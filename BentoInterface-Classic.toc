@@ -1,6 +1,6 @@
 ## Interface: 11570
 ## Title: Bento Interface Classic
-## Notes: Simple and efficient user interface enhancements.
+## Notes: Minimalist user interface enhancements for World of Warcraft Classic.
 ## Version: 1.0.0
 ## Author: MIYANKO
 ## SavedVariables: BentoInterfaceClassicDB
