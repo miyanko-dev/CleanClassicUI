@@ -4,7 +4,9 @@ Minimalist user interface enhancements for World of Warcraft Classic.
 
 ## Features
 
-- **Minimalist UI**: Clean and resource-efficient interface tweaks.\n- **Frame Customization**: Simple adjustments to standard Blizzard frames.\n- **Performance Focused**: Low memory and CPU footprint.
+- **Minimalist UI**: Clean and resource-efficient interface tweaks.
+- **Frame Customization**: Simple adjustments to standard Blizzard frames.
+- **Performance Focused**: Low memory and CPU footprint.
 
 ## Installation
 
