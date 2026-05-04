@@ -1,26 +1,21 @@
 ## Interface: 11570
 ## Title: Bento Interface Classic
-## Notes: Minimalist user interface enhancements for World of Warcraft Classic.
-## Version: 1.0.0
+## Notes: Minimalist layout for action bars, bags, micro menu, unit frames, and tooltips.
+## Version: 2.0.0
 ## Author: MIYANKO
 ## SavedVariables: BentoInterfaceClassicDB
 
-Modules/Styles.lua
-Modules/AddonSupport.lua
-Modules/ActionButtons.lua
-Modules/Auras.lua
+Core/Constants.lua
+
+Modules/ActionBars.lua
 Modules/Bags.lua
-Modules/CastBar.lua
-Modules/Chat.lua
+Modules/MicroMenu.lua
 Modules/LFGButton.lua
-Modules/MenuButtons.lua
-Modules/MiniMap.lua
-Modules/NamePlates.lua
+
 Modules/PlayerFrame.lua
-Modules/PlayerComboPoints.lua
-Modules/PlayerDruidMana.lua
-Modules/RaidFrames.lua
-Modules/StatusBars.lua
-Modules/Target.lua
+Modules/TargetFrame.lua
+Modules/CastBar.lua
+
 Modules/Tooltips.lua
-Modules/WorldMap.lua
+
+Modules/HideRaidAuras.lua
