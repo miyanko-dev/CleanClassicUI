@@ -1,22 +1,18 @@
--- Detach the LFG button from the minimap and place it next to the micro menu
-local function positionLFGButton()
-    if LFGMinimapFrameBorder then
-        LFGMinimapFrameBorder:Hide()
-    end
+local function position()
+    if LFGMinimapFrameBorder then LFGMinimapFrameBorder:Hide() end
+    if not LFGMinimapFrame then return end
 
-    if LFGMinimapFrame then
-        LFGMinimapFrame:SetParent(UIParent)
-        LFGMinimapFrame:ClearAllPoints()
-        LFGMinimapFrame:SetSize(36, 36)
-        LFGMinimapFrame:SetPoint("RIGHT", CharacterMicroButton, "LEFT", -4, -12)
-    end
+    LFGMinimapFrame:SetParent(UIParent)
+    LFGMinimapFrame:ClearAllPoints()
+    LFGMinimapFrame:SetSize(36, 36)
+    LFGMinimapFrame:SetPoint("RIGHT", CharacterMicroButton, "LEFT", -4, -12)
 
     if LFGMinimapFrameIcon then
         LFGMinimapFrameIcon:SetSize(40, 40)
-        LFGMinimapFrameIcon:SetPoint("CENTER", LFGMinimapFrame, "CENTER", 0, 0)
+        LFGMinimapFrameIcon:SetPoint("CENTER")
     end
 end
 
-local lfgFrame = CreateFrame("Frame")
-lfgFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-lfgFrame:SetScript("OnEvent", positionLFGButton)
+local f = CreateFrame("Frame")
+f:RegisterEvent("PLAYER_ENTERING_WORLD")
+f:SetScript("OnEvent", position)

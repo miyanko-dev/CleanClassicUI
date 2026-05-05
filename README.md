@@ -1,4 +1,4 @@
-# BentoInterface-Classic
+# CleanUI-Classic
 
 Minimalist layout addon for World of Warcraft Classic (1.15.x).
 
@@ -25,4 +25,4 @@ Minimalist layout addon for World of Warcraft Classic (1.15.x).
 
 ## Legacy
 
-The previous version of this addon is preserved on the [`legacy`](../../tree/legacy) branch.
+The previous version of this addon is preserved on the [`legacy`](https://github.com/marco-vrinssen/CleanUI-Classic/tree/legacy) branch.

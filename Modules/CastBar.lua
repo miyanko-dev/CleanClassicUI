@@ -1,11 +1,27 @@
--- CastingBarFrame: 195 × 13 px (Vanilla/CastingBarFrame.xml).
--- Centered between PlayerFrame and TargetFrame; BOTTOM flush with the unit frames
--- at y=164. Gap to each unit frame edge: ~50 px ((260-116) - (195/2) ≈ 47 px).
-local function positionCastBar()
+local PADDING = 20
+
+local function getAnchor()
+    if StanceBarFrame and StanceBarFrame:IsShown() and StanceButton1:IsShown() then
+        return StanceButton1
+    end
+    if PetActionBarFrame and PetActionBarFrame:IsShown() and PetActionButton1:IsShown() then
+        return PetActionButton1
+    end
+    if MultiBarBottomLeft:IsShown() then
+        return MultiBarBottomLeft
+    end
+    return MainMenuBar
+end
+
+local function position()
+    if InCombatLockdown() then return end
     CastingBarFrame:ClearAllPoints()
-    CastingBarFrame:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 164)
+    CastingBarFrame:SetPoint("BOTTOM", getAnchor(), "TOP", 0, PADDING)
 end
 
 local f = CreateFrame("Frame")
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
-f:SetScript("OnEvent", positionCastBar)
+f:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
+f:RegisterEvent("PET_BAR_UPDATE")
+f:RegisterEvent("PLAYER_REGEN_ENABLED")
+f:SetScript("OnEvent", position)
