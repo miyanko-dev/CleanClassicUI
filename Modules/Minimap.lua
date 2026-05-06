@@ -8,6 +8,7 @@ local hideList = {
     "MinimapZoneTextButton",
     "MinimapToggleButton",
     "MinimapCompassTexture",
+    "MinimapNorthTag",
     "MinimapBorder",
     "MinimapBorderTop",
     "MinimapZoomIn",
@@ -110,6 +111,14 @@ f:SetScript("OnEvent", function()
     for _, name in ipairs(hideList) do
         local frame = _G[name]
         if frame then frame:Hide() end
+    end
+
+    if TimeManagerClockButton then
+        for _, region in ipairs({ TimeManagerClockButton:GetRegions() }) do
+            if region:GetObjectType() == "Texture" and region ~= TimeManagerAlarmFiredTexture then
+                region:Hide()
+            end
+        end
     end
 
     buildBorder()
