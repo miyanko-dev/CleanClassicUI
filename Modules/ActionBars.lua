@@ -89,18 +89,36 @@ local function positionStance()
     StanceBarRight:SetAlpha(0)
 end
 
+local PET_SCALE = 0.8
+local PET_GAP = 6
+local PET_COUNT = 10
+local PET_OFFSET_Y = 8 / PET_SCALE
+
+local function getPetAnchor()
+    if MultiBarBottomLeft:IsShown() then
+        return MultiBarBottomLeft
+    end
+    return MainMenuBar
+end
+
 local function positionPet()
     if InCombatLockdown() then return end
-    local anchor = getUpperAnchor()
-    local prev
-    for i = 1, 10 do
+    if not PetActionBarFrame or not PetActionButton1 then return end
+
+    PetActionBarFrame:SetScale(PET_SCALE)
+
+    local btnW = PetActionButton1:GetWidth()
+    local totalW = PET_COUNT * btnW + (PET_COUNT - 1) * PET_GAP
+    local firstX = -(totalW - btnW) / 2
+
+    PetActionButton1:ClearAllPoints()
+    PetActionButton1:SetPoint("BOTTOM", getPetAnchor(), "TOP", firstX, PET_OFFSET_Y)
+
+    local prev = PetActionButton1
+    for i = 2, PET_COUNT do
         local btn = _G["PetActionButton" .. i]
         btn:ClearAllPoints()
-        if not prev then
-            btn:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", 0, PADDING)
-        else
-            btn:SetPoint("LEFT", prev, "RIGHT", 6, 0)
-        end
+        btn:SetPoint("LEFT", prev, "RIGHT", PET_GAP, 0)
         prev = btn
     end
 end
@@ -117,6 +135,8 @@ hooksecurefunc("ActionButton_OnUpdate", updateUsability)
 local f = CreateFrame("Frame")
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
 f:RegisterEvent("PLAYER_REGEN_ENABLED")
+f:RegisterEvent("PET_BAR_UPDATE")
+f:RegisterEvent("UNIT_PET")
 f:SetScript("OnEvent", function(_, event)
     positionBars()
     stripButtons()

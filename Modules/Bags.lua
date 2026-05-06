@@ -19,7 +19,7 @@ local function arrangeBags()
         btn:Show()
         btn:ClearAllPoints()
         if i == 1 then
-            btn:SetPoint("BOTTOMRIGHT", HelpMicroButton, "TOPRIGHT", 0, 10)
+            btn:SetPoint("BOTTOMRIGHT", HelpMicroButton, "TOPRIGHT", 0, -8)
         else
             btn:SetPoint("RIGHT", _G[bags[i - 1]], "LEFT", SPACING, 0)
         end

@@ -3,6 +3,7 @@
 ## Notes: Minimalist layout helper for action bars, bags, micro menu, status bars, minimap, auras, and tooltips.
 ## Version: 2.1.0
 ## Author: MIYANKO
+## SavedVariables: CleanUIClassicDB
 
 Modules/MicroMenu.lua
 Modules/ActionBars.lua
