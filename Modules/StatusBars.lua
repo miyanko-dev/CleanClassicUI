@@ -1,31 +1,32 @@
 local BAR_TEXTURE = "Interface/RaidFrame/Raid-Bar-Hp-Fill"
+local BG_TEXTURE = "Interface/Buttons/WHITE8x8"
 
 local function addBackground(bar)
-    if not bar or bar.cleanUIBG then return end
+    if not bar or bar.cleanBackground then return end
     local bg = CreateFrame("Frame", nil, bar)
     bg:SetAllPoints()
     bg:SetFrameLevel(math.max(0, bar:GetFrameLevel() - 1))
     local tex = bg:CreateTexture(nil, "BACKGROUND")
     tex:SetAllPoints()
-    tex:SetTexture("Interface/Buttons/WHITE8x8")
+    tex:SetTexture(BG_TEXTURE)
     tex:SetVertexColor(0, 0, 0, 0.4)
-    bar.cleanUIBG = bg
+    bar.cleanBackground = bg
 end
 
-local function cleanBar(bar)
+local function reskinBar(bar)
     if not bar then return end
     bar:SetStatusBarTexture(BAR_TEXTURE)
     local fill = bar:GetStatusBarTexture()
     for i = 1, bar:GetNumRegions() do
-        local r = select(i, bar:GetRegions())
-        if r and r ~= fill and r:GetObjectType() == "Texture" then
-            r:Hide()
+        local region = select(i, bar:GetRegions())
+        if region and region ~= fill and region:GetObjectType() == "Texture" then
+            region:Hide()
         end
     end
 end
 
-local function setupXPTooltip(bar)
-    if not bar or bar.cleanUIHooked then return end
+local function attachXPTooltip(bar)
+    if not bar or bar.cleanTooltip then return end
     bar:EnableMouse(true)
     bar:SetScript("OnEnter", function(self)
         local cur, max = UnitXP("player"), UnitXPMax("player")
@@ -38,14 +39,14 @@ local function setupXPTooltip(bar)
         GameTooltip:Show()
     end)
     bar:SetScript("OnLeave", GameTooltip_Hide)
-    bar.cleanUIHooked = true
+    bar.cleanTooltip = true
 end
 
-local function style()
+local function applyStyle()
     if MainMenuExpBar then
         addBackground(MainMenuExpBar)
-        cleanBar(MainMenuExpBar)
-        setupXPTooltip(MainMenuExpBar)
+        reskinBar(MainMenuExpBar)
+        attachXPTooltip(MainMenuExpBar)
         if ExhaustionTick then
             ExhaustionTick:Hide()
             ExhaustionTick.Show = ExhaustionTick.Hide
@@ -55,14 +56,14 @@ local function style()
 
     if ReputationWatchStatusBar then
         addBackground(ReputationWatchStatusBar)
-        cleanBar(ReputationWatchStatusBar)
+        reskinBar(ReputationWatchStatusBar)
     end
 end
 
-local f = CreateFrame("Frame")
-f:RegisterEvent("PLAYER_ENTERING_WORLD")
-f:RegisterEvent("PLAYER_LEVEL_UP")
-f:RegisterEvent("UPDATE_FACTION")
-f:SetScript("OnEvent", function()
-    C_Timer.After(0, style)
+local frame = CreateFrame("Frame")
+frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+frame:RegisterEvent("PLAYER_LEVEL_UP")
+frame:RegisterEvent("UPDATE_FACTION")
+frame:SetScript("OnEvent", function()
+    C_Timer.After(0, applyStyle)
 end)

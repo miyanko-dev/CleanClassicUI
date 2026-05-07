@@ -1,18 +1,14 @@
-local PADDING = 24
+local SCREEN_PADDING = 24
 local MINIMAP_SIZE = 196
 local DEFAULT_SIZE = 140
-local DELTA = (MINIMAP_SIZE - DEFAULT_SIZE) / 2
+local SIZE_DELTA = (MINIMAP_SIZE - DEFAULT_SIZE) / 2
 
--- Cluster default insets to the Minimap edges (Classic Era source: Minimap.xml).
--- Minimap is anchored CENTER -> cluster TOP at offset (9, -92), so at default
--- size it's 17 from cluster right and 22 from cluster top. Resizing reduces
--- those insets and may overflow.
-local CLUSTER_RIGHT_INSET = 17 - DELTA
-local CLUSTER_TOP_INSET = 22 - DELTA
-local X_OFFSET = CLUSTER_RIGHT_INSET - PADDING
-local Y_OFFSET = CLUSTER_TOP_INSET - PADDING
+-- MinimapCluster has 17px right / 22px top default insets to the Minimap.
+-- Resizing reduces those insets, so we offset the cluster to compensate.
+local CLUSTER_X = (17 - SIZE_DELTA) - SCREEN_PADDING
+local CLUSTER_Y = (22 - SIZE_DELTA) - SCREEN_PADDING
 
-local hideList = {
+local HIDDEN_FRAMES = {
     "MinimapBorder",
     "MinimapBorderTop",
     "MinimapZoneTextButton",
@@ -28,10 +24,10 @@ local function applyLayout()
     Minimap:SetSize(MINIMAP_SIZE, MINIMAP_SIZE)
     MinimapCluster:SetScale(1.0)
     MinimapCluster:ClearAllPoints()
-    MinimapCluster:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", X_OFFSET, Y_OFFSET)
+    MinimapCluster:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", CLUSTER_X, CLUSTER_Y)
 end
 
-local function refreshAddonButtons()
+local function refreshMinimapButtons()
     if not LibStub then return end
     local lib = LibStub("LibDBIcon-1.0", true)
     if not (lib and lib.objects and lib.Refresh) then return end
@@ -40,8 +36,7 @@ local function refreshAddonButtons()
     end
 end
 
--- Apply size/position immediately at file load so addons that register
--- minimap buttons during ADDON_LOADED/PLAYER_LOGIN see the final size.
+-- Apply at file load so addons registering buttons during ADDON_LOADED see final size.
 applyLayout()
 
 Minimap:EnableMouseWheel(true)
@@ -49,18 +44,14 @@ Minimap:SetScript("OnMouseWheel", function(_, delta)
     if delta > 0 then Minimap_ZoomIn() else Minimap_ZoomOut() end
 end)
 
-local function onLogin()
+local frame = CreateFrame("Frame")
+frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+frame:SetScript("OnEvent", function()
     applyLayout()
-    for _, name in ipairs(hideList) do
-        local frame = _G[name]
-        if frame then frame:Hide() end
+    for _, name in ipairs(HIDDEN_FRAMES) do
+        local f = _G[name]
+        if f then f:Hide() end
     end
-    if TimeManagerClockButton then
-        TimeManagerClockButton:Hide()
-    end
-    refreshAddonButtons()
-end
-
-local f = CreateFrame("Frame")
-f:RegisterEvent("PLAYER_ENTERING_WORLD")
-f:SetScript("OnEvent", onLogin)
+    if TimeManagerClockButton then TimeManagerClockButton:Hide() end
+    refreshMinimapButtons()
+end)

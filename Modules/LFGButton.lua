@@ -1,18 +1,23 @@
-local function position()
+local BUTTON_SIZE = 36
+local ICON_SIZE = 40
+local OFFSET_X = -4
+local OFFSET_Y = -12
+
+local function placeLFGButton()
     if LFGMinimapFrameBorder then LFGMinimapFrameBorder:Hide() end
     if not LFGMinimapFrame then return end
 
     LFGMinimapFrame:SetParent(UIParent)
     LFGMinimapFrame:ClearAllPoints()
-    LFGMinimapFrame:SetSize(36, 36)
-    LFGMinimapFrame:SetPoint("RIGHT", CharacterMicroButton, "LEFT", -4, -12)
+    LFGMinimapFrame:SetSize(BUTTON_SIZE, BUTTON_SIZE)
+    LFGMinimapFrame:SetPoint("RIGHT", CharacterMicroButton, "LEFT", OFFSET_X, OFFSET_Y)
 
     if LFGMinimapFrameIcon then
-        LFGMinimapFrameIcon:SetSize(40, 40)
+        LFGMinimapFrameIcon:SetSize(ICON_SIZE, ICON_SIZE)
         LFGMinimapFrameIcon:SetPoint("CENTER")
     end
 end
 
-local f = CreateFrame("Frame")
-f:RegisterEvent("PLAYER_ENTERING_WORLD")
-f:SetScript("OnEvent", position)
+local frame = CreateFrame("Frame")
+frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+frame:SetScript("OnEvent", placeLFGButton)

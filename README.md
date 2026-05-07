@@ -16,12 +16,6 @@ Minimalist layout addon for World of Warcraft Classic (1.15.x).
 | **Status bars** | Reskins XP and reputation bars with a clean texture and dark background. Adds an XP tooltip on hover. |
 | **Tooltips** | Anchors non-cursor tooltips to the top-left of the target frame. |
 
-## Slash commands
-
-```
-/simplegrid    — toggle the alignment grid overlay
-```
-
 ## Legacy
 
 The previous version of this addon is preserved on the [`legacy`](https://github.com/marco-vrinssen/CleanUI-Classic/tree/legacy) branch.

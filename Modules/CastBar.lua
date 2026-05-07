@@ -1,25 +1,29 @@
 local BAR_TEXTURE = "Interface/RaidFrame/Raid-Bar-Hp-Fill"
 local BAR_WIDTH = 160
 local BAR_HEIGHT = 16
+local FALLBACK_Y = 300
 
-local function position()
-    if CastingBarFrame.cleanInHook then return end
-    CastingBarFrame.cleanInHook = true
-    local y = (CleanUIClassicLayout and CleanUIClassicLayout.castBarY) or 300
+local HIDDEN_REGIONS = { "Border", "BorderShield", "Spark", "Flash", "Icon" }
+
+local repositioning = false
+local function anchorCastBar()
+    if repositioning then return end
+    repositioning = true
+    local y = (CleanUIClassicLayout and CleanUIClassicLayout.castBarY) or FALLBACK_Y
     CastingBarFrame:ClearAllPoints()
     CastingBarFrame:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, y)
-    CastingBarFrame.cleanInHook = false
+    repositioning = false
 end
 
 local function styleCastBar()
     CastingBarFrame:SetSize(BAR_WIDTH, BAR_HEIGHT)
     CastingBarFrame:SetStatusBarTexture(BAR_TEXTURE)
 
-    for _, key in ipairs({ "Border", "BorderShield", "Spark", "Flash", "Icon" }) do
-        local r = CastingBarFrame[key]
-        if r then
-            r:Hide()
-            r:SetScript("OnShow", r.Hide)
+    for _, key in ipairs(HIDDEN_REGIONS) do
+        local region = CastingBarFrame[key]
+        if region then
+            region:Hide()
+            region:SetScript("OnShow", region.Hide)
         end
     end
 
@@ -30,23 +34,23 @@ local function styleCastBar()
 end
 
 local styled = false
-local f = CreateFrame("Frame")
-f:RegisterEvent("PLAYER_ENTERING_WORLD")
-f:RegisterEvent("PET_BAR_UPDATE")
-f:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
-f:RegisterEvent("PLAYER_REGEN_ENABLED")
-f:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
-f:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
-f:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "player")
-f:SetScript("OnEvent", function()
+local frame = CreateFrame("Frame")
+frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+frame:RegisterEvent("PET_BAR_UPDATE")
+frame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
+frame:RegisterEvent("PLAYER_REGEN_ENABLED")
+frame:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
+frame:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
+frame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "player")
+frame:SetScript("OnEvent", function()
     if not styled then
         styleCastBar()
         styled = true
     end
-    position()
+    anchorCastBar()
 end)
 
-hooksecurefunc(CastingBarFrame, "SetPoint", position)
+hooksecurefunc(CastingBarFrame, "SetPoint", anchorCastBar)
 
 hooksecurefunc("CastingBarFrame_FinishSpell", function(bar)
     if bar == CastingBarFrame then
