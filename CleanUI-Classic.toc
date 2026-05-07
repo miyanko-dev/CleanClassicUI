@@ -14,4 +14,3 @@ Modules/LFGButton.lua
 Modules/Minimap.lua
 Modules/Auras.lua
 Modules/Tooltips.lua
-Modules/SimpleGrid.lua

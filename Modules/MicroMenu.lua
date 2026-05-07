@@ -1,4 +1,4 @@
-local PADDING = 20
+local PADDING = 24
 
 local anchor = CreateFrame("Frame", "CleanUIMicroMenu", UIParent)
 anchor:SetSize(1, 1)

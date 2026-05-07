@@ -1,4 +1,3 @@
-local PADDING = 20
 local BAR_TEXTURE = "Interface/RaidFrame/Raid-Bar-Hp-Fill"
 
 local function addBackground(bar)
@@ -42,14 +41,8 @@ local function setupXPTooltip(bar)
     bar.cleanUIHooked = true
 end
 
-local function arrange()
-    if not MultiBarBottomRight then return end
-    local barWidth = MultiBarBottomRight:GetWidth() * MultiBarBottomRight:GetScale()
-
+local function style()
     if MainMenuExpBar then
-        MainMenuExpBar:ClearAllPoints()
-        MainMenuExpBar:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, PADDING)
-        MainMenuExpBar:SetWidth(barWidth)
         addBackground(MainMenuExpBar)
         cleanBar(MainMenuExpBar)
         setupXPTooltip(MainMenuExpBar)
@@ -60,13 +53,7 @@ local function arrange()
         if ExhaustionLevelFillBar then ExhaustionLevelFillBar:Hide() end
     end
 
-    if ReputationWatchBar then
-        ReputationWatchBar:ClearAllPoints()
-        ReputationWatchBar:SetPoint("BOTTOM", MainMenuExpBar, "TOP", 0, 0)
-        ReputationWatchBar:SetWidth(barWidth)
-    end
     if ReputationWatchStatusBar then
-        ReputationWatchStatusBar:SetWidth(barWidth)
         addBackground(ReputationWatchStatusBar)
         cleanBar(ReputationWatchStatusBar)
     end
@@ -77,5 +64,5 @@ f:RegisterEvent("PLAYER_ENTERING_WORLD")
 f:RegisterEvent("PLAYER_LEVEL_UP")
 f:RegisterEvent("UPDATE_FACTION")
 f:SetScript("OnEvent", function()
-    C_Timer.After(0, arrange)
+    C_Timer.After(0, style)
 end)
