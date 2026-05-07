@@ -17,7 +17,10 @@ local function styleCastBar()
 
     for _, key in ipairs({ "Border", "BorderShield", "Spark", "Flash", "Icon" }) do
         local r = CastingBarFrame[key]
-        if r then r:Hide() end
+        if r then
+            r:Hide()
+            r:SetScript("OnShow", r.Hide)
+        end
     end
 
     if CastingBarFrame.Text then
@@ -44,3 +47,11 @@ f:SetScript("OnEvent", function()
 end)
 
 hooksecurefunc(CastingBarFrame, "SetPoint", position)
+
+hooksecurefunc("CastingBarFrame_FinishSpell", function(bar)
+    if bar == CastingBarFrame then
+        bar.flash = nil
+        bar.fadeOut = nil
+        bar:Hide()
+    end
+end)
