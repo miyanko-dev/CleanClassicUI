@@ -1,8 +1,7 @@
-local BAR_TEXTURE = "Interface/RaidFrame/Raid-Bar-Hp-Fill"
 local BG_TEXTURE = "Interface/Buttons/WHITE8x8"
 
-local function addBackground(bar)
-    if not bar or bar.cleanBackground then return end
+local function addBg(bar)
+    if not bar or bar.cleanBg then return end
     local bg = CreateFrame("Frame", nil, bar)
     bg:SetAllPoints()
     bg:SetFrameLevel(math.max(0, bar:GetFrameLevel() - 1))
@@ -10,28 +9,29 @@ local function addBackground(bar)
     tex:SetAllPoints()
     tex:SetTexture(BG_TEXTURE)
     tex:SetVertexColor(0, 0, 0, 0.4)
-    bar.cleanBackground = bg
+    bar.cleanBg = bg
 end
 
-local function reskinBar(bar)
+local function stripTextures(bar)
     if not bar then return end
-    bar:SetStatusBarTexture(BAR_TEXTURE)
+    bar:SetStatusBarTexture(CleanUI.BAR_TEXTURE)
     local fill = bar:GetStatusBarTexture()
     for i = 1, bar:GetNumRegions() do
-        local region = select(i, bar:GetRegions())
-        if region and region ~= fill and region:GetObjectType() == "Texture" then
-            region:Hide()
+        local r = select(i, bar:GetRegions())
+        if r and r ~= fill and r:GetObjectType() == "Texture" then
+            r:Hide()
         end
     end
 end
 
-local function attachXPTooltip(bar)
-    if not bar or bar.cleanTooltip then return end
+local function addXPTooltip(bar)
+    if not bar or bar.cleanTip then return end
     bar:EnableMouse(true)
     bar:SetScript("OnEnter", function(self)
         local cur, max = UnitXP("player"), UnitXPMax("player")
         local rest = GetXPExhaustion() or 0
-        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetOwner(self, "ANCHOR_NONE")
+        GameTooltip:SetPoint("BOTTOM", self, "TOP", 0, 4)
         GameTooltip:AddLine(format("XP: %d / %d (%.0f%%)", cur, max, cur / max * 100), 1, 1, 1)
         if rest > 0 then
             GameTooltip:AddLine(format("Rested: %d (%.0f%%)", rest, rest / max * 100), 0.2, 0.6, 1)
@@ -39,14 +39,15 @@ local function attachXPTooltip(bar)
         GameTooltip:Show()
     end)
     bar:SetScript("OnLeave", GameTooltip_Hide)
-    bar.cleanTooltip = true
+    bar.cleanTip = true
 end
 
 local function applyStyle()
     if MainMenuExpBar then
-        addBackground(MainMenuExpBar)
-        reskinBar(MainMenuExpBar)
-        attachXPTooltip(MainMenuExpBar)
+        addBg(MainMenuExpBar)
+        stripTextures(MainMenuExpBar)
+        addXPTooltip(MainMenuExpBar)
+        CleanUI.ApplyBorder(MainMenuExpBar)
         if ExhaustionTick then
             ExhaustionTick:Hide()
             ExhaustionTick.Show = ExhaustionTick.Hide
@@ -55,8 +56,9 @@ local function applyStyle()
     end
 
     if ReputationWatchStatusBar then
-        addBackground(ReputationWatchStatusBar)
-        reskinBar(ReputationWatchStatusBar)
+        addBg(ReputationWatchStatusBar)
+        stripTextures(ReputationWatchStatusBar)
+        CleanUI.ApplyBorder(ReputationWatchStatusBar)
     end
 end
 
