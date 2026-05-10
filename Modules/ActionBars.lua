@@ -1,72 +1,67 @@
-local SCREEN_MARGIN = 24
-local UNIT_FRAME_GAP = 72
+local MARGIN = 24
 local BAR_GAP = 8
-local PET_GAP = 6
-local STANCE_GAP = 6
-local BUTTON_SIZE = 36
+local BTN_SIZE = 36
 local BAR3_SCALE = 0.8
 local PET_SCALE = 0.8
 local PET_COUNT = 10
+local PET_GAP = 6
+local STANCE_GAP = 6
+local AB1_INSET = 4
+local UF_GAP = 72
+local UF_TOP = 64
+local PLAYER_X = 225
+local TARGET_X = 7
 
--- ActionButton1 sits 4px above MainMenuBar's frame bottom.
-local AB1_BOTTOM_INSET = 4
+CleanUILayout = CleanUILayout or {}
+CleanUILayout.afterLayout = CleanUILayout.afterLayout or {}
 
--- Mana-bar offsets used to align Player/Target frames with action bar 2.
--- Derived from Blizzard's PlayerFrame/TargetFrame XML insets.
-local PLAYER_MANA_RIGHT = 225
-local TARGET_MANA_LEFT = 7
-local MANA_TO_FRAME_TOP = 64
+local function keepHidden(f)
+    if not f then return end
+    f:Hide()
+    f.Show = f.Hide
+end
 
-CleanUIClassicLayout = CleanUIClassicLayout or {}
-
-local function enableExtraBars()
+local function enableBars()
     if InCombatLockdown() then return end
     if GetCVar("bottomLeftActionBar") ~= "1" then SetCVar("bottomLeftActionBar", "1") end
     if GetCVar("bottomRightActionBar") ~= "1" then SetCVar("bottomRightActionBar", "1") end
 end
 
-local function keepHidden(frame)
-    if not frame then return end
-    frame:Hide()
-    frame.Show = frame.Hide
-end
-
 local function centerRow(prefix, count, gap, scale, y)
     local first = _G[prefix .. "1"]
-    local width = first:GetWidth()
-    local totalWidth = count * width + (count - 1) * gap
-    local startX = -(totalWidth - width) / 2
+    local w = first:GetWidth()
+    local total = count * w + (count - 1) * gap
+    local startX = -(total - w) / 2
     first:ClearAllPoints()
     first:SetPoint("BOTTOM", UIParent, "BOTTOM", startX, y / scale)
     for i = 2, count do
-        local btn = _G[prefix .. i]
-        btn:ClearAllPoints()
-        btn:SetPoint("LEFT", _G[prefix .. (i - 1)], "RIGHT", gap, 0)
+        _G[prefix .. i]:ClearAllPoints()
+        _G[prefix .. i]:SetPoint("LEFT", _G[prefix .. (i - 1)], "RIGHT", gap, 0)
     end
 end
 
-local function applyLayout()
+local function layout()
     if InCombatLockdown() then return end
 
-    local y = SCREEN_MARGIN
-    local barWidth = 512 * BAR3_SCALE
+    local y = MARGIN
+    local barW = 512 * BAR3_SCALE
 
     if MainMenuExpBar then
         MainMenuExpBar:ClearAllPoints()
         MainMenuExpBar:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, y)
-        MainMenuExpBar:SetWidth(barWidth)
+        MainMenuExpBar:SetWidth(barW)
         if MainMenuExpBar:IsShown() then y = y + MainMenuExpBar:GetHeight() end
     end
 
     if ReputationWatchBar then
         ReputationWatchBar:ClearAllPoints()
         ReputationWatchBar:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, y)
-        ReputationWatchBar:SetWidth(barWidth)
-        if ReputationWatchStatusBar then ReputationWatchStatusBar:SetWidth(barWidth) end
+        ReputationWatchBar:SetWidth(barW)
+        if ReputationWatchStatusBar then ReputationWatchStatusBar:SetWidth(barW) end
         if ReputationWatchBar:IsShown() then y = y + ReputationWatchBar:GetHeight() end
     end
 
-    y = y + SCREEN_MARGIN
+    y = y + MARGIN
 
     MultiBarBottomRight:Show()
     MultiBarBottomRight:SetScale(BAR3_SCALE)
@@ -74,21 +69,21 @@ local function applyLayout()
     MultiBarBottomRight:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, y / BAR3_SCALE)
     MultiBarBottomRight:SetMovable(true)
     MultiBarBottomRight:SetUserPlaced(true)
-    y = y + BUTTON_SIZE * BAR3_SCALE + SCREEN_MARGIN
+    y = y + BTN_SIZE * BAR3_SCALE + MARGIN
 
     MainMenuBar:SetWidth(512)
     MainMenuBar:ClearAllPoints()
-    MainMenuBar:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, y - AB1_BOTTOM_INSET)
+    MainMenuBar:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, y - AB1_INSET)
     MainMenuBar:SetMovable(true)
     MainMenuBar:SetUserPlaced(true)
-    y = y + BUTTON_SIZE
+    y = y + BTN_SIZE
 
     MultiBarBottomLeft:Show()
     MultiBarBottomLeft:ClearAllPoints()
     MultiBarBottomLeft:SetPoint("BOTTOMLEFT", ActionButton1, "TOPLEFT", 0, BAR_GAP)
     MultiBarBottomLeft:SetMovable(true)
     MultiBarBottomLeft:SetUserPlaced(true)
-    y = y + BAR_GAP + BUTTON_SIZE
+    y = y + BAR_GAP + BTN_SIZE
 
     if PetActionBarFrame and PetActionBarFrame:IsShown()
         and PetActionButton1 and PetActionButton1:IsShown() then
@@ -104,26 +99,26 @@ local function applyLayout()
         StanceBarLeft:SetAlpha(0)
         StanceBarMiddle:SetAlpha(0)
         StanceBarRight:SetAlpha(0)
-        y = y + BUTTON_SIZE
+        y = y + BTN_SIZE
     end
 
-    CleanUIClassicLayout.castBarY = y + SCREEN_MARGIN
+    CleanUILayout.castBarY = y + MARGIN
 
     if VerticalMultiBarsContainer then
         VerticalMultiBarsContainer:ClearAllPoints()
-        VerticalMultiBarsContainer:SetPoint("RIGHT", UIParent, "RIGHT", -SCREEN_MARGIN, 0)
+        VerticalMultiBarsContainer:SetPoint("RIGHT", UIParent, "RIGHT", -MARGIN, 0)
     end
 
     if PlayerFrame and MultiBarBottomLeftButton1 then
         PlayerFrame:ClearAllPoints()
         PlayerFrame:SetPoint("TOPLEFT", MultiBarBottomLeftButton1, "TOPLEFT",
-            -PLAYER_MANA_RIGHT, UNIT_FRAME_GAP + MANA_TO_FRAME_TOP)
+            -PLAYER_X, UF_GAP + UF_TOP)
         PlayerFrame:SetUserPlaced(true)
     end
     if TargetFrame and MultiBarBottomLeftButton12 then
         TargetFrame:ClearAllPoints()
         TargetFrame:SetPoint("TOPLEFT", MultiBarBottomLeftButton12, "TOPRIGHT",
-            -TARGET_MANA_LEFT, UNIT_FRAME_GAP + MANA_TO_FRAME_TOP)
+            -TARGET_X, UF_GAP + UF_TOP)
         TargetFrame:SetUserPlaced(true)
     end
 
@@ -146,7 +141,7 @@ local function applyLayout()
     end
 end
 
-local BUTTON_PREFIXES = {
+local BAR_PREFIXES = {
     "ActionButton",
     "MultiBarBottomLeftButton",
     "MultiBarBottomRightButton",
@@ -154,11 +149,44 @@ local BUTTON_PREFIXES = {
     "MultiBarLeftButton",
 }
 
-local function hideButtonBackgrounds()
-    for _, prefix in ipairs(BUTTON_PREFIXES) do
+local function styleBtn(btn)
+    if not btn then return end
+    local name = btn:GetName()
+    local norm = _G[name .. "NormalTexture"]
+    if norm then norm:SetAlpha(0) end
+    local float = _G[name .. "FloatingBG"]
+    if float then float:SetAlpha(0) end
+    local icon = _G[name .. "Icon"]
+    if icon then icon:SetTexCoord(0.1, 0.9, 0.1, 0.9) end
+    CleanUI.ApplyBorder(btn)
+end
+
+local function styleAll()
+    for _, prefix in ipairs(BAR_PREFIXES) do
         for i = 1, 12 do
-            local bg = _G[prefix .. i .. "FloatingBG"]
-            if bg then bg:SetAlpha(0) end
+            styleBtn(_G[prefix .. i])
+        end
+    end
+    for i = 1, NUM_STANCE_SLOTS do
+        local btn = _G["StanceButton" .. i]
+        if btn then
+            for j = 1, 3 do
+                local tex = _G[btn:GetName() .. "NormalTexture" .. j]
+                if tex then tex:SetAlpha(0) end
+            end
+            styleBtn(btn)
+        end
+    end
+    for i = 1, PET_COUNT do
+        local btn = _G["PetActionButton" .. i]
+        if btn then
+            local n = _G[btn:GetName() .. "NormalTexture"]
+            if n then n:SetAlpha(0) end
+            local n2 = _G[btn:GetName() .. "NormalTexture2"]
+            if n2 then n2:SetAlpha(0) end
+            local icon = _G[btn:GetName() .. "Icon"]
+            if icon then icon:SetTexCoord(0.1, 0.9, 0.1, 0.9) end
+            CleanUI.ApplyBorder(btn)
         end
     end
 end
@@ -170,6 +198,30 @@ hooksecurefunc("ActionButton_OnUpdate", function(self)
     self.icon:SetAlpha((not usable or inRange == false) and 0.9 or 1.0)
 end)
 
+local pending = false
+local function scheduleLayout()
+    if pending then return end
+    pending = true
+    C_Timer.After(0, function()
+        pending = false
+        enableBars()
+        layout()
+        styleAll()
+        for _, cb in ipairs(CleanUILayout.afterLayout) do cb() end
+    end)
+end
+
+CleanUILayout.scheduleLayout = scheduleLayout
+
+if PetActionBarFrame then
+    PetActionBarFrame:HookScript("OnShow", scheduleLayout)
+    PetActionBarFrame:HookScript("OnHide", scheduleLayout)
+end
+if StanceBarFrame then
+    StanceBarFrame:HookScript("OnShow", scheduleLayout)
+    StanceBarFrame:HookScript("OnHide", scheduleLayout)
+end
+
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("PLAYER_REGEN_ENABLED")
@@ -177,8 +229,6 @@ frame:RegisterEvent("PET_BAR_UPDATE")
 frame:RegisterEvent("UNIT_PET")
 frame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
 frame:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
-frame:SetScript("OnEvent", function()
-    enableExtraBars()
-    applyLayout()
-    hideButtonBackgrounds()
-end)
+frame:RegisterEvent("UI_SCALE_CHANGED")
+frame:RegisterEvent("DISPLAY_SIZE_CHANGED")
+frame:SetScript("OnEvent", scheduleLayout)
