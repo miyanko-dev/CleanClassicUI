@@ -1,45 +1,57 @@
-local BAR_TEXTURE = "Interface/RaidFrame/Raid-Bar-Hp-Fill"
-local BAR_WIDTH = 160
-local BAR_HEIGHT = 16
+local BAR_W = 160
+local BAR_H = 16
 local FALLBACK_Y = 300
+local HIDDEN = { "Border", "BorderShield", "Spark", "Flash", "Icon" }
 
-local HIDDEN_REGIONS = { "Border", "BorderShield", "Spark", "Flash", "Icon" }
+local applying = false
+local pending = false
 
-local repositioning = false
-local function anchorCastBar()
-    if repositioning then return end
-    repositioning = true
-    local y = (CleanUIClassicLayout and CleanUIClassicLayout.castBarY) or FALLBACK_Y
+local function applyAnchor()
+    pending = false
+    if applying then return end
+    applying = true
+    local y = (CleanUILayout and CleanUILayout.castBarY) or FALLBACK_Y
     CastingBarFrame:ClearAllPoints()
     CastingBarFrame:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, y)
-    repositioning = false
+    applying = false
+end
+
+local function scheduleAnchor()
+    if applying or pending then return end
+    pending = true
+    C_Timer.After(0, applyAnchor)
 end
 
 local function styleCastBar()
-    CastingBarFrame:SetSize(BAR_WIDTH, BAR_HEIGHT)
-    CastingBarFrame:SetStatusBarTexture(BAR_TEXTURE)
+    CastingBarFrame:SetSize(BAR_W, BAR_H)
+    CastingBarFrame:SetStatusBarTexture(CleanUI.BAR_TEXTURE)
 
-    for _, key in ipairs(HIDDEN_REGIONS) do
-        local region = CastingBarFrame[key]
-        if region then
-            region:Hide()
-            region:SetScript("OnShow", region.Hide)
+    for _, key in ipairs(HIDDEN) do
+        local r = CastingBarFrame[key]
+        if r then
+            r:Hide()
+            r:SetScript("OnShow", r.Hide)
         end
     end
 
     if CastingBarFrame.Text then
         CastingBarFrame.Text:ClearAllPoints()
-        CastingBarFrame.Text:SetPoint("CENTER", CastingBarFrame, "CENTER", 0, 0)
+        CastingBarFrame.Text:SetPoint("CENTER")
     end
+
+    CleanUI.ApplyBorder(CastingBarFrame)
 end
 
 local styled = false
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("PET_BAR_UPDATE")
+frame:RegisterEvent("UNIT_PET")
 frame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
 frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 frame:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
+frame:RegisterEvent("UI_SCALE_CHANGED")
+frame:RegisterEvent("DISPLAY_SIZE_CHANGED")
 frame:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
 frame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "player")
 frame:SetScript("OnEvent", function()
@@ -47,10 +59,14 @@ frame:SetScript("OnEvent", function()
         styleCastBar()
         styled = true
     end
-    anchorCastBar()
+    scheduleAnchor()
 end)
 
-hooksecurefunc(CastingBarFrame, "SetPoint", anchorCastBar)
+hooksecurefunc(CastingBarFrame, "SetPoint", scheduleAnchor)
+
+CleanUILayout = CleanUILayout or {}
+CleanUILayout.afterLayout = CleanUILayout.afterLayout or {}
+table.insert(CleanUILayout.afterLayout, scheduleAnchor)
 
 hooksecurefunc("CastingBarFrame_FinishSpell", function(bar)
     if bar == CastingBarFrame then
