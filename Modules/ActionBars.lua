@@ -1,6 +1,5 @@
 local MARGIN = 24
 local BAR_GAP = 8
-local BTN_SIZE = 36
 local BAR3_SCALE = 0.8
 local PET_SCALE = 0.8
 local PET_COUNT = 10
@@ -14,6 +13,7 @@ local TARGET_X = 7
 
 CleanUILayout = CleanUILayout or {}
 CleanUILayout.afterLayout = CleanUILayout.afterLayout or {}
+CleanUILayout.bar3Scale = BAR3_SCALE
 
 local function keepHidden(f)
     if not f then return end
@@ -43,6 +43,9 @@ end
 local function layout()
     if InCombatLockdown() then return end
 
+    local btnH = ActionButton1 and ActionButton1:GetHeight() or 36
+    CleanUILayout.btnSize = btnH
+
     local y = MARGIN
     local barW = 512 * BAR3_SCALE
 
@@ -69,21 +72,21 @@ local function layout()
     MultiBarBottomRight:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, y / BAR3_SCALE)
     MultiBarBottomRight:SetMovable(true)
     MultiBarBottomRight:SetUserPlaced(true)
-    y = y + BTN_SIZE * BAR3_SCALE + MARGIN
+    y = y + btnH * BAR3_SCALE + MARGIN
 
     MainMenuBar:SetWidth(512)
     MainMenuBar:ClearAllPoints()
     MainMenuBar:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, y - AB1_INSET)
     MainMenuBar:SetMovable(true)
     MainMenuBar:SetUserPlaced(true)
-    y = y + BTN_SIZE
+    y = y + btnH
 
     MultiBarBottomLeft:Show()
     MultiBarBottomLeft:ClearAllPoints()
     MultiBarBottomLeft:SetPoint("BOTTOMLEFT", ActionButton1, "TOPLEFT", 0, BAR_GAP)
     MultiBarBottomLeft:SetMovable(true)
     MultiBarBottomLeft:SetUserPlaced(true)
-    y = y + BAR_GAP + BTN_SIZE
+    y = y + BAR_GAP + btnH
 
     if PetActionBarFrame and PetActionBarFrame:IsShown()
         and PetActionButton1 and PetActionButton1:IsShown() then
@@ -99,7 +102,7 @@ local function layout()
         StanceBarLeft:SetAlpha(0)
         StanceBarMiddle:SetAlpha(0)
         StanceBarRight:SetAlpha(0)
-        y = y + BTN_SIZE
+        y = y + btnH
     end
 
     CleanUILayout.castBarY = y + MARGIN

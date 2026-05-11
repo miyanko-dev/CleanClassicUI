@@ -87,3 +87,13 @@ hooksecurefunc("FCF_OpenTemporaryWindow", function()
         styleEditBox(cf, _G[cf:GetName() .. "EditBox"])
     end
 end)
+
+hooksecurefunc("ChatEdit_UpdateHeader", function(editBox)
+    if editBox:GetAttribute("chatType") ~= "WHISPER" then return end
+    local info = ChatTypeInfo["WHISPER_INFORM"]
+    if not info then return end
+    editBox:SetTextColor(info.r, info.g, info.b)
+    if editBox.header then
+        editBox.header:SetTextColor(info.r, info.g, info.b)
+    end
+end)

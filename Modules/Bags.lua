@@ -1,4 +1,6 @@
-local BTN_GAP = -4
+local BTN_SIZE = CleanUILayout and CleanUILayout.btnSize or 36
+local BAR_SCALE = CleanUILayout and CleanUILayout.bar3Scale or 0.8
+local BTN_GAP = -2
 local BACKPACK_GAP = -8
 local CONTAINER_GAP = 4
 
@@ -13,6 +15,13 @@ local BAG_BTNS = {
 
 local function styleBtn(btn)
     if not btn then return end
+    if btn == KeyRingButton then
+        local ratio = btn.cleanUINativeRatio or 1
+        btn:SetSize(BTN_SIZE * ratio, BTN_SIZE)
+    else
+        btn:SetSize(BTN_SIZE, BTN_SIZE)
+    end
+    btn:SetScale(BAR_SCALE)
     local name = btn:GetName()
     local norm = _G[name .. "NormalTexture"]
     if norm then norm:SetAlpha(0) end
@@ -25,10 +34,25 @@ local function styleBtn(btn)
     CleanUI.ApplyBorder(btn)
 end
 
+local function lockKeyringSize()
+    if not KeyRingButton or KeyRingButton.cleanUISizeLock then return end
+    KeyRingButton.cleanUISizeLock = true
+    local w, h = KeyRingButton:GetSize()
+    KeyRingButton.cleanUINativeRatio = (h > 0) and (w / h) or 1
+    KeyRingButton:HookScript("OnSizeChanged", function(self, sw, sh)
+        local target = BTN_SIZE * (self.cleanUINativeRatio or 1)
+        if sw ~= target or sh ~= BTN_SIZE then
+            self:SetSize(target, BTN_SIZE)
+        end
+    end)
+end
+
 local pending = false
 local function arrangeBtns()
     pending = false
     if not HelpMicroButton then return end
+
+    lockKeyringSize()
 
     for i, name in ipairs(BAG_BTNS) do
         local btn = _G[name]
@@ -37,7 +61,7 @@ local function arrangeBtns()
         btn:Show()
         btn:ClearAllPoints()
         if i == 1 then
-            btn:SetPoint("BOTTOMRIGHT", HelpMicroButton, "TOPRIGHT", 0, BACKPACK_GAP)
+            btn:SetPoint("BOTTOMRIGHT", HelpMicroButton, "TOPRIGHT", -2, BACKPACK_GAP)
         else
             btn:SetPoint("RIGHT", _G[BAG_BTNS[i - 1]], "LEFT", BTN_GAP, 0)
         end
