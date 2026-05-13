@@ -17,9 +17,9 @@ local function stripTextures(bar)
     bar:SetStatusBarTexture(CleanUI.BAR_TEXTURE)
     local fill = bar:GetStatusBarTexture()
     for i = 1, bar:GetNumRegions() do
-        local r = select(i, bar:GetRegions())
-        if r and r ~= fill and r:GetObjectType() == "Texture" then
-            r:Hide()
+        local region = select(i, bar:GetRegions())
+        if region and region ~= fill and region:GetObjectType() == "Texture" then
+            region:Hide()
         end
     end
 end
@@ -28,13 +28,13 @@ local function addXPTooltip(bar)
     if not bar or bar.cleanTip then return end
     bar:EnableMouse(true)
     bar:SetScript("OnEnter", function(self)
-        local cur, max = UnitXP("player"), UnitXPMax("player")
-        local rest = GetXPExhaustion() or 0
+        local currentXp, maxXp = UnitXP("player"), UnitXPMax("player")
+        local rested = GetXPExhaustion() or 0
         GameTooltip:SetOwner(self, "ANCHOR_NONE")
         GameTooltip:SetPoint("BOTTOM", self, "TOP", 0, 4)
-        GameTooltip:AddLine(format("XP: %d / %d (%.0f%%)", cur, max, cur / max * 100), 1, 1, 1)
-        if rest > 0 then
-            GameTooltip:AddLine(format("Rested: %d (%.0f%%)", rest, rest / max * 100), 0.2, 0.6, 1)
+        GameTooltip:AddLine(format("XP: %d / %d (%.0f%%)", currentXp, maxXp, currentXp / maxXp * 100), 1, 1, 1)
+        if rested > 0 then
+            GameTooltip:AddLine(format("Rested: %d (%.0f%%)", rested, rested / maxXp * 100), 0.2, 0.6, 1)
         end
         GameTooltip:Show()
     end)
@@ -48,10 +48,7 @@ local function applyStyle()
         stripTextures(MainMenuExpBar)
         addXPTooltip(MainMenuExpBar)
         CleanUI.ApplyBorder(MainMenuExpBar)
-        if ExhaustionTick then
-            ExhaustionTick:Hide()
-            ExhaustionTick.Show = ExhaustionTick.Hide
-        end
+        CleanUI.HideForever(ExhaustionTick)
         if ExhaustionLevelFillBar then ExhaustionLevelFillBar:Hide() end
     end
 
@@ -62,10 +59,6 @@ local function applyStyle()
     end
 end
 
-local frame = CreateFrame("Frame")
-frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-frame:RegisterEvent("PLAYER_LEVEL_UP")
-frame:RegisterEvent("UPDATE_FACTION")
-frame:SetScript("OnEvent", function()
+CleanUI.OnEvent(function()
     C_Timer.After(0, applyStyle)
-end)
+end, "PLAYER_ENTERING_WORLD", "PLAYER_LEVEL_UP", "UPDATE_FACTION")
