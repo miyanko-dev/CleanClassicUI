@@ -1,36 +1,42 @@
-local BAR_W = 160
-local BAR_H = 16
-local FALLBACK_Y = 300
+local BAR_H = 20
+local MARGIN = 48
+
+-- 2*BORDER clears the touching position; MARGIN is the visible gap above the action bar.
+local ANCHOR_Y = MARGIN + CleanUI.BORDER * 2
 local HIDDEN = { "Border", "BorderShield", "Spark", "Flash", "Icon" }
 
-local applying = false
-local pending = false
+local isApplying = false
+local isPending = false
 
 local function applyAnchor()
-    pending = false
-    if applying then return end
-    applying = true
-    local y = (CleanUILayout and CleanUILayout.castBarY) or FALLBACK_Y
+    isPending = false
+    if isApplying then return end
+    local leftBtn = MultiBarBottomLeftButton5
+    local rightBtn = MultiBarBottomLeftButton8
+    if not (leftBtn and rightBtn) then return end
+    isApplying = true
     CastingBarFrame:ClearAllPoints()
-    CastingBarFrame:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, y)
-    applying = false
+    CastingBarFrame:SetPoint("BOTTOMLEFT", leftBtn, "TOPLEFT", 0, ANCHOR_Y)
+    CastingBarFrame:SetPoint("BOTTOMRIGHT", rightBtn, "TOPRIGHT", 0, ANCHOR_Y)
+    CastingBarFrame:SetHeight(BAR_H)
+    isApplying = false
 end
 
 local function scheduleAnchor()
-    if applying or pending then return end
-    pending = true
+    if isApplying or isPending then return end
+    isPending = true
     C_Timer.After(0, applyAnchor)
 end
 
 local function styleCastBar()
-    CastingBarFrame:SetSize(BAR_W, BAR_H)
+    CastingBarFrame:SetHeight(BAR_H)
     CastingBarFrame:SetStatusBarTexture(CleanUI.BAR_TEXTURE)
 
     for _, key in ipairs(HIDDEN) do
-        local r = CastingBarFrame[key]
-        if r then
-            r:Hide()
-            r:SetScript("OnShow", r.Hide)
+        local region = CastingBarFrame[key]
+        if region then
+            region:Hide()
+            region:SetScript("OnShow", region.Hide)
         end
     end
 
@@ -42,25 +48,20 @@ local function styleCastBar()
     CleanUI.ApplyBorder(CastingBarFrame)
 end
 
-local styled = false
-local frame = CreateFrame("Frame")
-frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-frame:RegisterEvent("PET_BAR_UPDATE")
-frame:RegisterEvent("UNIT_PET")
-frame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
-frame:RegisterEvent("PLAYER_REGEN_ENABLED")
-frame:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
-frame:RegisterEvent("UI_SCALE_CHANGED")
-frame:RegisterEvent("DISPLAY_SIZE_CHANGED")
-frame:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
-frame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "player")
-frame:SetScript("OnEvent", function()
-    if not styled then
+local isStyled = false
+
+local events = CleanUI.OnEvent(function()
+    if not isStyled then
         styleCastBar()
-        styled = true
+        isStyled = true
     end
     scheduleAnchor()
-end)
+end,
+"PLAYER_ENTERING_WORLD", "PET_BAR_UPDATE", "UNIT_PET", "UPDATE_SHAPESHIFT_FORM",
+"UPDATE_BONUS_ACTIONBAR", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")
+
+events:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
+events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "player")
 
 hooksecurefunc(CastingBarFrame, "SetPoint", scheduleAnchor)
 
