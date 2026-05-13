@@ -1,8 +1,13 @@
-local BTN_SIZE = CleanUILayout and CleanUILayout.btnSize or 36
-local BAR_SCALE = CleanUILayout and CleanUILayout.bar3Scale or 0.8
-local BTN_GAP = -2
-local BACKPACK_GAP = -8
-local CONTAINER_GAP = 4
+local SPACING = CleanUI.SPACING
+local BORDER = CleanUI.BORDER
+local BTN_SIZE = CleanUI.BTN_SIZE
+
+local BAG_BTN_GAP = 6
+local BAR_SCALE = (CleanUILayout and CleanUILayout.bar3Scale) or 0.8
+local CONTAINER_GAP = SPACING.XS
+
+CleanUILayout = CleanUILayout or {}
+CleanUILayout.bagScale = BAR_SCALE
 
 local BAG_BTNS = {
     "MainMenuBarBackpackButton",
@@ -13,11 +18,24 @@ local BAG_BTNS = {
     "KeyRingButton",
 }
 
+-- Keep the keyring at the shared button size while preserving its native aspect ratio.
+local function lockKeyringSize()
+    if not KeyRingButton or KeyRingButton.cleanSizeLock then return end
+    KeyRingButton.cleanSizeLock = true
+    local w, h = KeyRingButton:GetSize()
+    KeyRingButton.cleanRatio = (h > 0) and (w / h) or 1
+    KeyRingButton:HookScript("OnSizeChanged", function(self, sw, sh)
+        local target = BTN_SIZE * (self.cleanRatio or 1)
+        if sw ~= target or sh ~= BTN_SIZE then
+            self:SetSize(target, BTN_SIZE)
+        end
+    end)
+end
+
 local function styleBtn(btn)
     if not btn then return end
     if btn == KeyRingButton then
-        local ratio = btn.cleanUINativeRatio or 1
-        btn:SetSize(BTN_SIZE * ratio, BTN_SIZE)
+        btn:SetSize(BTN_SIZE * (btn.cleanRatio or 1), BTN_SIZE)
     else
         btn:SetSize(BTN_SIZE, BTN_SIZE)
     end
@@ -34,22 +52,7 @@ local function styleBtn(btn)
     CleanUI.ApplyBorder(btn)
 end
 
-local function lockKeyringSize()
-    if not KeyRingButton or KeyRingButton.cleanUISizeLock then return end
-    KeyRingButton.cleanUISizeLock = true
-    local w, h = KeyRingButton:GetSize()
-    KeyRingButton.cleanUINativeRatio = (h > 0) and (w / h) or 1
-    KeyRingButton:HookScript("OnSizeChanged", function(self, sw, sh)
-        local target = BTN_SIZE * (self.cleanUINativeRatio or 1)
-        if sw ~= target or sh ~= BTN_SIZE then
-            self:SetSize(target, BTN_SIZE)
-        end
-    end)
-end
-
-local pending = false
 local function arrangeBtns()
-    pending = false
     if not HelpMicroButton then return end
 
     lockKeyringSize()
@@ -61,28 +64,22 @@ local function arrangeBtns()
         btn:Show()
         btn:ClearAllPoints()
         if i == 1 then
-            btn:SetPoint("BOTTOMRIGHT", HelpMicroButton, "TOPRIGHT", -2, BACKPACK_GAP)
+            btn:SetPoint("BOTTOMRIGHT", HelpMicroButton, "TOPRIGHT", -BORDER, BORDER)
         else
-            btn:SetPoint("RIGHT", _G[BAG_BTNS[i - 1]], "LEFT", BTN_GAP, 0)
+            btn:SetPoint("RIGHT", _G[BAG_BTNS[i - 1]], "LEFT", -BAG_BTN_GAP, 0)
         end
         styleBtn(btn)
     end
 end
 
-local function schedule()
-    if pending then return end
-    pending = true
-    C_Timer.After(0, arrangeBtns)
-end
-
-hooksecurefunc("MoveMicroButtons", schedule)
+hooksecurefunc("MoveMicroButtons", arrangeBtns)
 
 local function arrangeContainers()
     local visible = {}
     for i = 1, NUM_CONTAINER_FRAMES do
-        local f = _G["ContainerFrame" .. i]
-        if f and f:IsShown() then
-            table.insert(visible, f)
+        local container = _G["ContainerFrame" .. i]
+        if container and container:IsShown() then
+            table.insert(visible, container)
         end
     end
     if #visible == 0 then return end
@@ -101,24 +98,13 @@ end
 
 hooksecurefunc("UpdateContainerFrameAnchors", arrangeContainers)
 
-MainMenuBarBackpackButton:SetScript("OnClick", function()
-    if IsBagOpen(0) then CloseAllBags() else OpenAllBags() end
-end)
-
-local bankFrame = CreateFrame("Frame")
-bankFrame:RegisterEvent("BANKFRAME_OPENED")
-bankFrame:RegisterEvent("BANKFRAME_CLOSED")
-bankFrame:SetScript("OnEvent", function(_, event)
+CleanUI.OnEvent(function(_, event)
     if event == "BANKFRAME_OPENED" then
         for id = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do OpenBag(id) end
     else
         for id = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do CloseBag(id) end
     end
-end)
+end, "BANKFRAME_OPENED", "BANKFRAME_CLOSED")
 
-local frame = CreateFrame("Frame")
-frame:RegisterEvent("PLAYER_LOGIN")
-frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-frame:RegisterEvent("UI_SCALE_CHANGED")
-frame:RegisterEvent("DISPLAY_SIZE_CHANGED")
-frame:SetScript("OnEvent", schedule)
+CleanUI.OnEvent(arrangeBtns,
+    "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")
