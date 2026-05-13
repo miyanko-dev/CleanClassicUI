@@ -1,4 +1,4 @@
-local MARGIN = 24
+local MARGIN = CleanUI.SPACING.LG
 local MAP_SIZE = 196
 local DEFAULT_SIZE = 140
 local SIZE_DELTA = (MAP_SIZE - DEFAULT_SIZE) / 2
@@ -38,35 +38,35 @@ local function refreshAddonIcons()
     end
 end
 
-local function placeOnEdge(frame, angle)
+local function placeOnEdge(icon, angle)
     local rad = math.rad(angle)
-    frame:ClearAllPoints()
-    frame:SetPoint("CENTER", Minimap, "CENTER", math.cos(rad) * EDGE_RADIUS, math.sin(rad) * EDGE_RADIUS)
+    icon:ClearAllPoints()
+    icon:SetPoint("CENTER", Minimap, "CENTER", math.cos(rad) * EDGE_RADIUS, math.sin(rad) * EDGE_RADIUS)
 end
 
-local function dragUpdate(frame, key)
+local function dragUpdate(icon, key)
     local cx, cy = Minimap:GetCenter()
     if not cx then return end
     local mx, my = GetCursorPosition()
     local scale = Minimap:GetEffectiveScale()
     local angle = math.deg(math.atan2(my / scale - cy, mx / scale - cx))
     CleanUIClassicDB.iconAngles[key] = angle
-    placeOnEdge(frame, angle)
+    placeOnEdge(icon, angle)
 end
 
-local function setupEdgeIcon(frame, key, defaultAngle)
-    if not frame then return end
-    frame:SetScale(EDGE_SCALE)
-    frame:SetMovable(true)
-    frame:RegisterForDrag("LeftButton")
-    frame:SetScript("OnDragStart", function(self)
-        self:SetScript("OnUpdate", function(self) dragUpdate(self, key) end)
+local function setupEdgeIcon(icon, key, defaultAngle)
+    if not icon then return end
+    icon:SetScale(EDGE_SCALE)
+    icon:SetMovable(true)
+    icon:RegisterForDrag("LeftButton")
+    icon:SetScript("OnDragStart", function(self)
+        self:SetScript("OnUpdate", function(this) dragUpdate(this, key) end)
     end)
-    frame:SetScript("OnDragStop", function(self)
+    icon:SetScript("OnDragStop", function(self)
         self:SetScript("OnUpdate", nil)
     end)
     local angle = CleanUIClassicDB.iconAngles[key] or defaultAngle
-    placeOnEdge(frame, angle)
+    placeOnEdge(icon, angle)
 end
 
 local function adjustEdgeIcons()
@@ -75,30 +75,40 @@ local function adjustEdgeIcons()
     setupEdgeIcon(MiniMapBattlefieldFrame, "battlefield", 225)
 end
 
-applyLayout()
-
 Minimap:EnableMouseWheel(true)
 Minimap:SetScript("OnMouseWheel", function(_, delta)
     if delta > 0 then Minimap_ZoomIn() else Minimap_ZoomOut() end
 end)
 
-local function refresh()
+local function applyMinimap()
     applyLayout()
     for _, name in ipairs(HIDDEN) do
-        local f = _G[name]
-        if f then f:Hide() end
+        local region = _G[name]
+        if region then region:Hide() end
     end
-    if TimeManagerClockButton then TimeManagerClockButton:Hide() end
+    if TimeManagerClockButton then
+        TimeManagerClockButton:Show()
+        TimeManagerClockButton:SetSize(60, 20)
+        TimeManagerClockButton:ClearAllPoints()
+        TimeManagerClockButton:SetPoint("TOP", Minimap, "BOTTOM", 0, -4)
+        TimeManagerClockButton:SetHitRectInsets(0, 0, 0, 0)
+        for _, region in pairs({ TimeManagerClockButton:GetRegions() }) do
+            if region:IsObjectType("Texture") then
+                region:Hide()
+            end
+        end
+        TimeManagerClockTicker:SetFont(TimeManagerClockTicker:GetFont(), 14, "OUTLINE")
+        TimeManagerClockTicker:ClearAllPoints()
+        TimeManagerClockTicker:SetPoint("CENTER", TimeManagerClockButton, "CENTER", 0, 0)
+    end
     CleanUIClassicDB = CleanUIClassicDB or {}
     CleanUIClassicDB.iconAngles = CleanUIClassicDB.iconAngles or {}
     adjustEdgeIcons()
     refreshAddonIcons()
 end
 
-local frame = CreateFrame("Frame")
-frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-frame:RegisterEvent("UI_SCALE_CHANGED")
-frame:RegisterEvent("DISPLAY_SIZE_CHANGED")
-frame:SetScript("OnEvent", function()
-    C_Timer.After(0, refresh)
-end)
+applyMinimap()
+
+CleanUI.OnEvent(function()
+    C_Timer.After(0, applyMinimap)
+end, "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")
