@@ -1,12 +1,5 @@
-local EDGE_FILE = "Interface/Tooltips/UI-Tooltip-Border"
-local BG_FILE = "Interface/Tooltips/UI-Tooltip-Background"
-local EDITBOX_GAP = 8
-
-local function kill(el)
-    if not el then return end
-    el:Hide()
-    el:SetScript("OnShow", el.Hide)
-end
+local SPACING = CleanUI.SPACING
+local EDITBOX_GAP = SPACING.SM
 
 local function styleEditBox(chatFrame, editBox)
     if not editBox or editBox.cleanBg then return end
@@ -23,13 +16,13 @@ local function styleEditBox(chatFrame, editBox)
     local bg = CreateFrame("Frame", nil, editBox, "BackdropTemplate")
     bg:SetAllPoints(editBox)
     bg:SetBackdrop({
-        bgFile = BG_FILE,
-        edgeFile = EDGE_FILE,
+        bgFile = CleanUI.BG_FILE,
+        edgeFile = CleanUI.EDGE_FILE,
         edgeSize = 12,
         insets = { left = 2, right = 2, top = 2, bottom = 2 },
     })
     bg:SetBackdropColor(0, 0, 0, 1)
-    bg:SetBackdropBorderColor(0.5, 0.5, 0.5, 1)
+    bg:SetBackdropBorderColor(unpack(CleanUI.COLOR.GREY))
     bg:SetFrameLevel(editBox:GetFrameLevel() - 1)
     bg:Hide()
     editBox.cleanBg = bg
@@ -45,14 +38,14 @@ local function styleEditBox(chatFrame, editBox)
 end
 
 local function applyStyle()
-    kill(ChatFrameMenuButton)
-    kill(ChatFrameChannelButton)
+    CleanUI.HideForever(ChatFrameMenuButton)
+    CleanUI.HideForever(ChatFrameChannelButton)
 
     for i = 1, NUM_CHAT_WINDOWS do
-        local cf = _G["ChatFrame" .. i]
-        if cf then
-            kill(_G[cf:GetName() .. "ButtonFrame"])
-            styleEditBox(cf, _G[cf:GetName() .. "EditBox"])
+        local chatFrame = _G["ChatFrame" .. i]
+        if chatFrame then
+            CleanUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
+            styleEditBox(chatFrame, _G[chatFrame:GetName() .. "EditBox"])
         end
     end
 end
@@ -72,28 +65,25 @@ local function enableClassColors()
     end
 end
 
-local frame = CreateFrame("Frame")
-frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-frame:RegisterEvent("UPDATE_FLOATING_CHAT_WINDOWS")
-frame:SetScript("OnEvent", function()
+CleanUI.OnEvent(function()
     applyStyle()
     enableClassColors()
-end)
+end, "PLAYER_ENTERING_WORLD", "UPDATE_FLOATING_CHAT_WINDOWS")
 
 hooksecurefunc("FCF_OpenTemporaryWindow", function()
-    local cf = FCF_GetCurrentChatFrame()
-    if cf then
-        kill(_G[cf:GetName() .. "ButtonFrame"])
-        styleEditBox(cf, _G[cf:GetName() .. "EditBox"])
+    local chatFrame = FCF_GetCurrentChatFrame()
+    if chatFrame then
+        CleanUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
+        styleEditBox(chatFrame, _G[chatFrame:GetName() .. "EditBox"])
     end
 end)
 
 hooksecurefunc("ChatEdit_UpdateHeader", function(editBox)
     if editBox:GetAttribute("chatType") ~= "WHISPER" then return end
-    local info = ChatTypeInfo["WHISPER_INFORM"]
-    if not info then return end
-    editBox:SetTextColor(info.r, info.g, info.b)
+    local whisperColor = ChatTypeInfo["WHISPER_INFORM"]
+    if not whisperColor then return end
+    editBox:SetTextColor(whisperColor.r, whisperColor.g, whisperColor.b)
     if editBox.header then
-        editBox.header:SetTextColor(info.r, info.g, info.b)
+        editBox.header:SetTextColor(whisperColor.r, whisperColor.g, whisperColor.b)
     end
 end)
