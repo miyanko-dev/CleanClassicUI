@@ -1,10 +1,4 @@
-local RED = { 0.980, 0.153, 0.184 }
-local ORANGE = { 0.984, 0.506, 0.157 }
-local YELLOW = { 0.984, 0.820, 0.204 }
-local GREEN = { 0.188, 0.996, 0.192 }
-local GREY = { 0.5, 0.5, 0.5 }
-
-local EDGE_FILE = "Interface/Tooltips/UI-Tooltip-Border"
+local C = CleanUI.COLOR
 
 local function colorBar(plate, unit)
     local bar = plate.UnitFrame and plate.UnitFrame.healthBar
@@ -12,28 +6,29 @@ local function colorBar(plate, unit)
 
     local threat = UnitThreatSituation("player", unit)
     if threat and threat >= 2 then
-        bar:SetStatusBarColor(unpack(ORANGE))
+        bar:SetStatusBarColor(unpack(C.ORANGE))
     elseif UnitIsTapDenied(unit) then
-        bar:SetStatusBarColor(unpack(GREY))
+        bar:SetStatusBarColor(unpack(C.GREY))
     elseif UnitCanAttack("player", unit) then
         local reaction = UnitReaction(unit, "player")
         if reaction and reaction <= 3 then
-            bar:SetStatusBarColor(unpack(RED))
+            bar:SetStatusBarColor(unpack(C.RED))
         else
-            bar:SetStatusBarColor(unpack(YELLOW))
+            bar:SetStatusBarColor(unpack(C.YELLOW))
         end
     else
-        bar:SetStatusBarColor(unpack(GREEN))
+        bar:SetStatusBarColor(unpack(C.GREEN))
     end
 end
 
+-- Nameplate border needs HIGH strata, so ApplyBorder can't be reused (inherits parent strata).
 local function addBorder(bar, plate)
     if bar.cleanBorder then return end
     local border = CreateFrame("Frame", nil, plate, "BackdropTemplate")
-    border:SetPoint("TOPLEFT", bar, "TOPLEFT", -3, 3)
-    border:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", 3, -3)
-    border:SetBackdrop({ edgeFile = EDGE_FILE, edgeSize = 12 })
-    border:SetBackdropBorderColor(0.5, 0.5, 0.5, 1)
+    border:SetPoint("TOPLEFT", bar, "TOPLEFT", -CleanUI.BORDER, CleanUI.BORDER)
+    border:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", CleanUI.BORDER, -CleanUI.BORDER)
+    border:SetBackdrop({ edgeFile = CleanUI.EDGE_FILE, edgeSize = 12 })
+    border:SetBackdropBorderColor(unpack(C.GREY))
     border:SetFrameStrata("HIGH")
     bar.cleanBorder = border
 end
@@ -69,11 +64,7 @@ local function stylePlate(plate, unit)
     colorBar(plate, unit)
 end
 
-local frame = CreateFrame("Frame")
-frame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
-frame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
-frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
-frame:SetScript("OnEvent", function(_, event, unit)
+CleanUI.OnEvent(function(_, event, unit)
     local plate = C_NamePlate.GetNamePlateForUnit(unit)
     if not plate then return end
     if event == "NAME_PLATE_UNIT_ADDED" then
@@ -81,15 +72,13 @@ frame:SetScript("OnEvent", function(_, event, unit)
     else
         colorBar(plate, unit)
     end
-end)
+end, "NAME_PLATE_UNIT_ADDED", "UNIT_THREAT_SITUATION_UPDATE", "UNIT_THREAT_LIST_UPDATE")
 
-local cfgFrame = CreateFrame("Frame")
-cfgFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-cfgFrame:SetScript("OnEvent", function()
+CleanUI.OnEvent(function()
     SetCVar("nameplateMinScale", 0.8)
     SetCVar("nameplateSelectedScale", 1)
     SetCVar("nameplateMaxScale", 1)
     SetCVar("nameplateOverlapH", 1)
     SetCVar("nameplateOverlapV", 1)
     SetCVar("nameplateMaxDistance", 40)
-end)
+end, "PLAYER_ENTERING_WORLD")
