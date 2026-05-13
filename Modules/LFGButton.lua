@@ -1,9 +1,9 @@
-local BTN_SIZE = 36
+local BTN_SIZE = CleanUI.BTN_SIZE
 local ICON_SIZE = 40
 local OFFSET_X = -4
 local OFFSET_Y = -12
 
-local function place()
+local function placeButton()
     if LFGMinimapFrameBorder then LFGMinimapFrameBorder:Hide() end
     if not LFGMinimapFrame then return end
 
@@ -18,10 +18,6 @@ local function place()
     end
 end
 
-local frame = CreateFrame("Frame")
-frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-frame:RegisterEvent("UI_SCALE_CHANGED")
-frame:RegisterEvent("DISPLAY_SIZE_CHANGED")
-frame:SetScript("OnEvent", function()
-    C_Timer.After(0, place)
-end)
+CleanUI.OnEvent(function()
+    C_Timer.After(0, placeButton)
+end, "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")
