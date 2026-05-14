@@ -58,6 +58,21 @@ local function centerRow(prefix, count, gap, scale, screenY)
     end
 end
 
+-- True while the cursor holds an action or the spellbook is open.
+local gridShown = false
+
+-- Hide cleanBorder on empty slots unless the grid is being shown for drag/spellbook.
+local function syncBorder(btn)
+    if not btn or not btn.cleanBorder or not btn.action then return end
+    btn.cleanBorder:SetShown(HasAction(btn.action) or gridShown)
+end
+
+local function syncAllBorders()
+    for _, prefix in ipairs(BAR_PREFIXES) do
+        for i = 1, 12 do syncBorder(_G[prefix .. i]) end
+    end
+end
+
 local function styleBtn(btn)
     if not btn then return end
     local name = btn:GetName()
@@ -68,7 +83,10 @@ local function styleBtn(btn)
     local icon = _G[name .. "Icon"]
     if icon then icon:SetTexCoord(0.1, 0.9, 0.1, 0.9) end
     CleanUI.ApplyBorder(btn)
+    syncBorder(btn)
 end
+
+hooksecurefunc("ActionButton_Update", syncBorder)
 
 local function enableBars()
     if GetCVar("bottomLeftActionBar") ~= "1" then SetCVar("bottomLeftActionBar", "1") end
@@ -227,6 +245,24 @@ hooksecurefunc("ActionButton_OnUpdate", function(self)
     self.icon:SetAlpha((not usable or inRange == false) and 0.9 or 1.0)
 end)
 
+-- Hide the border on empty slots unless the grid is being shown (drag, spellbook, CVar).
+local function syncBorder(btn)
+    if not btn or not btn.cleanBorder or not btn.action then return end
+    local hasAction = HasAction(btn.action)
+    local showGrid = btn:GetAttribute("showgrid") or 0
+    btn.cleanBorder:SetShown(hasAction or showGrid > 0)
+end
+
+hooksecurefunc("ActionButton_ShowGrid", syncBorder)
+hooksecurefunc("ActionButton_HideGrid", syncBorder)
+hooksecurefunc("ActionButton_Update", syncBorder)
+
+local function syncAllBorders()
+    for _, prefix in ipairs(BAR_PREFIXES) do
+        for i = 1, 12 do syncBorder(_G[prefix .. i]) end
+    end
+end
+
 local isLayoutDone = false
 
 local function runLayout()
@@ -235,8 +271,10 @@ local function runLayout()
     petStanceBase = placeBars()
     hideChrome()
     styleAllButtons()
+    syncAllBorders()
     placePet()
     placeStance()
+    syncAllBorders()
     isLayoutDone = true
     for _, cb in ipairs(CleanUILayout.afterLayout) do cb() end
 end
@@ -264,7 +302,14 @@ CleanUI.OnEvent(function(self, event)
         end)
     elseif event == "UPDATE_SHAPESHIFT_FORM" then
         C_Timer.After(0, placeStance)
+    elseif event == "ACTIONBAR_SHOWGRID" then
+        gridShown = true
+        syncAllBorders()
+    elseif event == "ACTIONBAR_HIDEGRID" then
+        gridShown = false
+        syncAllBorders()
     end
 end,
 "PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED", "UI_SCALE_CHANGED",
-"DISPLAY_SIZE_CHANGED", "PET_BAR_UPDATE", "UNIT_PET", "UPDATE_SHAPESHIFT_FORM")
+"DISPLAY_SIZE_CHANGED", "PET_BAR_UPDATE", "UNIT_PET", "UPDATE_SHAPESHIFT_FORM",
+"ACTIONBAR_SHOWGRID", "ACTIONBAR_HIDEGRID")
