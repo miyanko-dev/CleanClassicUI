@@ -12,6 +12,7 @@ Modules/ActionBars.lua
 Modules/StatusBars.lua
 Modules/CastBar.lua
 Modules/Bags.lua
+Modules/Items.lua
 Modules/LFGButton.lua
 Modules/Minimap.lua
 Modules/NamePlates.lua
