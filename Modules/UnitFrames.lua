@@ -1,10 +1,10 @@
 local function placeFrames()
     if InCombatLockdown() then
-        print("|cff33ff99CleanUI:|r unit frames can't be moved during combat.")
+        print("|cffffff00[CleanUI]:|r Unit frames can't be moved during combat.")
         return
     end
     if not (PlayerFrame and TargetFrame and CastingBarFrame and ActionButton1 and ActionButton12) then
-        print("|cff33ff99CleanUI:|r required frames not ready, try again after login.")
+        print("|cffffff00[CleanUI]:|r Required frames not ready, try again after login.")
         return
     end
 
@@ -17,7 +17,7 @@ local function placeFrames()
     local tFrameBottom = TargetFrame:GetBottom()
     if not (castBottom and btn1Left and btn12Right
         and pPortraitBottom and tPortraitBottom and pFrameBottom and tFrameBottom) then
-        print("|cff33ff99CleanUI:|r anchor frames not measurable yet.")
+        print("|cffffff00[CleanUI]:|r Anchor frames not measurable yet.")
         return
     end
 
