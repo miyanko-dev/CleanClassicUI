@@ -87,14 +87,19 @@ local function styleBtn(btn)
 end
 
 hooksecurefunc("ActionButton_Update", syncBorder)
+hooksecurefunc("ActionButton_ShowGrid", syncBorder)
+hooksecurefunc("ActionButton_HideGrid", syncBorder)
 
+-- Force action bars 2 and 3 on; bars 4 and 5 remain user-controlled.
 local function enableBars()
     if GetCVar("bottomLeftActionBar") ~= "1" then SetCVar("bottomLeftActionBar", "1") end
     if GetCVar("bottomRightActionBar") ~= "1" then SetCVar("bottomRightActionBar", "1") end
 end
 
--- Position XP/rep and action bars 1-3 bottom-up using border-aware visible gaps.
--- Returns the screen-Y of action bar 2's visible top, used as the pet/stance base.
+-- Captured from placeBars; used as the pet/stance base (AB2 visible top in screen px).
+local petStanceBase = nil
+
+-- Position XP/rep and action bars 1-5. Returns the screen-Y of AB2's visible top.
 local function placeBars()
     local xpRepFrameBottom = MARGIN + BORDER
     local stackTop = xpRepFrameBottom
@@ -150,12 +155,15 @@ local function placeBars()
     MultiBarBottomLeft:SetPoint("BOTTOMLEFT", ActionButton1, "TOPLEFT", 0, ab2AnchorY)
     local ab2VisibleTop = ab1VisibleTop + TIGHT_GAP + BTN_SIZE + 2 * BORDER
 
-    if VerticalMultiBarsContainer then
-        VerticalMultiBarsContainer:ClearAllPoints()
-        VerticalMultiBarsContainer:SetPoint("RIGHT", UIParent, "RIGHT", -MARGIN, 0)
-    end
-
     return ab2VisibleTop
+end
+
+-- MultiBarRight (bar 4) and MultiBarLeft (bar 5) live inside VerticalMultiBarsContainer.
+-- Reposition the container; Blizzard handles the bars inside it.
+local function placeVerticalBars()
+    if InCombatLockdown() or not VerticalMultiBarsContainer then return end
+    VerticalMultiBarsContainer:ClearAllPoints()
+    VerticalMultiBarsContainer:SetPoint("RIGHT", UIParent, "RIGHT", -(MARGIN + BORDER), 0)
 end
 
 local function hideChrome()
@@ -205,9 +213,6 @@ local function styleAllButtons()
     end
 end
 
--- Captured from placeBars; used as the pet/stance base (AB2 visible top in screen px).
-local petStanceBase = nil
-
 local function isPetVisible()
     return PetActionBarFrame and PetActionBarFrame:IsShown()
         and PetActionButton1 and PetActionButton1:IsShown()
@@ -245,63 +250,31 @@ hooksecurefunc("ActionButton_OnUpdate", function(self)
     self.icon:SetAlpha((not usable or inRange == false) and 0.9 or 1.0)
 end)
 
--- Hide the border on empty slots unless the grid is being shown (drag, spellbook, CVar).
-local function syncBorder(btn)
-    if not btn or not btn.cleanBorder or not btn.action then return end
-    local hasAction = HasAction(btn.action)
-    local showGrid = btn:GetAttribute("showgrid") or 0
-    btn.cleanBorder:SetShown(hasAction or showGrid > 0)
-end
-
-hooksecurefunc("ActionButton_ShowGrid", syncBorder)
-hooksecurefunc("ActionButton_HideGrid", syncBorder)
-hooksecurefunc("ActionButton_Update", syncBorder)
-
-local function syncAllBorders()
-    for _, prefix in ipairs(BAR_PREFIXES) do
-        for i = 1, 12 do syncBorder(_G[prefix .. i]) end
-    end
-end
-
-local isLayoutDone = false
-
 local function runLayout()
-    if isLayoutDone or InCombatLockdown() then return end
+    if InCombatLockdown() then return end
     enableBars()
     petStanceBase = placeBars()
+    placeVerticalBars()
     hideChrome()
     styleAllButtons()
     syncAllBorders()
-    placePet()
-    placeStance()
-    syncAllBorders()
-    isLayoutDone = true
     for _, cb in ipairs(CleanUILayout.afterLayout) do cb() end
 end
 
-local function relayout()
-    isLayoutDone = false
-    C_Timer.After(0, runLayout)
-end
+-- Blizzard runs MultiActionBar_Update whenever bars 4 or 5 are toggled on/off.
+if MultiActionBar_Update then hooksecurefunc("MultiActionBar_Update", placeVerticalBars) end
 
 CleanUILayout.scheduleLayout = runLayout
-CleanUILayout.relayout = relayout
+CleanUILayout.relayout = runLayout
 
 CleanUI.OnEvent(function(self, event)
     if event == "PLAYER_ENTERING_WORLD" then
-        self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-        C_Timer.After(0, runLayout)
-    elseif event == "PLAYER_REGEN_ENABLED" then
-        if not isLayoutDone then C_Timer.After(0, runLayout) end
-    elseif event == "UI_SCALE_CHANGED" or event == "DISPLAY_SIZE_CHANGED" then
-        relayout()
+        runLayout()
     elseif event == "PET_BAR_UPDATE" or event == "UNIT_PET" then
-        C_Timer.After(0, function()
-            placePet()
-            placeStance()
-        end)
+        placePet()
+        placeStance()
     elseif event == "UPDATE_SHAPESHIFT_FORM" then
-        C_Timer.After(0, placeStance)
+        placeStance()
     elseif event == "ACTIONBAR_SHOWGRID" then
         gridShown = true
         syncAllBorders()
@@ -310,6 +283,5 @@ CleanUI.OnEvent(function(self, event)
         syncAllBorders()
     end
 end,
-"PLAYER_ENTERING_WORLD", "PLAYER_REGEN_ENABLED", "UI_SCALE_CHANGED",
-"DISPLAY_SIZE_CHANGED", "PET_BAR_UPDATE", "UNIT_PET", "UPDATE_SHAPESHIFT_FORM",
+"PLAYER_ENTERING_WORLD", "PET_BAR_UPDATE", "UNIT_PET", "UPDATE_SHAPESHIFT_FORM",
 "ACTIONBAR_SHOWGRID", "ACTIONBAR_HIDEGRID")
