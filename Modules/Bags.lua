@@ -74,24 +74,24 @@ end
 
 hooksecurefunc("MoveMicroButtons", arrangeBtns)
 
+-- Fully re-anchor every bag in Blizzard's open-order chain. Blizzard anchors
+-- each new column to UIParent's right edge, so we cannot let it set columns.
+-- Pair bags two-per-column: even index sits on top of its predecessor, odd
+-- index starts a new column to the left of two positions back.
 local function arrangeContainers()
-    local visible = {}
-    for i = 1, NUM_CONTAINER_FRAMES do
-        local container = _G["ContainerFrame" .. i]
-        if container and container:IsShown() then
-            table.insert(visible, container)
-        end
-    end
-    if #visible == 0 then return end
+    local bags = ContainerFrame1 and ContainerFrame1.bags
+    if not bags or not bags[1] then return end
 
-    visible[1]:ClearAllPoints()
-    visible[1]:SetPoint("BOTTOMRIGHT", MainMenuBarBackpackButton, "TOPRIGHT", CONTAINER_GAP, CONTAINER_GAP)
-    for i = 2, #visible do
-        visible[i]:ClearAllPoints()
-        if i % 2 == 0 then
-            visible[i]:SetPoint("BOTTOMRIGHT", visible[i - 1], "TOPRIGHT", 0, CONTAINER_GAP)
+    for i, name in ipairs(bags) do
+        local bag = _G[name]
+        if not bag then return end
+        bag:ClearAllPoints()
+        if i == 1 then
+            bag:SetPoint("BOTTOMRIGHT", MainMenuBarBackpackButton, "TOPRIGHT", CONTAINER_GAP, CONTAINER_GAP)
+        elseif i % 2 == 0 then
+            bag:SetPoint("BOTTOMRIGHT", _G[bags[i - 1]], "TOPRIGHT", 0, CONTAINER_GAP)
         else
-            visible[i]:SetPoint("BOTTOMRIGHT", visible[i - 2], "BOTTOMLEFT", 0, CONTAINER_GAP)
+            bag:SetPoint("BOTTOMRIGHT", _G[bags[i - 2]], "BOTTOMLEFT", 0, CONTAINER_GAP)
         end
     end
 end
