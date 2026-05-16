@@ -1,21 +1,13 @@
 local SPACING = CleanUI.SPACING
-local TOOLTIP_BORDER = CleanUI.BORDER
+local BORDER = CleanUI.BORDER
 
--- Visible 8px gap between tooltip and the bag button, accounting for both border insets.
-local function anchorOffset()
-    local bagScale = (CleanUILayout and CleanUILayout.bagScale) or 1
-    local bagBorder = CleanUI.BORDER * bagScale
-    local x = bagBorder - TOOLTIP_BORDER
-    local y = SPACING.SM + bagBorder + TOOLTIP_BORDER
-    return x, y
-end
-
+-- Anchor tooltip BOTTOMRIGHT so its border sits SPACING.XS inside Container 1's
+-- border on both the right and bottom edges, giving a uniform corner margin.
 hooksecurefunc("GameTooltip_SetDefaultAnchor", function(tooltip)
     if tooltip:GetAnchorType() == "ANCHOR_CURSOR" then return end
     if not MainMenuBarBackpackButton then return end
-    local x, y = anchorOffset()
     tooltip:ClearAllPoints()
-    tooltip:SetPoint("BOTTOMRIGHT", MainMenuBarBackpackButton, "TOPRIGHT", x, y)
+    tooltip:SetPoint("BOTTOMRIGHT", MainMenuBarBackpackButton, "TOPRIGHT", 0, SPACING.SM)
 end)
 
 CleanUI.HideForever(GameTooltipStatusBar)
