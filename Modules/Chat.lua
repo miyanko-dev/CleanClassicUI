@@ -87,3 +87,15 @@ hooksecurefunc("ChatEdit_UpdateHeader", function(editBox)
         editBox.header:SetTextColor(whisperColor.r, whisperColor.g, whisperColor.b)
     end
 end)
+
+local _origHyperlinkShow = ChatFrame_OnHyperlinkShow
+ChatFrame_OnHyperlinkShow = function(self, link, text, button)
+    if button == "LeftButton" and IsControlKeyDown() then
+        local name = link:match("^player:([^:]+)")
+        if name and name ~= "" then
+            FCF_OpenTemporaryWindow("WHISPER", name, self, true)
+            return
+        end
+    end
+    return _origHyperlinkShow(self, link, text, button)
+end
