@@ -64,7 +64,7 @@ local function arrangeBtns()
         btn:Show()
         btn:ClearAllPoints()
         if i == 1 then
-            btn:SetPoint("BOTTOMRIGHT", HelpMicroButton, "TOPRIGHT", -BORDER, BORDER)
+            btn:SetPoint("BOTTOMRIGHT", HelpMicroButton, "TOPRIGHT", 0, 0)
         else
             btn:SetPoint("RIGHT", _G[BAG_BTNS[i - 1]], "LEFT", -BAG_BTN_GAP, 0)
         end
