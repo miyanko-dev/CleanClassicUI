@@ -18,6 +18,11 @@ local BAG_BTNS = {
     "KeyRingButton",
 }
 
+-- Scale the row by scaling this container; individual buttons inherit through reparenting.
+local bagContainer = CreateFrame("Frame", "CleanUIBagContainer", UIParent)
+bagContainer:SetSize(BTN_SIZE, BTN_SIZE)
+bagContainer:SetScale(BAR_SCALE)
+
 -- Keep the keyring at the shared button size while preserving its native aspect ratio.
 local function lockKeyringSize()
     if not KeyRingButton or KeyRingButton.cleanSizeLock then return end
@@ -39,7 +44,6 @@ local function styleBtn(btn)
     else
         btn:SetSize(BTN_SIZE, BTN_SIZE)
     end
-    btn:SetScale(BAR_SCALE)
     local name = btn:GetName()
     local norm = _G[name .. "NormalTexture"]
     if norm then norm:SetAlpha(0) end
@@ -57,14 +61,17 @@ local function arrangeBtns()
 
     lockKeyringSize()
 
+    bagContainer:ClearAllPoints()
+    bagContainer:SetPoint("BOTTOMRIGHT", HelpMicroButton, "TOPRIGHT", 0, 0)
+
     for i, name in ipairs(BAG_BTNS) do
         local btn = _G[name]
         if not btn then return end
-        btn:SetParent(UIParent)
+        btn:SetParent(bagContainer)
         btn:Show()
         btn:ClearAllPoints()
         if i == 1 then
-            btn:SetPoint("BOTTOMRIGHT", HelpMicroButton, "TOPRIGHT", 0, 0)
+            btn:SetPoint("BOTTOMRIGHT", bagContainer, "BOTTOMRIGHT", 0, 0)
         else
             btn:SetPoint("RIGHT", _G[BAG_BTNS[i - 1]], "LEFT", -BAG_BTN_GAP, 0)
         end
