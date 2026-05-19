@@ -33,8 +33,20 @@ local function styleEditBox(chatFrame, editBox)
         header:SetPoint("LEFT", editBox, "LEFT", 8, 0)
     end
 
-    editBox:HookScript("OnEditFocusGained", function(self) self.cleanBg:Show() end)
-    editBox:HookScript("OnEditFocusLost", function(self) self.cleanBg:Hide() end)
+    -- $parentHeaderSuffix (the ": " after the chat type) is in the editbox's
+    -- ARTWORK layer and leaks at dimmed alpha when Blizzard fades the box out
+    -- on deactivate; toggle it with focus instead.
+    local headerSuffix = _G[editBox:GetName() .. "HeaderSuffix"]
+    if headerSuffix then headerSuffix:Hide() end
+
+    editBox:HookScript("OnEditFocusGained", function(self)
+        self.cleanBg:Show()
+        if headerSuffix then headerSuffix:Show() end
+    end)
+    editBox:HookScript("OnEditFocusLost", function(self)
+        self.cleanBg:Hide()
+        if headerSuffix then headerSuffix:Hide() end
+    end)
 end
 
 local function applyStyle()
