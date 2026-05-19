@@ -63,6 +63,8 @@ end,
 events:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
 events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "player")
 
+CastingBarFrame.ignoreFramePositionManager = true
+
 hooksecurefunc(CastingBarFrame, "SetPoint", scheduleAnchor)
 
 CleanUILayout = CleanUILayout or {}
