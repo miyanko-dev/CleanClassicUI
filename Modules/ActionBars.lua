@@ -16,10 +16,17 @@ local BAR3_BTN_GAP = 6
 local BAR3_BTN_COUNT = 12
 
 local PET_SCALE = 0.8
-local PET_COUNT = 10
-local PET_GAP = 6
 
-local STANCE_GAP = 6
+-- Native PetActionBarFrame: 509x43, PetActionButton1 inset (36,2), 10 buttons of 30px with gaps mostly 8 (one 7), row width 371.
+local PET_BAR_WIDTH = 509
+local PET_ROW_WIDTH = 371
+local PET_BTN1_INSET_X = 36
+local PET_CENTER_SHIFT = (PET_BAR_WIDTH - PET_ROW_WIDTH) / 2 - PET_BTN1_INSET_X
+
+-- Native StanceBarFrame: 29x32 (buttons extend beyond), StanceButton1 inset (11,3), 30px buttons with gap 7.
+local STANCE_BTN_SIZE = 30
+local STANCE_BTN_GAP = 7
+local STANCE_BTN1_INSET_X = 11
 
 local BAR_PREFIXES = {
     "ActionButton",
@@ -38,24 +45,6 @@ CleanUILayout.afterLayout = CleanUILayout.afterLayout or {}
 local function xpRepWidth()
     local outer = (BAR3_BTN_COUNT * BAR3_BTN_W + (BAR3_BTN_COUNT - 1) * BAR3_BTN_GAP + 2 * BORDER) * BAR3_SCALE
     return outer - 2 * BORDER
-end
-
--- Center a row of equal-width buttons; screenY is the row frame bottom in UIParent pixels.
-local function centerRow(prefix, count, gap, scale, screenY)
-    local first = _G[prefix .. "1"]
-    if not first then return end
-    local w = first:GetWidth()
-    local startX = -(count * w + (count - 1) * gap - w) / 2
-    local s = scale or 1
-    first:ClearAllPoints()
-    first:SetPoint("BOTTOM", UIParent, "BOTTOM", startX, screenY / s)
-    for i = 2, count do
-        local cur, prev = _G[prefix .. i], _G[prefix .. (i - 1)]
-        if cur and prev then
-            cur:ClearAllPoints()
-            cur:SetPoint("LEFT", prev, "RIGHT", gap, 0)
-        end
-    end
 end
 
 -- True while the cursor holds an action or the spellbook is open.
@@ -199,7 +188,7 @@ local function styleAllButtons()
             styleBtn(btn)
         end
     end
-    for i = 1, PET_COUNT do
+    for i = 1, NUM_PET_ACTION_SLOTS or 10 do
         local btn = _G["PetActionButton" .. i]
         if btn then
             for _, suffix in ipairs({ "NormalTexture", "NormalTexture2" }) do
@@ -213,31 +202,55 @@ local function styleAllButtons()
     end
 end
 
+-- Mirrors PetActionBar_OnEvent's show/hide test: PetHasActionBar +
+-- UnitIsVisible("pet"). Reads the underlying state so stance repositions
+-- immediately on mount, not 0.09s later when the slide-out completes.
 local function isPetVisible()
-    return PetActionBarFrame and PetActionBarFrame:IsShown()
-        and PetActionButton1 and PetActionButton1:IsShown()
+    if not (PetActionBarFrame and PetActionButton1) then return false end
+    if PetHasActionBar and not PetHasActionBar() then return false end
+    if UnitIsVisible and not UnitIsVisible("pet") then return false end
+    return true
 end
 
 local function placePet()
     if InCombatLockdown() or not petStanceBase then return end
-    if not isPetVisible() then return end
+    if not (PetActionBarFrame and PetActionButton1) then return end
+
+    PetActionBarFrame.ignoreFramePositionManager = true
+    if not PetActionBarFrame:IsUserPlaced() then
+        PetActionBarFrame:SetMovable(true)
+        PetActionBarFrame:SetUserPlaced(true)
+    end
     PetActionBarFrame:SetScale(PET_SCALE)
+
     local petBorder = BORDER * PET_SCALE
     local petFrameBottomScreen = petStanceBase + TIGHT_GAP + petBorder
-    centerRow("PetActionButton", PET_COUNT, PET_GAP, PET_SCALE, petFrameBottomScreen)
+    PetActionBarFrame:ClearAllPoints()
+    PetActionBarFrame:SetPoint("BOTTOM", UIParent, "BOTTOM",
+        PET_CENTER_SHIFT, petFrameBottomScreen / PET_SCALE)
 end
 
 local function placeStance()
     if InCombatLockdown() or not petStanceBase then return end
-    if not (StanceBarFrame and StanceBarFrame:IsShown() and GetNumShapeshiftForms() > 0) then return end
+    local numForms = GetNumShapeshiftForms()
+    if not (StanceBarFrame and StanceBarFrame:IsShown() and numForms > 0) then return end
     local base = petStanceBase
     if isPetVisible() then
         local petBorder = BORDER * PET_SCALE
-        local petButtonH = (PetActionButton1 and PetActionButton1:GetHeight() or BTN_SIZE) * PET_SCALE
+        local petButtonH = PetActionButton1:GetHeight() * PET_SCALE
         base = base + TIGHT_GAP + petBorder + petButtonH + petBorder
     end
     local stanceFrameBottomScreen = base + TIGHT_GAP + BORDER
-    centerRow("StanceButton", GetNumShapeshiftForms(), STANCE_GAP, 1, stanceFrameBottomScreen)
+
+    StanceBarFrame.ignoreFramePositionManager = true
+    if not StanceBarFrame:IsUserPlaced() then
+        StanceBarFrame:SetMovable(true)
+        StanceBarFrame:SetUserPlaced(true)
+    end
+    local rowWidth = STANCE_BTN_SIZE * numForms + STANCE_BTN_GAP * (numForms - 1)
+    StanceBarFrame:ClearAllPoints()
+    StanceBarFrame:SetPoint("BOTTOMLEFT", UIParent, "BOTTOM",
+        -(STANCE_BTN1_INSET_X + rowWidth / 2), stanceFrameBottomScreen)
     StanceBarLeft:SetAlpha(0)
     StanceBarMiddle:SetAlpha(0)
     StanceBarRight:SetAlpha(0)
@@ -250,6 +263,14 @@ hooksecurefunc("ActionButton_OnUpdate", function(self)
     self.icon:SetAlpha((not usable or inRange == false) and 0.9 or 1.0)
 end)
 
+-- Replace the pet bar's slide-time repositioner with a no-op. One-time method
+-- swap, zero per-frame cost — Blizzard's slide state machine still drives
+-- mode/Show/Hide and the OnUpdate range timer keeps working, but the per-tick
+-- SetPoint to MainMenuBar that fights our anchor is gone.
+if PetActionBarFrame and PetActionBarFrame.UpdatePositionValues then
+    PetActionBarFrame.UpdatePositionValues = function() end
+end
+
 local function runLayout()
     if InCombatLockdown() then return end
     enableBars()
@@ -258,6 +279,8 @@ local function runLayout()
     hideChrome()
     styleAllButtons()
     syncAllBorders()
+    placePet()
+    placeStance()
     for _, cb in ipairs(CleanUILayout.afterLayout) do cb() end
 end
 
@@ -267,13 +290,24 @@ if MultiActionBar_Update then hooksecurefunc("MultiActionBar_Update", placeVerti
 CleanUILayout.scheduleLayout = runLayout
 CleanUILayout.relayout = runLayout
 
-CleanUI.OnEvent(function(self, event)
+-- Events from Gethe/wow-ui-source classic_era:
+--   PetActionBar.lua/PetActionBar_OnEvent drives Show/HidePetActionBar on
+--     PET_BAR_UPDATE, UNIT_PET (arg1=="player"), PET_UI_UPDATE,
+--     UPDATE_VEHICLE_ACTIONBAR. PLAYER_MOUNT_DISPLAY_CHANGED also registered.
+--   StanceBar reacts to UPDATE_SHAPESHIFT_FORM(S).
+CleanUI.OnEvent(function(self, event, arg1)
     if event == "PLAYER_ENTERING_WORLD" then
         runLayout()
-    elseif event == "PET_BAR_UPDATE" or event == "UNIT_PET" then
+    elseif event == "UNIT_PET" then
+        if arg1 == "player" then
+            placePet()
+            placeStance()
+        end
+    elseif event == "PET_BAR_UPDATE" or event == "PET_UI_UPDATE"
+        or event == "UPDATE_VEHICLE_ACTIONBAR" or event == "PLAYER_MOUNT_DISPLAY_CHANGED" then
         placePet()
         placeStance()
-    elseif event == "UPDATE_SHAPESHIFT_FORM" then
+    elseif event == "UPDATE_SHAPESHIFT_FORM" or event == "UPDATE_SHAPESHIFT_FORMS" then
         placeStance()
     elseif event == "ACTIONBAR_SHOWGRID" then
         gridShown = true
@@ -283,5 +317,8 @@ CleanUI.OnEvent(function(self, event)
         syncAllBorders()
     end
 end,
-"PLAYER_ENTERING_WORLD", "PET_BAR_UPDATE", "UNIT_PET", "UPDATE_SHAPESHIFT_FORM",
+"PLAYER_ENTERING_WORLD",
+"PET_BAR_UPDATE", "UNIT_PET", "PET_UI_UPDATE", "UPDATE_VEHICLE_ACTIONBAR",
+"PLAYER_MOUNT_DISPLAY_CHANGED",
+"UPDATE_SHAPESHIFT_FORM", "UPDATE_SHAPESHIFT_FORMS",
 "ACTIONBAR_SHOWGRID", "ACTIONBAR_HIDEGRID")
