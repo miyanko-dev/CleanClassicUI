@@ -90,7 +90,7 @@ local function applyMinimap()
         TimeManagerClockButton:Show()
         TimeManagerClockButton:SetSize(60, 20)
         TimeManagerClockButton:ClearAllPoints()
-        TimeManagerClockButton:SetPoint("TOP", Minimap, "BOTTOM", 0, -4)
+        TimeManagerClockButton:SetPoint("TOP", Minimap, "BOTTOM", 0, -12)
         TimeManagerClockButton:SetHitRectInsets(0, 0, 0, 0)
         for _, region in pairs({ TimeManagerClockButton:GetRegions() }) do
             if region:IsObjectType("Texture") then
