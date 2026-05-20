@@ -1,4 +1,4 @@
-local SPACING = CleanUI.SPACING
+local SPACING = NewNativeUI.SPACING
 local EDITBOX_GAP = SPACING.SM
 
 local function styleEditBox(chatFrame, editBox)
@@ -16,13 +16,13 @@ local function styleEditBox(chatFrame, editBox)
     local bg = CreateFrame("Frame", nil, editBox, "BackdropTemplate")
     bg:SetAllPoints(editBox)
     bg:SetBackdrop({
-        bgFile = CleanUI.BG_FILE,
-        edgeFile = CleanUI.EDGE_FILE,
+        bgFile = NewNativeUI.BG_FILE,
+        edgeFile = NewNativeUI.EDGE_FILE,
         edgeSize = 12,
         insets = { left = 2, right = 2, top = 2, bottom = 2 },
     })
     bg:SetBackdropColor(0, 0, 0, 1)
-    bg:SetBackdropBorderColor(unpack(CleanUI.COLOR.GREY))
+    bg:SetBackdropBorderColor(unpack(NewNativeUI.COLOR.GREY))
     bg:SetFrameLevel(editBox:GetFrameLevel() - 1)
     bg:Hide()
     editBox.cleanBg = bg
@@ -50,13 +50,13 @@ local function styleEditBox(chatFrame, editBox)
 end
 
 local function applyStyle()
-    CleanUI.HideForever(ChatFrameMenuButton)
-    CleanUI.HideForever(ChatFrameChannelButton)
+    NewNativeUI.HideForever(ChatFrameMenuButton)
+    NewNativeUI.HideForever(ChatFrameChannelButton)
 
     for i = 1, NUM_CHAT_WINDOWS do
         local chatFrame = _G["ChatFrame" .. i]
         if chatFrame then
-            CleanUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
+            NewNativeUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
             styleEditBox(chatFrame, _G[chatFrame:GetName() .. "EditBox"])
         end
     end
@@ -77,7 +77,7 @@ local function enableClassColors()
     end
 end
 
-CleanUI.OnEvent(function()
+NewNativeUI.OnEvent(function()
     applyStyle()
     enableClassColors()
 end, "PLAYER_ENTERING_WORLD", "UPDATE_FLOATING_CHAT_WINDOWS")
@@ -85,7 +85,7 @@ end, "PLAYER_ENTERING_WORLD", "UPDATE_FLOATING_CHAT_WINDOWS")
 hooksecurefunc("FCF_OpenTemporaryWindow", function()
     local chatFrame = FCF_GetCurrentChatFrame()
     if chatFrame then
-        CleanUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
+        NewNativeUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
         styleEditBox(chatFrame, _G[chatFrame:GetName() .. "EditBox"])
     end
 end)

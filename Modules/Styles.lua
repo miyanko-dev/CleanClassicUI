@@ -1,13 +1,13 @@
-CleanUI = CleanUI or {}
+NewNativeUI = NewNativeUI or {}
 
-CleanUI.BAR_TEXTURE = "Interface/RaidFrame/Raid-Bar-Hp-Fill"
-CleanUI.EDGE_FILE = "Interface/Tooltips/UI-Tooltip-Border"
-CleanUI.BG_FILE = "Interface/Tooltips/UI-Tooltip-Background"
+NewNativeUI.BAR_TEXTURE = "Interface/RaidFrame/Raid-Bar-Hp-Fill"
+NewNativeUI.EDGE_FILE = "Interface/Tooltips/UI-Tooltip-Border"
+NewNativeUI.BG_FILE = "Interface/Tooltips/UI-Tooltip-Background"
 
-CleanUI.BORDER = 3
-CleanUI.BTN_SIZE = 36
+NewNativeUI.BORDER = 3
+NewNativeUI.BTN_SIZE = 36
 
-CleanUI.SPACING = {
+NewNativeUI.SPACING = {
     XS  = 4,
     SM  = 8,
     MD  = 16,
@@ -16,7 +16,7 @@ CleanUI.SPACING = {
     XXL = 48,
 }
 
-CleanUI.COLOR = {
+NewNativeUI.COLOR = {
     RED    = { 0.980, 0.153, 0.184 },
     GREEN  = { 0.188, 0.996, 0.192 },
     BLUE   = { 0.157, 0.443, 0.851 },
@@ -28,26 +28,26 @@ CleanUI.COLOR = {
 
 local EDGE_SIZE = 12
 
-function CleanUI.ApplyBorder(frame, level)
+function NewNativeUI.ApplyBorder(frame, level)
     if not frame or frame.cleanBorder then return frame and frame.cleanBorder end
     local border = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    border:SetPoint("TOPLEFT", frame, "TOPLEFT", -CleanUI.BORDER, CleanUI.BORDER)
-    border:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", CleanUI.BORDER, -CleanUI.BORDER)
-    border:SetBackdrop({ edgeFile = CleanUI.EDGE_FILE, edgeSize = EDGE_SIZE })
-    border:SetBackdropBorderColor(unpack(CleanUI.COLOR.GREY))
+    border:SetPoint("TOPLEFT", frame, "TOPLEFT", -NewNativeUI.BORDER, NewNativeUI.BORDER)
+    border:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", NewNativeUI.BORDER, -NewNativeUI.BORDER)
+    border:SetBackdrop({ edgeFile = NewNativeUI.EDGE_FILE, edgeSize = EDGE_SIZE })
+    border:SetBackdropBorderColor(unpack(NewNativeUI.COLOR.GREY))
     border:SetFrameStrata(frame:GetFrameStrata())
     border:SetFrameLevel((level or frame:GetFrameLevel()) + 5)
     frame.cleanBorder = border
     return border
 end
 
-function CleanUI.HideForever(frame)
+function NewNativeUI.HideForever(frame)
     if not frame then return end
     frame:Hide()
     frame:SetScript("OnShow", frame.Hide)
 end
 
-function CleanUI.OnEvent(handler, ...)
+function NewNativeUI.OnEvent(handler, ...)
     local frame = CreateFrame("Frame")
     for i = 1, select("#", ...) do
         frame:RegisterEvent((select(i, ...)))

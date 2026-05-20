@@ -1,4 +1,4 @@
-local MARGIN = CleanUI.SPACING.LG
+local MARGIN = NewNativeUI.SPACING.LG
 local MAP_SIZE = 196
 local DEFAULT_SIZE = 140
 local SIZE_DELTA = (MAP_SIZE - DEFAULT_SIZE) / 2
@@ -50,7 +50,7 @@ local function dragUpdate(icon, key)
     local mx, my = GetCursorPosition()
     local scale = Minimap:GetEffectiveScale()
     local angle = math.deg(math.atan2(my / scale - cy, mx / scale - cx))
-    CleanUIClassicDB.iconAngles[key] = angle
+    NewNativeUIDB.iconAngles[key] = angle
     placeOnEdge(icon, angle)
 end
 
@@ -65,7 +65,7 @@ local function setupEdgeIcon(icon, key, defaultAngle)
     icon:SetScript("OnDragStop", function(self)
         self:SetScript("OnUpdate", nil)
     end)
-    local angle = CleanUIClassicDB.iconAngles[key] or defaultAngle
+    local angle = NewNativeUIDB.iconAngles[key] or defaultAngle
     placeOnEdge(icon, angle)
 end
 
@@ -101,14 +101,14 @@ local function applyMinimap()
         TimeManagerClockTicker:ClearAllPoints()
         TimeManagerClockTicker:SetPoint("CENTER", TimeManagerClockButton, "CENTER", 0, 0)
     end
-    CleanUIClassicDB = CleanUIClassicDB or {}
-    CleanUIClassicDB.iconAngles = CleanUIClassicDB.iconAngles or {}
+    NewNativeUIDB = NewNativeUIDB or {}
+    NewNativeUIDB.iconAngles = NewNativeUIDB.iconAngles or {}
     adjustEdgeIcons()
     refreshAddonIcons()
 end
 
 applyMinimap()
 
-CleanUI.OnEvent(function()
+NewNativeUI.OnEvent(function()
     C_Timer.After(0, applyMinimap)
 end, "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")

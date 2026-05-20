@@ -14,7 +14,7 @@ end
 
 local function stripTextures(bar)
     if not bar then return end
-    bar:SetStatusBarTexture(CleanUI.BAR_TEXTURE)
+    bar:SetStatusBarTexture(NewNativeUI.BAR_TEXTURE)
     local fill = bar:GetStatusBarTexture()
     for i = 1, bar:GetNumRegions() do
         local region = select(i, bar:GetRegions())
@@ -47,18 +47,18 @@ local function applyStyle()
         addBg(MainMenuExpBar)
         stripTextures(MainMenuExpBar)
         addXPTooltip(MainMenuExpBar)
-        CleanUI.ApplyBorder(MainMenuExpBar)
-        CleanUI.HideForever(ExhaustionTick)
+        NewNativeUI.ApplyBorder(MainMenuExpBar)
+        NewNativeUI.HideForever(ExhaustionTick)
         if ExhaustionLevelFillBar then ExhaustionLevelFillBar:Hide() end
     end
 
     if ReputationWatchStatusBar then
         addBg(ReputationWatchStatusBar)
         stripTextures(ReputationWatchStatusBar)
-        CleanUI.ApplyBorder(ReputationWatchStatusBar)
+        NewNativeUI.ApplyBorder(ReputationWatchStatusBar)
     end
 end
 
-CleanUI.OnEvent(function()
+NewNativeUI.OnEvent(function()
     C_Timer.After(0, applyStyle)
 end, "PLAYER_ENTERING_WORLD", "PLAYER_LEVEL_UP", "UPDATE_FACTION")

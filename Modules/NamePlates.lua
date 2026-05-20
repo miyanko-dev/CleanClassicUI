@@ -1,4 +1,4 @@
-local C = CleanUI.COLOR
+local C = NewNativeUI.COLOR
 
 local function colorBar(plate, unit)
     local bar = plate.UnitFrame and plate.UnitFrame.healthBar
@@ -25,9 +25,9 @@ end
 local function addBorder(bar, plate)
     if bar.cleanBorder then return end
     local border = CreateFrame("Frame", nil, plate, "BackdropTemplate")
-    border:SetPoint("TOPLEFT", bar, "TOPLEFT", -CleanUI.BORDER, CleanUI.BORDER)
-    border:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", CleanUI.BORDER, -CleanUI.BORDER)
-    border:SetBackdrop({ edgeFile = CleanUI.EDGE_FILE, edgeSize = 12 })
+    border:SetPoint("TOPLEFT", bar, "TOPLEFT", -NewNativeUI.BORDER, NewNativeUI.BORDER)
+    border:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", NewNativeUI.BORDER, -NewNativeUI.BORDER)
+    border:SetBackdrop({ edgeFile = NewNativeUI.EDGE_FILE, edgeSize = 12 })
     border:SetBackdropBorderColor(unpack(C.GREY))
     border:SetFrameStrata("HIGH")
     bar.cleanBorder = border
@@ -38,7 +38,7 @@ local function stylePlate(plate, unit)
     if not uf then return end
 
     local bar = uf.healthBar
-    bar:SetStatusBarTexture(CleanUI.BAR_TEXTURE)
+    bar:SetStatusBarTexture(NewNativeUI.BAR_TEXTURE)
 
     if bar.border then bar.border:Hide() end
     if uf.LevelFrame then uf.LevelFrame:Hide() end
@@ -64,7 +64,7 @@ local function stylePlate(plate, unit)
     colorBar(plate, unit)
 end
 
-CleanUI.OnEvent(function(_, event, unit)
+NewNativeUI.OnEvent(function(_, event, unit)
     local plate = C_NamePlate.GetNamePlateForUnit(unit)
     if not plate then return end
     if event == "NAME_PLATE_UNIT_ADDED" then
@@ -74,7 +74,7 @@ CleanUI.OnEvent(function(_, event, unit)
     end
 end, "NAME_PLATE_UNIT_ADDED", "UNIT_THREAT_SITUATION_UPDATE", "UNIT_THREAT_LIST_UPDATE")
 
-CleanUI.OnEvent(function()
+NewNativeUI.OnEvent(function()
     SetCVar("nameplateMinScale", 0.8)
     SetCVar("nameplateSelectedScale", 1)
     SetCVar("nameplateMaxScale", 1)

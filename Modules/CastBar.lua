@@ -2,7 +2,7 @@ local BAR_H = 20
 local MARGIN = 48
 
 -- 2*BORDER clears the touching position; MARGIN is the visible gap above the action bar.
-local ANCHOR_Y = MARGIN + CleanUI.BORDER * 2
+local ANCHOR_Y = MARGIN + NewNativeUI.BORDER * 2
 local HIDDEN = { "Border", "BorderShield", "Spark", "Flash", "Icon" }
 
 local isApplying = false
@@ -30,7 +30,7 @@ end
 
 local function styleCastBar()
     CastingBarFrame:SetHeight(BAR_H)
-    CastingBarFrame:SetStatusBarTexture(CleanUI.BAR_TEXTURE)
+    CastingBarFrame:SetStatusBarTexture(NewNativeUI.BAR_TEXTURE)
 
     for _, key in ipairs(HIDDEN) do
         local region = CastingBarFrame[key]
@@ -45,12 +45,12 @@ local function styleCastBar()
         CastingBarFrame.Text:SetPoint("CENTER")
     end
 
-    CleanUI.ApplyBorder(CastingBarFrame)
+    NewNativeUI.ApplyBorder(CastingBarFrame)
 end
 
 local isStyled = false
 
-local events = CleanUI.OnEvent(function()
+local events = NewNativeUI.OnEvent(function()
     if not isStyled then
         styleCastBar()
         isStyled = true
@@ -67,9 +67,9 @@ CastingBarFrame.ignoreFramePositionManager = true
 
 hooksecurefunc(CastingBarFrame, "SetPoint", scheduleAnchor)
 
-CleanUILayout = CleanUILayout or {}
-CleanUILayout.afterLayout = CleanUILayout.afterLayout or {}
-table.insert(CleanUILayout.afterLayout, scheduleAnchor)
+NewNativeUILayout = NewNativeUILayout or {}
+NewNativeUILayout.afterLayout = NewNativeUILayout.afterLayout or {}
+table.insert(NewNativeUILayout.afterLayout, scheduleAnchor)
 
 hooksecurefunc("CastingBarFrame_FinishSpell", function(bar)
     if bar == CastingBarFrame then

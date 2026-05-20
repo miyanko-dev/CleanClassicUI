@@ -1,6 +1,6 @@
 local QUALITY_COLORS = ITEM_QUALITY_COLORS
 local BORDER_TEXTURE = [[Interface\Common\WhiteIconFrame]]
-local QUEST_COLOR = CleanUI.COLOR.YELLOW
+local QUEST_COLOR = NewNativeUI.COLOR.YELLOW
 
 -- Skip Poor and Common to keep grey and white items uncluttered.
 local MIN_QUALITY = 2

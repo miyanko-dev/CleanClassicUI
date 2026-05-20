@@ -5,4 +5,4 @@ local function configureQuestie()
     Questie.db.profile.nameplateScale = 1.5
 end
 
-CleanUI.OnEvent(configureQuestie, "PLAYER_ENTERING_WORLD")
+NewNativeUI.OnEvent(configureQuestie, "PLAYER_ENTERING_WORLD")
