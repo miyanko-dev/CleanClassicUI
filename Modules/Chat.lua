@@ -1,8 +1,52 @@
 local SPACING = NewNativeUI.SPACING
-local EDITBOX_GAP = SPACING.SM
+local BLOCK_GAP = SPACING.XS
+local SCREEN_MARGIN = SPACING.MD
+local TAB_FONT_SIZE = 14
+
+local TAB_TEXTURE_SUFFIXES = {
+    "Left", "Middle", "Right",
+    "SelectedLeft", "SelectedMiddle", "SelectedRight",
+    "HighlightLeft", "HighlightMiddle", "HighlightRight",
+    "Glow",
+}
+
+local CHAT_FRAME_TEXTURE_SUFFIXES = {
+    "Background",
+    "TopLeftTexture", "TopRightTexture", "BottomLeftTexture", "BottomRightTexture",
+    "LeftTexture", "RightTexture", "TopTexture", "BottomTexture",
+}
+
+local function stripChatFrameTextures(chatFrame)
+    local name = chatFrame:GetName()
+    for _, suffix in ipairs(CHAT_FRAME_TEXTURE_SUFFIXES) do
+        local tex = _G[name .. suffix]
+        if tex then tex:SetTexture(nil) end
+    end
+end
+
+local function styleTab(tab)
+    if not tab or tab.cleanStyled then return end
+    local name = tab:GetName()
+    for _, suffix in ipairs(TAB_TEXTURE_SUFFIXES) do
+        local tex = _G[name .. suffix]
+        if tex then tex:SetTexture(nil) end
+    end
+    local text = _G[name .. "Text"]
+    if text then
+        local font = text:GetFont()
+        text:SetFont(font, TAB_FONT_SIZE, "OUTLINE")
+    end
+    tab:HookScript("OnClick", function(self)
+        if IsShiftKeyDown() then
+            local chatFrame = _G["ChatFrame" .. self:GetID()]
+            if chatFrame then chatFrame:ScrollToBottom() end
+        end
+    end)
+    tab.cleanStyled = true
+end
 
 local function styleEditBox(chatFrame, editBox)
-    if not editBox or editBox.cleanBg then return end
+    if not editBox or editBox.cleanStyled then return end
 
     for _, suffix in ipairs({ "Left", "Mid", "Right" }) do
         local tex = _G[editBox:GetName() .. suffix]
@@ -10,43 +54,67 @@ local function styleEditBox(chatFrame, editBox)
     end
 
     editBox:ClearAllPoints()
-    editBox:SetPoint("TOPLEFT", chatFrame, "BOTTOMLEFT", -3, -EDITBOX_GAP)
-    editBox:SetPoint("TOPRIGHT", chatFrame, "BOTTOMRIGHT", 3, -EDITBOX_GAP)
+    editBox:SetPoint("TOPLEFT", chatFrame, "BOTTOMLEFT", 0, -BLOCK_GAP)
+    editBox:SetPoint("TOPRIGHT", chatFrame, "BOTTOMRIGHT", 0, -BLOCK_GAP)
 
-    local bg = CreateFrame("Frame", nil, editBox, "BackdropTemplate")
-    bg:SetAllPoints(editBox)
-    bg:SetBackdrop({
-        bgFile = NewNativeUI.BG_FILE,
-        edgeFile = NewNativeUI.EDGE_FILE,
-        edgeSize = 12,
-        insets = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    bg:SetBackdropColor(0, 0, 0, 1)
-    bg:SetBackdropBorderColor(unpack(NewNativeUI.COLOR.GREY))
-    bg:SetFrameLevel(editBox:GetFrameLevel() - 1)
-    bg:Hide()
-    editBox.cleanBg = bg
+    local font, size = editBox:GetFont()
+    editBox:SetFont(font, size, "OUTLINE")
 
     local header = _G[editBox:GetName() .. "Header"]
     if header then
         header:ClearAllPoints()
         header:SetPoint("LEFT", editBox, "LEFT", 8, 0)
+        local hfont, hsize = header:GetFont()
+        header:SetFont(hfont, hsize, "OUTLINE")
     end
 
     -- $parentHeaderSuffix (the ": " after the chat type) is in the editbox's
     -- ARTWORK layer and leaks at dimmed alpha when Blizzard fades the box out
     -- on deactivate; toggle it with focus instead.
     local headerSuffix = _G[editBox:GetName() .. "HeaderSuffix"]
-    if headerSuffix then headerSuffix:Hide() end
+    if headerSuffix then
+        headerSuffix:Hide()
+        local sfont, ssize = headerSuffix:GetFont()
+        headerSuffix:SetFont(sfont, ssize, "OUTLINE")
+    end
 
-    editBox:HookScript("OnEditFocusGained", function(self)
-        self.cleanBg:Show()
+    editBox:HookScript("OnEditFocusGained", function()
         if headerSuffix then headerSuffix:Show() end
     end)
-    editBox:HookScript("OnEditFocusLost", function(self)
-        self.cleanBg:Hide()
+    editBox:HookScript("OnEditFocusLost", function()
         if headerSuffix then headerSuffix:Hide() end
     end)
+
+    editBox.cleanStyled = true
+end
+
+local function positionChatFrame(chatFrame, editBox)
+    chatFrame:SetMovable(true)
+    chatFrame:ClearAllPoints()
+    chatFrame:SetPoint(
+        "BOTTOMLEFT", UIParent, "BOTTOMLEFT",
+        SCREEN_MARGIN,
+        SCREEN_MARGIN + BLOCK_GAP + editBox:GetHeight()
+    )
+    chatFrame:SetUserPlaced(true)
+end
+
+local function layoutDockedTabs()
+    local dock = GENERAL_CHAT_DOCK
+    if not dock or not dock.DOCKED_CHAT_FRAMES then return end
+    local prev = nil
+    for _, frame in ipairs(dock.DOCKED_CHAT_FRAMES) do
+        local tab = _G[frame:GetName() .. "Tab"]
+        if tab then
+            tab:ClearAllPoints()
+            if prev then
+                tab:SetPoint("BOTTOMLEFT", prev, "BOTTOMRIGHT", BLOCK_GAP, 0)
+            else
+                tab:SetPoint("BOTTOMLEFT", ChatFrame1, "TOPLEFT", 0, BLOCK_GAP)
+            end
+            prev = tab
+        end
+    end
 end
 
 local function applyStyle()
@@ -56,10 +124,19 @@ local function applyStyle()
     for i = 1, NUM_CHAT_WINDOWS do
         local chatFrame = _G["ChatFrame" .. i]
         if chatFrame then
+            local editBox = _G[chatFrame:GetName() .. "EditBox"]
+            local tab = _G[chatFrame:GetName() .. "Tab"]
             NewNativeUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
-            styleEditBox(chatFrame, _G[chatFrame:GetName() .. "EditBox"])
+            stripChatFrameTextures(chatFrame)
+            styleTab(tab)
+            styleEditBox(chatFrame, editBox)
+            if chatFrame == ChatFrame1 then
+                positionChatFrame(chatFrame, editBox)
+            end
         end
     end
+
+    layoutDockedTabs()
 end
 
 local function enableClassColors()
@@ -86,9 +163,16 @@ hooksecurefunc("FCF_OpenTemporaryWindow", function()
     local chatFrame = FCF_GetCurrentChatFrame()
     if chatFrame then
         NewNativeUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
+        stripChatFrameTextures(chatFrame)
+        styleTab(_G[chatFrame:GetName() .. "Tab"])
         styleEditBox(chatFrame, _G[chatFrame:GetName() .. "EditBox"])
     end
+    layoutDockedTabs()
 end)
+
+if FCFDock_UpdateTabs then
+    hooksecurefunc("FCFDock_UpdateTabs", layoutDockedTabs)
+end
 
 hooksecurefunc("ChatEdit_UpdateHeader", function(editBox)
     if editBox:GetAttribute("chatType") ~= "WHISPER" then return end
