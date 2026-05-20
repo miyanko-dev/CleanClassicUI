@@ -148,11 +148,15 @@ local function placeBars()
 end
 
 -- MultiBarRight (bar 4) and MultiBarLeft (bar 5) live inside VerticalMultiBarsContainer.
--- Reposition the container; Blizzard handles the bars inside it.
+-- MultiBarRight is anchored TOPRIGHT at (0,0) inside a 141x503 container that
+-- matches its height, so the container's BOTTOMRIGHT coincides with MultiBarRight's
+-- BOTTOMRIGHT. Anchor the container to the backpack button: horizontal margin
+-- matches ContainerFrame1 (see Bags.lua), vertical gap is fixed at SPACING.XXL so
+-- AB4/AB5 sit a comfortable distance above the bag row.
 local function placeVerticalBars()
-    if InCombatLockdown() or not VerticalMultiBarsContainer then return end
+    if InCombatLockdown() or not VerticalMultiBarsContainer or not MainMenuBarBackpackButton then return end
     VerticalMultiBarsContainer:ClearAllPoints()
-    VerticalMultiBarsContainer:SetPoint("RIGHT", UIParent, "RIGHT", -(MARGIN + BORDER), 0)
+    VerticalMultiBarsContainer:SetPoint("BOTTOMRIGHT", MainMenuBarBackpackButton, "TOPRIGHT", SPACING.XS, SPACING.XXL)
 end
 
 local function hideChrome()
