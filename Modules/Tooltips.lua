@@ -1,13 +1,16 @@
-local SPACING = CleanUI.SPACING
-local BORDER = CleanUI.BORDER
-
--- Anchor tooltip BOTTOMRIGHT so its border sits SPACING.XS inside Container 1's
--- border on both the right and bottom edges, giving a uniform corner margin.
+local anchorX, anchorY
 hooksecurefunc("GameTooltip_SetDefaultAnchor", function(tooltip)
     if tooltip:GetAnchorType() == "ANCHOR_CURSOR" then return end
-    if not MainMenuBarBackpackButton then return end
+    local frame = TargetFrameTextureFrameLevelText
+    if not frame then return end
+    local right, bottom = frame:GetRight(), frame:GetBottom()
+    if right and bottom then
+        local scale = frame:GetEffectiveScale() / UIParent:GetEffectiveScale()
+        anchorX, anchorY = right * scale, bottom * scale
+    end
+    if not anchorX then return end
     tooltip:ClearAllPoints()
-    tooltip:SetPoint("BOTTOMRIGHT", MainMenuBarBackpackButton, "TOPRIGHT", 0, SPACING.SM)
+    tooltip:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", anchorX + 4, anchorY - 4)
 end)
 
 CleanUI.HideForever(GameTooltipStatusBar)
