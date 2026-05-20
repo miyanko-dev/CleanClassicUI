@@ -62,7 +62,7 @@ local function arrangeBtns()
     lockKeyringSize()
 
     bagContainer:ClearAllPoints()
-    bagContainer:SetPoint("BOTTOMRIGHT", HelpMicroButton, "TOPRIGHT", 0, 0)
+    bagContainer:SetPoint("BOTTOMRIGHT", HelpMicroButton, "TOPRIGHT", -2, 0)
 
     for i, name in ipairs(BAG_BTNS) do
         local btn = _G[name]
