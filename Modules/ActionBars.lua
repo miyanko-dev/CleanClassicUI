@@ -267,12 +267,15 @@ hooksecurefunc("ActionButton_OnUpdate", function(self)
     self.icon:SetAlpha((not usable or inRange == false) and 0.9 or 1.0)
 end)
 
--- Replace the pet bar's slide-time repositioner with a no-op. One-time method
--- swap, zero per-frame cost — Blizzard's slide state machine still drives
--- mode/Show/Hide and the OnUpdate range timer keeps working, but the per-tick
--- SetPoint to MainMenuBar that fights our anchor is gone.
+-- Re-anchor the pet bar after Blizzard's slide-time repositioner runs.
+-- A plain method swap taints the call site: ShowPetActionBar calls
+-- self:UpdatePositionValues() then self:Show(), and an insecure replacement
+-- on the first call propagates taint to the second, blocking Show() in combat
+-- on PET_BAR_UPDATE/UNIT_PET/PET_UI_UPDATE. hooksecurefunc preserves the
+-- original's secure status; placePet's InCombatLockdown guard makes the
+-- in-combat hook a no-op, and PLAYER_REGEN_ENABLED restores our anchor after.
 if PetActionBarFrame and PetActionBarFrame.UpdatePositionValues then
-    PetActionBarFrame.UpdatePositionValues = function() end
+    hooksecurefunc(PetActionBarFrame, "UpdatePositionValues", placePet)
 end
 
 local function runLayout()
@@ -319,10 +322,14 @@ NewNativeUI.OnEvent(function(self, event, arg1)
     elseif event == "ACTIONBAR_HIDEGRID" then
         gridShown = false
         syncAllBorders()
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        placePet()
+        placeStance()
     end
 end,
 "PLAYER_ENTERING_WORLD",
 "PET_BAR_UPDATE", "UNIT_PET", "PET_UI_UPDATE", "UPDATE_VEHICLE_ACTIONBAR",
 "PLAYER_MOUNT_DISPLAY_CHANGED",
 "UPDATE_SHAPESHIFT_FORM", "UPDATE_SHAPESHIFT_FORMS",
-"ACTIONBAR_SHOWGRID", "ACTIONBAR_HIDEGRID")
+"ACTIONBAR_SHOWGRID", "ACTIONBAR_HIDEGRID",
+"PLAYER_REGEN_ENABLED")
