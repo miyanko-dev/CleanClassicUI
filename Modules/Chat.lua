@@ -2,6 +2,8 @@ local SPACING = NewNativeUI.SPACING
 local BLOCK_GAP = SPACING.XS
 local SCREEN_MARGIN = SPACING.MD
 local TAB_FONT_SIZE = 14
+local TAB_HEIGHT = 22
+local TAB_PADDING_X = SPACING.SM
 
 local TAB_TEXTURE_SUFFIXES = {
     "Left", "Middle", "Right",
@@ -24,6 +26,14 @@ local function stripChatFrameTextures(chatFrame)
     end
 end
 
+local function sizeTab(tab)
+    if not tab then return end
+    local text = _G[tab:GetName() .. "Text"]
+    if not text then return end
+    tab:SetHeight(TAB_HEIGHT)
+    tab:SetWidth(math.ceil(text:GetStringWidth()) + TAB_PADDING_X * 2)
+end
+
 local function styleTab(tab)
     if not tab or tab.cleanStyled then return end
     local name = tab:GetName()
@@ -35,7 +45,11 @@ local function styleTab(tab)
     if text then
         local font = text:GetFont()
         text:SetFont(font, TAB_FONT_SIZE, "OUTLINE")
+        -- Blizzard's ChatTabTemplate anchors text at CENTER with y=-5; re-center it.
+        text:ClearAllPoints()
+        text:SetPoint("CENTER", tab, "CENTER", 0, 0)
     end
+    sizeTab(tab)
     tab:HookScript("OnClick", function(self)
         if IsShiftKeyDown() then
             local chatFrame = _G["ChatFrame" .. self:GetID()]
@@ -70,20 +84,13 @@ local function styleEditBox(chatFrame, editBox)
 
     -- $parentHeaderSuffix (the ": " after the chat type) is in the editbox's
     -- ARTWORK layer and leaks at dimmed alpha when Blizzard fades the box out
-    -- on deactivate; toggle it with focus instead.
+    -- on deactivate; visibility is bound to the header via ChatEdit_UpdateHeader below.
     local headerSuffix = _G[editBox:GetName() .. "HeaderSuffix"]
     if headerSuffix then
         headerSuffix:Hide()
         local sfont, ssize = headerSuffix:GetFont()
         headerSuffix:SetFont(sfont, ssize, "OUTLINE")
     end
-
-    editBox:HookScript("OnEditFocusGained", function()
-        if headerSuffix then headerSuffix:Show() end
-    end)
-    editBox:HookScript("OnEditFocusLost", function()
-        if headerSuffix then headerSuffix:Hide() end
-    end)
 
     editBox.cleanStyled = true
 end
@@ -99,13 +106,12 @@ local function positionChatFrame(chatFrame, editBox)
     chatFrame:SetUserPlaced(true)
 end
 
-local function layoutDockedTabs()
-    local dock = GENERAL_CHAT_DOCK
-    if not dock or not dock.DOCKED_CHAT_FRAMES then return end
+local function layoutTabs()
     local prev = nil
-    for _, frame in ipairs(dock.DOCKED_CHAT_FRAMES) do
-        local tab = _G[frame:GetName() .. "Tab"]
-        if tab then
+    for i = 1, NUM_CHAT_WINDOWS do
+        local tab = _G["ChatFrame" .. i .. "Tab"]
+        if tab and tab:IsShown() then
+            sizeTab(tab)
             tab:ClearAllPoints()
             if prev then
                 tab:SetPoint("BOTTOMLEFT", prev, "BOTTOMRIGHT", BLOCK_GAP, 0)
@@ -136,7 +142,7 @@ local function applyStyle()
         end
     end
 
-    layoutDockedTabs()
+    layoutTabs()
 end
 
 local function enableClassColors()
@@ -167,14 +173,28 @@ hooksecurefunc("FCF_OpenTemporaryWindow", function()
         styleTab(_G[chatFrame:GetName() .. "Tab"])
         styleEditBox(chatFrame, _G[chatFrame:GetName() .. "EditBox"])
     end
-    layoutDockedTabs()
+    layoutTabs()
 end)
 
 if FCFDock_UpdateTabs then
-    hooksecurefunc("FCFDock_UpdateTabs", layoutDockedTabs)
+    hooksecurefunc("FCFDock_UpdateTabs", layoutTabs)
 end
 
+hooksecurefunc("FCF_SetWindowName", function(chatFrame)
+    if chatFrame then
+        sizeTab(_G[chatFrame:GetName() .. "Tab"])
+    end
+end)
+
 hooksecurefunc("ChatEdit_UpdateHeader", function(editBox)
+    local headerSuffix = _G[editBox:GetName() .. "HeaderSuffix"]
+    if headerSuffix then
+        headerSuffix:Hide()
+        if editBox.header then
+            editBox:SetTextInsets(15 + editBox.header:GetWidth(), 13, 0, 0)
+        end
+    end
+
     if editBox:GetAttribute("chatType") ~= "WHISPER" then return end
     local whisperColor = ChatTypeInfo["WHISPER_INFORM"]
     if not whisperColor then return end
