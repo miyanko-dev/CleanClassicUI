@@ -21,12 +21,20 @@ local PET_SCALE = 0.8
 local PET_BAR_WIDTH = 509
 local PET_ROW_WIDTH = 371
 local PET_BTN1_INSET_X = 36
+local PET_BTN1_INSET_Y = 2
+local PET_BTN_SIZE = 30
 local PET_CENTER_SHIFT = (PET_BAR_WIDTH - PET_ROW_WIDTH) / 2 - PET_BTN1_INSET_X
 
 -- Native StanceBarFrame: 29x32 (buttons extend beyond), StanceButton1 inset (11,3), 30px buttons with gap 7.
 local STANCE_BTN_SIZE = 30
 local STANCE_BTN_GAP = 7
 local STANCE_BTN1_INSET_X = 11
+local STANCE_BTN1_INSET_Y = 3
+
+-- AB1 to AB2 spacing (TIGHT_GAP + 2*BORDER) used between AB2 and the pet/stance bar above it.
+-- AB3 to AB1 spacing (BAR_GAP + BORDER) used between the topmost bottom-bar element and the castbar.
+local INNER_BAR_GAP = TIGHT_GAP + 2 * BORDER
+local OUTER_BAR_GAP = BAR_GAP + BORDER
 
 local BAR_PREFIXES = {
     "ActionButton",
@@ -216,35 +224,50 @@ local function isPetVisible()
     return true
 end
 
-local function placePet()
+-- Replace PetActionBarMixin.UpdatePositionValues on the frame so every Blizzard
+-- caller (ShowPetActionBar, PetActionBar_OnUpdate, UIParentManageFramePositions)
+-- runs our placement instead of Blizzard's, which would otherwise re-anchor the
+-- bar against MainMenuBar.TOP and fight our SetPoint. The replacement is insecure
+-- Lua, but the InCombatLockdown guard means it never calls SetPoint while combat
+-- protection is active, so it can't trigger ADDON_ACTION_BLOCKED when the panel
+-- manager reruns it. Anchoring directly to UIParent (no SetUserPlaced) avoids
+-- the original taint source.
+local function placePetBar(self)
     if InCombatLockdown() or not petStanceBase then return end
-    if not (PetActionBarFrame and PetActionButton1) then return end
+    if not (self and PetActionButton1) then return end
 
-    PetActionBarFrame.ignoreFramePositionManager = true
-    if not PetActionBarFrame:IsUserPlaced() then
-        PetActionBarFrame:SetMovable(true)
-        PetActionBarFrame:SetUserPlaced(true)
-    end
-    PetActionBarFrame:SetScale(PET_SCALE)
+    self:SetScale(PET_SCALE)
 
-    local petBorder = BORDER * PET_SCALE
-    local petFrameBottomScreen = petStanceBase + TIGHT_GAP + petBorder
-    PetActionBarFrame:ClearAllPoints()
-    PetActionBarFrame:SetPoint("BOTTOM", UIParent, "BOTTOM",
+    -- Pet button BOTTOM sits INNER_BAR_GAP above AB2's visible top, matching AB1 to AB2.
+    -- PetActionButton1 is inset PET_BTN1_INSET_Y self-units above PetActionBarFrame.BOTTOM,
+    -- so subtract that scaled inset so the visible row (not the frame) lands at the gap.
+    local petFrameBottomScreen = petStanceBase + INNER_BAR_GAP - PET_BTN1_INSET_Y * PET_SCALE
+
+    self:ClearAllPoints()
+    self:SetPoint("BOTTOM", UIParent, "BOTTOM",
         PET_CENTER_SHIFT, petFrameBottomScreen / PET_SCALE)
+end
+
+local function placePet()
+    if PetActionBarFrame then placePetBar(PetActionBarFrame) end
 end
 
 local function placeStance()
     if InCombatLockdown() or not petStanceBase then return end
     local numForms = GetNumShapeshiftForms()
     if not (StanceBarFrame and StanceBarFrame:IsShown() and numForms > 0) then return end
-    local base = petStanceBase
+
+    -- Stance button BOTTOM sits INNER_BAR_GAP above whatever bar is directly below it:
+    -- pet button TOP if the pet bar is visible, otherwise AB2's visible top.
+    local stanceBtnBottomScreen
     if isPetVisible() then
-        local petBorder = BORDER * PET_SCALE
-        local petButtonH = PetActionButton1:GetHeight() * PET_SCALE
-        base = base + TIGHT_GAP + petBorder + petButtonH + petBorder
+        local petBtnBottomScreen = petStanceBase + INNER_BAR_GAP
+        local petBtnTopScreen = petBtnBottomScreen + PET_BTN_SIZE * PET_SCALE
+        stanceBtnBottomScreen = petBtnTopScreen + INNER_BAR_GAP
+    else
+        stanceBtnBottomScreen = petStanceBase + INNER_BAR_GAP
     end
-    local stanceFrameBottomScreen = base + TIGHT_GAP + BORDER
+    local stanceFrameBottomScreen = stanceBtnBottomScreen - STANCE_BTN1_INSET_Y
 
     StanceBarFrame.ignoreFramePositionManager = true
     if not StanceBarFrame:IsUserPlaced() then
@@ -260,6 +283,22 @@ local function placeStance()
     StanceBarRight:SetAlpha(0)
 end
 
+-- Returns the Y delta (screen px) from AB2 visible top to where CastingBarFrame.BOTTOM
+-- should land, so the cast bar sits OUTER_BAR_GAP above the topmost visible bottom-bar
+-- element (stance if shown, else pet if shown, else AB2 itself).
+NewNativeUILayout.castbarYOffsetAboveAB2 = function()
+    if not petStanceBase then return OUTER_BAR_GAP end
+    local topAboveAB2 = 0
+    if isPetVisible() then
+        topAboveAB2 = INNER_BAR_GAP + PET_BTN_SIZE * PET_SCALE
+    end
+    local numForms = GetNumShapeshiftForms and GetNumShapeshiftForms() or 0
+    if StanceBarFrame and StanceBarFrame:IsShown() and numForms > 0 then
+        topAboveAB2 = topAboveAB2 + INNER_BAR_GAP + STANCE_BTN_SIZE
+    end
+    return topAboveAB2 + OUTER_BAR_GAP
+end
+
 hooksecurefunc("ActionButton_OnUpdate", function(self)
     if not self or not self.action then return end
     local usable = IsUsableAction(self.action)
@@ -267,15 +306,13 @@ hooksecurefunc("ActionButton_OnUpdate", function(self)
     self.icon:SetAlpha((not usable or inRange == false) and 0.9 or 1.0)
 end)
 
--- Re-anchor the pet bar after Blizzard's slide-time repositioner runs.
--- A plain method swap taints the call site: ShowPetActionBar calls
--- self:UpdatePositionValues() then self:Show(), and an insecure replacement
--- on the first call propagates taint to the second, blocking Show() in combat
--- on PET_BAR_UPDATE/UNIT_PET/PET_UI_UPDATE. hooksecurefunc preserves the
--- original's secure status; placePet's InCombatLockdown guard makes the
--- in-combat hook a no-op, and PLAYER_REGEN_ENABLED restores our anchor after.
-if PetActionBarFrame and PetActionBarFrame.UpdatePositionValues then
-    hooksecurefunc(PetActionBarFrame, "UpdatePositionValues", placePet)
+-- Install our placement as PetActionBarFrame:UpdatePositionValues so every
+-- Blizzard caller routes through it. The original Blizzard method is replaced
+-- on the frame instance (PetActionBarMixin copies methods onto the frame at
+-- creation), so calls via PetActionBarFrame:UpdatePositionValues() resolve to
+-- placePetBar instead of Blizzard's anchor-against-parent routine.
+if PetActionBarFrame then
+    PetActionBarFrame.UpdatePositionValues = placePetBar
 end
 
 local function runLayout()

@@ -1,8 +1,5 @@
 local BAR_H = 20
-local MARGIN = 48
 
--- 2*BORDER clears the touching position; MARGIN is the visible gap above the action bar.
-local ANCHOR_Y = MARGIN + NewNativeUI.BORDER * 2
 local HIDDEN = { "Border", "BorderShield", "Spark", "Flash", "Icon" }
 
 local isApplying = false
@@ -14,10 +11,13 @@ local function applyAnchor()
     local leftBtn = MultiBarBottomLeftButton5
     local rightBtn = MultiBarBottomLeftButton8
     if not (leftBtn and rightBtn) then return end
+    local layout = NewNativeUILayout
+    local yOffset = layout and layout.castbarYOffsetAboveAB2 and layout.castbarYOffsetAboveAB2()
+    if not yOffset then return end
     isApplying = true
     CastingBarFrame:ClearAllPoints()
-    CastingBarFrame:SetPoint("BOTTOMLEFT", leftBtn, "TOPLEFT", 0, ANCHOR_Y)
-    CastingBarFrame:SetPoint("BOTTOMRIGHT", rightBtn, "TOPRIGHT", 0, ANCHOR_Y)
+    CastingBarFrame:SetPoint("BOTTOMLEFT", leftBtn, "TOPLEFT", 0, yOffset)
+    CastingBarFrame:SetPoint("BOTTOMRIGHT", rightBtn, "TOPRIGHT", 0, yOffset)
     CastingBarFrame:SetHeight(BAR_H)
     isApplying = false
 end

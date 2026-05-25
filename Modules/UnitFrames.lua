@@ -36,5 +36,45 @@ local function placeFrames()
     TargetFrame:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", btn12Right, castBottom - tOffset)
 end
 
-SLASH_CLEANUNITFRAMES1 = "/cleanunitframes"
-SlashCmdList["CLEANUNITFRAMES"] = placeFrames
+local positionEntry = CreateFromMixins(UnitPopupButtonBaseMixin)
+
+function positionEntry:GetText()
+    return "Auto Position"
+end
+
+function positionEntry:OnClick()
+    placeFrames()
+end
+
+function positionEntry:IsEnabled()
+    return not InCombatLockdown()
+end
+
+function positionEntry:CanShow(ctx)
+    return ctx and (ctx.fromPlayerFrame or ctx.fromTargetFrame)
+end
+
+local function injectPositionEntry(menuObject)
+    local originalGetEntries = menuObject.GetEntries
+    function menuObject:GetEntries()
+        local entries = originalGetEntries(self)
+        if type(entries) ~= "table" then
+            return entries
+        end
+        local insertIndex = #entries + 1
+        for index, entry in ipairs(entries) do
+            if entry == UnitPopupCancelButtonMixin then
+                insertIndex = index
+                break
+            end
+        end
+        table.insert(entries, insertIndex, positionEntry)
+        return entries
+    end
+end
+
+for _, menuObject in pairs(UnitPopupMenus) do
+    if type(menuObject) == "table" and type(menuObject.GetEntries) == "function" then
+        injectPositionEntry(menuObject)
+    end
+end

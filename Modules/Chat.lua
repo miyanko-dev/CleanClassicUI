@@ -2,8 +2,6 @@ local SPACING = NewNativeUI.SPACING
 local BLOCK_GAP = SPACING.XS
 local SCREEN_MARGIN = SPACING.MD
 local TAB_FONT_SIZE = 14
-local TAB_HEIGHT = 22
-local TAB_PADDING_X = SPACING.SM
 
 local TAB_TEXTURE_SUFFIXES = {
     "Left", "Middle", "Right",
@@ -26,14 +24,6 @@ local function stripChatFrameTextures(chatFrame)
     end
 end
 
-local function sizeTab(tab)
-    if not tab then return end
-    local text = _G[tab:GetName() .. "Text"]
-    if not text then return end
-    tab:SetHeight(TAB_HEIGHT)
-    tab:SetWidth(math.ceil(text:GetStringWidth()) + TAB_PADDING_X * 2)
-end
-
 local function styleTab(tab)
     if not tab or tab.cleanStyled then return end
     local name = tab:GetName()
@@ -45,11 +35,11 @@ local function styleTab(tab)
     if text then
         local font = text:GetFont()
         text:SetFont(font, TAB_FONT_SIZE, "OUTLINE")
-        -- Blizzard's ChatTabTemplate anchors text at CENTER with y=-5; re-center it.
-        text:ClearAllPoints()
-        text:SetPoint("CENTER", tab, "CENTER", 0, 0)
     end
-    sizeTab(tab)
+
+    local convoIcon = tab.conversationIcon or _G[name .. "ConversationIcon"]
+    if convoIcon then convoIcon:Hide() end
+
     tab:HookScript("OnClick", function(self)
         if IsShiftKeyDown() then
             local chatFrame = _G["ChatFrame" .. self:GetID()]
@@ -106,23 +96,6 @@ local function positionChatFrame(chatFrame, editBox)
     chatFrame:SetUserPlaced(true)
 end
 
-local function layoutTabs()
-    local prev = nil
-    for i = 1, NUM_CHAT_WINDOWS do
-        local tab = _G["ChatFrame" .. i .. "Tab"]
-        if tab and tab:IsShown() then
-            sizeTab(tab)
-            tab:ClearAllPoints()
-            if prev then
-                tab:SetPoint("BOTTOMLEFT", prev, "BOTTOMRIGHT", BLOCK_GAP, 0)
-            else
-                tab:SetPoint("BOTTOMLEFT", ChatFrame1, "TOPLEFT", 0, BLOCK_GAP)
-            end
-            prev = tab
-        end
-    end
-end
-
 local function applyStyle()
     NewNativeUI.HideForever(ChatFrameMenuButton)
     NewNativeUI.HideForever(ChatFrameChannelButton)
@@ -141,8 +114,6 @@ local function applyStyle()
             end
         end
     end
-
-    layoutTabs()
 end
 
 local function enableClassColors()
@@ -165,25 +136,13 @@ NewNativeUI.OnEvent(function()
     enableClassColors()
 end, "PLAYER_ENTERING_WORLD", "UPDATE_FLOATING_CHAT_WINDOWS")
 
-hooksecurefunc("FCF_OpenTemporaryWindow", function()
-    local chatFrame = FCF_GetCurrentChatFrame()
-    if chatFrame then
-        NewNativeUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
-        stripChatFrameTextures(chatFrame)
-        styleTab(_G[chatFrame:GetName() .. "Tab"])
-        styleEditBox(chatFrame, _G[chatFrame:GetName() .. "EditBox"])
-    end
-    layoutTabs()
-end)
-
-if FCFDock_UpdateTabs then
-    hooksecurefunc("FCFDock_UpdateTabs", layoutTabs)
-end
-
-hooksecurefunc("FCF_SetWindowName", function(chatFrame)
-    if chatFrame then
-        sizeTab(_G[chatFrame:GetName() .. "Tab"])
-    end
+-- FCF_SetTemporaryWindowType receives the new chatFrame as its first argument, so we can style brand-new temp tabs (ChatFrameNTab where N > NUM_CHAT_WINDOWS) directly.
+hooksecurefunc("FCF_SetTemporaryWindowType", function(chatFrame)
+    if not chatFrame then return end
+    NewNativeUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
+    stripChatFrameTextures(chatFrame)
+    styleTab(_G[chatFrame:GetName() .. "Tab"])
+    styleEditBox(chatFrame, _G[chatFrame:GetName() .. "EditBox"])
 end)
 
 hooksecurefunc("ChatEdit_UpdateHeader", function(editBox)
@@ -204,13 +163,25 @@ hooksecurefunc("ChatEdit_UpdateHeader", function(editBox)
     end
 end)
 
+local isMacClient = IsMacClient and IsMacClient()
+
+local function isInviteModifierDown()
+    if isMacClient then return IsMetaKeyDown() end
+    return IsAltKeyDown()
+end
+
 local _origHyperlinkShow = ChatFrame_OnHyperlinkShow
 ChatFrame_OnHyperlinkShow = function(self, link, text, button)
-    if button == "LeftButton" and IsControlKeyDown() then
+    if button == "LeftButton" then
         local name = link:match("^player:([^:]+)")
         if name and name ~= "" then
-            FCF_OpenTemporaryWindow("WHISPER", name, self, true)
-            return
+            if IsControlKeyDown() then
+                FCF_OpenTemporaryWindow("WHISPER", name, self, true)
+                return
+            elseif isInviteModifierDown() then
+                InviteUnit(name)
+                return
+            end
         end
     end
     return _origHyperlinkShow(self, link, text, button)
