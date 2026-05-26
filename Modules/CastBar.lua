@@ -1,25 +1,53 @@
 local BAR_H = 20
+local TEXT_PADDING = 6
+local FADE_WIDTH = 24
 
 local HIDDEN = { "Border", "BorderShield", "Spark", "Flash", "Icon" }
 
 local isApplying = false
 local isPending = false
 
+local function updateTextLayout()
+    local text = CastingBarFrame.Text
+    if not text then return end
+    local barW = CastingBarFrame:GetWidth()
+    if not barW or barW <= 0 then return end
+    local usable = barW - 2 * TEXT_PADDING
+    if usable <= 0 then return end
+    local textW = text.GetUnboundedStringWidth and text:GetUnboundedStringWidth() or text:GetStringWidth()
+    text:ClearAllPoints()
+    if textW > usable then
+        text:SetPoint("LEFT", CastingBarFrame, "LEFT", TEXT_PADDING, 0)
+        text:SetJustifyH("LEFT")
+        if text.SetAlphaGradient and usable > FADE_WIDTH then
+            text:SetAlphaGradient(usable - FADE_WIDTH, FADE_WIDTH)
+        end
+    else
+        text:SetPoint("CENTER", CastingBarFrame, "CENTER", 0, 0)
+        text:SetJustifyH("CENTER")
+        if text.ClearAlphaGradient then
+            text:ClearAlphaGradient()
+        end
+    end
+end
+
 local function applyAnchor()
     isPending = false
-    if isApplying then return end
-    local leftBtn = MultiBarBottomLeftButton5
-    local rightBtn = MultiBarBottomLeftButton8
-    if not (leftBtn and rightBtn) then return end
-    local layout = NewNativeUILayout
-    local yOffset = layout and layout.castbarYOffsetAboveAB2 and layout.castbarYOffsetAboveAB2()
-    if not yOffset then return end
-    isApplying = true
-    CastingBarFrame:ClearAllPoints()
-    CastingBarFrame:SetPoint("BOTTOMLEFT", leftBtn, "TOPLEFT", 0, yOffset)
-    CastingBarFrame:SetPoint("BOTTOMRIGHT", rightBtn, "TOPRIGHT", 0, yOffset)
-    CastingBarFrame:SetHeight(BAR_H)
-    isApplying = false
+    if not isApplying then
+        local leftBtn = MultiBarBottomLeftButton5
+        local rightBtn = MultiBarBottomLeftButton8
+        local layout = NewNativeUILayout
+        local yOffset = layout and layout.castbarYOffsetAboveAB2 and layout.castbarYOffsetAboveAB2()
+        if leftBtn and rightBtn and yOffset then
+            isApplying = true
+            CastingBarFrame:ClearAllPoints()
+            CastingBarFrame:SetPoint("BOTTOMLEFT", leftBtn, "TOPLEFT", 0, yOffset)
+            CastingBarFrame:SetPoint("BOTTOMRIGHT", rightBtn, "TOPRIGHT", 0, yOffset)
+            CastingBarFrame:SetHeight(BAR_H)
+            isApplying = false
+        end
+    end
+    updateTextLayout()
 end
 
 local function scheduleAnchor()
@@ -41,8 +69,8 @@ local function styleCastBar()
     end
 
     if CastingBarFrame.Text then
-        CastingBarFrame.Text:ClearAllPoints()
-        CastingBarFrame.Text:SetPoint("CENTER")
+        CastingBarFrame.Text:SetWordWrap(false)
+        CastingBarFrame.Text:SetNonSpaceWrap(false)
     end
 
     NewNativeUI.ApplyBorder(CastingBarFrame)
