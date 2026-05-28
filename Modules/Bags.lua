@@ -1,13 +1,13 @@
-local SPACING = NewNativeUI.SPACING
-local BORDER = NewNativeUI.BORDER
-local BTN_SIZE = NewNativeUI.BTN_SIZE
+local SPACING = CleanClassicUI.SPACING
+local BORDER = CleanClassicUI.BORDER
+local BTN_SIZE = CleanClassicUI.BTN_SIZE
 
 local BAG_BTN_GAP = 6
-local BAR_SCALE = (NewNativeUILayout and NewNativeUILayout.bar3Scale) or 0.8
+local BAR_SCALE = (CleanClassicUILayout and CleanClassicUILayout.bar3Scale) or 0.8
 local CONTAINER_GAP = SPACING.XS
 
-NewNativeUILayout = NewNativeUILayout or {}
-NewNativeUILayout.bagScale = BAR_SCALE
+CleanClassicUILayout = CleanClassicUILayout or {}
+CleanClassicUILayout.bagScale = BAR_SCALE
 
 local BAG_BTNS = {
     "MainMenuBarBackpackButton",
@@ -19,7 +19,7 @@ local BAG_BTNS = {
 }
 
 -- Scale the row by scaling this container; individual buttons inherit through reparenting.
-local bagContainer = CreateFrame("Frame", "NewNativeUIBagContainer", UIParent)
+local bagContainer = CreateFrame("Frame", "CleanClassicUIBagContainer", UIParent)
 bagContainer:SetSize(BTN_SIZE, BTN_SIZE)
 bagContainer:SetScale(BAR_SCALE)
 
@@ -53,7 +53,7 @@ local function styleBtn(btn)
         icon:SetAllPoints(btn)
         icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
     end
-    NewNativeUI.ApplyBorder(btn)
+    CleanClassicUI.ApplyBorder(btn)
 end
 
 local function arrangeBtns()
@@ -105,7 +105,7 @@ end
 
 hooksecurefunc("UpdateContainerFrameAnchors", arrangeContainers)
 
-NewNativeUI.OnEvent(function(_, event)
+CleanClassicUI.OnEvent(function(_, event)
     if event == "BANKFRAME_OPENED" then
         for id = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do OpenBag(id) end
     else
@@ -113,5 +113,5 @@ NewNativeUI.OnEvent(function(_, event)
     end
 end, "BANKFRAME_OPENED", "BANKFRAME_CLOSED")
 
-NewNativeUI.OnEvent(arrangeBtns,
+CleanClassicUI.OnEvent(arrangeBtns,
     "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")

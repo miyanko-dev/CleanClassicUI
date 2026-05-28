@@ -1,5 +1,5 @@
-local SPACING = NewNativeUI.SPACING
-local C = NewNativeUI.COLOR
+local SPACING = CleanClassicUI.SPACING
+local C = CleanClassicUI.COLOR
 
 local BUFF_GAP = 40
 local DEBUFF_GAP = 40
@@ -17,7 +17,7 @@ local DEBUFF_COLORS = {
 
 local function styleAura(btn, color)
     if not btn then return end
-    local border = NewNativeUI.ApplyBorder(btn)
+    local border = CleanClassicUI.ApplyBorder(btn)
     if border then border:SetBackdropBorderColor(unpack(color)) end
     local icon = _G[btn:GetName() .. "Icon"]
     if icon then icon:SetTexCoord(0.05, 0.95, 0.05, 0.95) end
@@ -74,7 +74,7 @@ end
 
 hooksecurefunc("BuffFrame_UpdateAllBuffAnchors", arrangeAuras)
 
-NewNativeUI.OnEvent(function(_, _, unit)
+CleanClassicUI.OnEvent(function(_, _, unit)
     if unit and unit ~= "player" then return end
     arrangeAuras()
 end, "PLAYER_ENTERING_WORLD", "UNIT_AURA")

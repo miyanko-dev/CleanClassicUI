@@ -1,4 +1,4 @@
-# NewNativeUI
+# CleanClassicUI
 
 Minimalist UI addon for World of Warcraft Classic Era (1.15.x).
 

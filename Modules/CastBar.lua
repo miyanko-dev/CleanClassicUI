@@ -36,7 +36,7 @@ local function applyAnchor()
     if not isApplying then
         local leftBtn = MultiBarBottomLeftButton5
         local rightBtn = MultiBarBottomLeftButton8
-        local layout = NewNativeUILayout
+        local layout = CleanClassicUILayout
         local yOffset = layout and layout.castbarYOffsetAboveAB2 and layout.castbarYOffsetAboveAB2()
         if leftBtn and rightBtn and yOffset then
             isApplying = true
@@ -58,7 +58,7 @@ end
 
 local function styleCastBar()
     CastingBarFrame:SetHeight(BAR_H)
-    CastingBarFrame:SetStatusBarTexture(NewNativeUI.BAR_TEXTURE)
+    CastingBarFrame:SetStatusBarTexture(CleanClassicUI.BAR_TEXTURE)
 
     for _, key in ipairs(HIDDEN) do
         local region = CastingBarFrame[key]
@@ -73,12 +73,12 @@ local function styleCastBar()
         CastingBarFrame.Text:SetNonSpaceWrap(false)
     end
 
-    NewNativeUI.ApplyBorder(CastingBarFrame)
+    CleanClassicUI.ApplyBorder(CastingBarFrame)
 end
 
 local isStyled = false
 
-local events = NewNativeUI.OnEvent(function()
+local events = CleanClassicUI.OnEvent(function()
     if not isStyled then
         styleCastBar()
         isStyled = true
@@ -95,9 +95,9 @@ CastingBarFrame.ignoreFramePositionManager = true
 
 hooksecurefunc(CastingBarFrame, "SetPoint", scheduleAnchor)
 
-NewNativeUILayout = NewNativeUILayout or {}
-NewNativeUILayout.afterLayout = NewNativeUILayout.afterLayout or {}
-table.insert(NewNativeUILayout.afterLayout, scheduleAnchor)
+CleanClassicUILayout = CleanClassicUILayout or {}
+CleanClassicUILayout.afterLayout = CleanClassicUILayout.afterLayout or {}
+table.insert(CleanClassicUILayout.afterLayout, scheduleAnchor)
 
 hooksecurefunc("CastingBarFrame_FinishSpell", function(bar)
     if bar == CastingBarFrame then

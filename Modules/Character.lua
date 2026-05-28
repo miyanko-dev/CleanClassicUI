@@ -53,7 +53,7 @@ local function updateText()
     pendingRetry = pending
 end
 
-NewNativeUI.OnEvent(function(_, event)
+CleanClassicUI.OnEvent(function(_, event)
     if event == "PLAYER_LOGIN" then
         createText()
         shiftLevelText()

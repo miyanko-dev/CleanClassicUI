@@ -1,6 +1,6 @@
-local SPACING = NewNativeUI.SPACING
-local BORDER = NewNativeUI.BORDER
-local BTN_SIZE = NewNativeUI.BTN_SIZE
+local SPACING = CleanClassicUI.SPACING
+local BORDER = CleanClassicUI.BORDER
+local BTN_SIZE = CleanClassicUI.BTN_SIZE
 
 local MARGIN = SPACING.LG
 local BAR_GAP = SPACING.MD
@@ -44,10 +44,10 @@ local BAR_PREFIXES = {
     "MultiBarLeftButton",
 }
 
-NewNativeUILayout = NewNativeUILayout or {}
-NewNativeUILayout.bar3Scale = BAR3_SCALE
-NewNativeUILayout.btnSize = BTN_SIZE
-NewNativeUILayout.afterLayout = NewNativeUILayout.afterLayout or {}
+CleanClassicUILayout = CleanClassicUILayout or {}
+CleanClassicUILayout.bar3Scale = BAR3_SCALE
+CleanClassicUILayout.btnSize = BTN_SIZE
+CleanClassicUILayout.afterLayout = CleanClassicUILayout.afterLayout or {}
 
 -- Visible width of the XP/rep stack, sized to match action bar 3's visible button row.
 local function xpRepWidth()
@@ -79,7 +79,7 @@ local function styleBtn(btn)
     if float then float:SetAlpha(0) end
     local icon = _G[name .. "Icon"]
     if icon then icon:SetTexCoord(0.1, 0.9, 0.1, 0.9) end
-    NewNativeUI.ApplyBorder(btn)
+    CleanClassicUI.ApplyBorder(btn)
     syncBorder(btn)
 end
 
@@ -176,13 +176,13 @@ local function hideChrome()
     MainMenuBarMaxLevelBar:Hide()
     MainMenuBarOverlayFrame:Hide()
     if MainMenuBarTextureExtender then MainMenuBarTextureExtender:Hide() end
-    NewNativeUI.HideForever(MainMenuBarPerformanceBarFrame)
+    CleanClassicUI.HideForever(MainMenuBarPerformanceBarFrame)
     for i = 0, 3 do
         if _G["MainMenuBarTexture" .. i] then _G["MainMenuBarTexture" .. i]:Hide() end
         if _G["MainMenuMaxLevelBar" .. i] then _G["MainMenuMaxLevelBar" .. i]:Hide() end
     end
     for i = 0, 1 do
-        NewNativeUI.HideForever(_G["SlidingActionBarTexture" .. i])
+        CleanClassicUI.HideForever(_G["SlidingActionBarTexture" .. i])
     end
 end
 
@@ -209,7 +209,7 @@ local function styleAllButtons()
             end
             local icon = _G[btn:GetName() .. "Icon"]
             if icon then icon:SetTexCoord(0.1, 0.9, 0.1, 0.9) end
-            NewNativeUI.ApplyBorder(btn)
+            CleanClassicUI.ApplyBorder(btn)
         end
     end
 end
@@ -286,7 +286,7 @@ end
 -- Returns the Y delta (screen px) from AB2 visible top to where CastingBarFrame.BOTTOM
 -- should land, so the cast bar sits OUTER_BAR_GAP above the topmost visible bottom-bar
 -- element (stance if shown, else pet if shown, else AB2 itself).
-NewNativeUILayout.castbarYOffsetAboveAB2 = function()
+CleanClassicUILayout.castbarYOffsetAboveAB2 = function()
     if not petStanceBase then return OUTER_BAR_GAP end
     local topAboveAB2 = 0
     if isPetVisible() then
@@ -325,21 +325,21 @@ local function runLayout()
     syncAllBorders()
     placePet()
     placeStance()
-    for _, cb in ipairs(NewNativeUILayout.afterLayout) do cb() end
+    for _, cb in ipairs(CleanClassicUILayout.afterLayout) do cb() end
 end
 
 -- Blizzard runs MultiActionBar_Update whenever bars 4 or 5 are toggled on/off.
 if MultiActionBar_Update then hooksecurefunc("MultiActionBar_Update", placeVerticalBars) end
 
-NewNativeUILayout.scheduleLayout = runLayout
-NewNativeUILayout.relayout = runLayout
+CleanClassicUILayout.scheduleLayout = runLayout
+CleanClassicUILayout.relayout = runLayout
 
 -- Events from Gethe/wow-ui-source classic_era:
 --   PetActionBar.lua/PetActionBar_OnEvent drives Show/HidePetActionBar on
 --     PET_BAR_UPDATE, UNIT_PET (arg1=="player"), PET_UI_UPDATE,
 --     UPDATE_VEHICLE_ACTIONBAR. PLAYER_MOUNT_DISPLAY_CHANGED also registered.
 --   StanceBar reacts to UPDATE_SHAPESHIFT_FORM(S).
-NewNativeUI.OnEvent(function(self, event, arg1)
+CleanClassicUI.OnEvent(function(self, event, arg1)
     if event == "PLAYER_ENTERING_WORLD" then
         runLayout()
     elseif event == "UNIT_PET" then

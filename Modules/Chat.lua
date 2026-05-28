@@ -1,4 +1,4 @@
-local SPACING = NewNativeUI.SPACING
+local SPACING = CleanClassicUI.SPACING
 local BLOCK_GAP = SPACING.XS
 local SCREEN_MARGIN = SPACING.MD
 local TAB_FONT_SIZE = 14
@@ -97,15 +97,15 @@ local function positionChatFrame(chatFrame, editBox)
 end
 
 local function applyStyle()
-    NewNativeUI.HideForever(ChatFrameMenuButton)
-    NewNativeUI.HideForever(ChatFrameChannelButton)
+    CleanClassicUI.HideForever(ChatFrameMenuButton)
+    CleanClassicUI.HideForever(ChatFrameChannelButton)
 
     for i = 1, NUM_CHAT_WINDOWS do
         local chatFrame = _G["ChatFrame" .. i]
         if chatFrame then
             local editBox = _G[chatFrame:GetName() .. "EditBox"]
             local tab = _G[chatFrame:GetName() .. "Tab"]
-            NewNativeUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
+            CleanClassicUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
             stripChatFrameTextures(chatFrame)
             styleTab(tab)
             styleEditBox(chatFrame, editBox)
@@ -131,7 +131,7 @@ local function enableClassColors()
     end
 end
 
-NewNativeUI.OnEvent(function()
+CleanClassicUI.OnEvent(function()
     applyStyle()
     enableClassColors()
 end, "PLAYER_ENTERING_WORLD", "UPDATE_FLOATING_CHAT_WINDOWS")
@@ -139,7 +139,7 @@ end, "PLAYER_ENTERING_WORLD", "UPDATE_FLOATING_CHAT_WINDOWS")
 -- FCF_SetTemporaryWindowType receives the new chatFrame as its first argument, so we can style brand-new temp tabs (ChatFrameNTab where N > NUM_CHAT_WINDOWS) directly.
 hooksecurefunc("FCF_SetTemporaryWindowType", function(chatFrame)
     if not chatFrame then return end
-    NewNativeUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
+    CleanClassicUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
     stripChatFrameTextures(chatFrame)
     styleTab(_G[chatFrame:GetName() .. "Tab"])
     styleEditBox(chatFrame, _G[chatFrame:GetName() .. "EditBox"])

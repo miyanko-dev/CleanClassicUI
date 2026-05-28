@@ -13,7 +13,7 @@ hooksecurefunc("GameTooltip_SetDefaultAnchor", function(tooltip)
     tooltip:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", anchorX + 4, anchorY - 4)
 end)
 
-NewNativeUI.HideForever(GameTooltipStatusBar)
+CleanClassicUI.HideForever(GameTooltipStatusBar)
 
 local function appendItemLevel(tooltip)
     local _, link = tooltip:GetItem()
