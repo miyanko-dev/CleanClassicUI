@@ -1,3 +1,17 @@
+local DB_KEY = "framePositions"
+
+local function getStore()
+    CleanClassicUIDB = CleanClassicUIDB or {}
+    CleanClassicUIDB[DB_KEY] = CleanClassicUIDB[DB_KEY] or {}
+    return CleanClassicUIDB[DB_KEY]
+end
+
+local function applyPosition(frame, pos)
+    if not (frame and pos) then return end
+    frame:ClearAllPoints()
+    frame:SetPoint(pos.point, UIParent, pos.relativePoint, pos.x, pos.y)
+end
+
 local function placeFrames()
     if InCombatLockdown() then
         print("|cffffff00[CleanClassicUI]:|r Unit frames can't be moved during combat.")
@@ -8,7 +22,11 @@ local function placeFrames()
         return
     end
 
-    local castBottom = CastingBarFrame:GetBottom()
+    -- Use the virtual cast-bottom (assumes a stance/pet bar row above AB2) so the
+    -- frames sit at the same peripheral-vision height for every class.
+    local layout = CleanClassicUILayout
+    local castBottom = (layout and layout.castBottomWithStanceOrPet and layout.castBottomWithStanceOrPet())
+        or CastingBarFrame:GetBottom()
     local btn1Left = ActionButton1:GetLeft()
     local btn12Right = ActionButton12:GetRight()
     local pPortraitBottom = PlayerPortrait and PlayerPortrait:GetBottom()
@@ -25,15 +43,18 @@ local function placeFrames()
     local pOffset = pPortraitBottom - pFrameBottom
     local tOffset = tPortraitBottom - tFrameBottom
 
-    PlayerFrame:SetMovable(true)
-    PlayerFrame:SetUserPlaced(true)
-    PlayerFrame:ClearAllPoints()
-    PlayerFrame:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMLEFT", btn1Left, castBottom - pOffset)
+    local store = getStore()
+    store.PlayerFrame = {
+        point = "BOTTOMRIGHT", relativePoint = "BOTTOMLEFT",
+        x = btn1Left, y = castBottom - pOffset,
+    }
+    store.TargetFrame = {
+        point = "BOTTOMLEFT", relativePoint = "BOTTOMLEFT",
+        x = btn12Right, y = castBottom - tOffset,
+    }
 
-    TargetFrame:SetMovable(true)
-    TargetFrame:SetUserPlaced(true)
-    TargetFrame:ClearAllPoints()
-    TargetFrame:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", btn12Right, castBottom - tOffset)
+    applyPosition(PlayerFrame, store.PlayerFrame)
+    applyPosition(TargetFrame, store.TargetFrame)
 end
 
 local positionEntry = CreateFromMixins(UnitPopupButtonBaseMixin)
@@ -61,14 +82,17 @@ local function injectPositionEntry(menuObject)
         if type(entries) ~= "table" then
             return entries
         end
-        local insertIndex = #entries + 1
+        local afterMoveIndex
         for index, entry in ipairs(entries) do
-            if entry == UnitPopupCancelButtonMixin then
-                insertIndex = index
-                break
+            if entry == UnitPopupMovePlayerFrameButtonMixin
+                or entry == UnitPopupMoveTargetFrameButtonMixin then
+                afterMoveIndex = index + 1
             end
         end
-        table.insert(entries, insertIndex, positionEntry)
+        if not afterMoveIndex then
+            return entries
+        end
+        table.insert(entries, afterMoveIndex, positionEntry)
         return entries
     end
 end
@@ -78,3 +102,12 @@ for _, menuObject in pairs(UnitPopupMenus) do
         injectPositionEntry(menuObject)
     end
 end
+
+local restoreFrame = CreateFrame("Frame")
+restoreFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+restoreFrame:SetScript("OnEvent", function()
+    if InCombatLockdown() then return end
+    local store = getStore()
+    applyPosition(PlayerFrame, store.PlayerFrame)
+    applyPosition(TargetFrame, store.TargetFrame)
+end)

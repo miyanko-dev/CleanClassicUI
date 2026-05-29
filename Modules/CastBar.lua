@@ -1,11 +1,28 @@
 local BAR_H = 20
 local TEXT_PADDING = 6
-local FADE_WIDTH = 24
+local ELLIPSIS = "..."
 
 local HIDDEN = { "Border", "BorderShield", "Spark", "Flash", "Icon" }
 
 local isApplying = false
 local isPending = false
+
+-- Shorten text and append "..." until it fits within maxWidth.
+local function truncateToWidth(text, full, maxWidth)
+    text:SetText(full)
+    if text:GetStringWidth() <= maxWidth then return end
+    local lo, hi = 0, #full
+    while lo < hi do
+        local mid = math.floor((lo + hi + 1) / 2)
+        text:SetText(string.sub(full, 1, mid) .. ELLIPSIS)
+        if text:GetStringWidth() <= maxWidth then
+            lo = mid
+        else
+            hi = mid - 1
+        end
+    end
+    text:SetText(string.sub(full, 1, lo) .. ELLIPSIS)
+end
 
 local function updateTextLayout()
     local text = CastingBarFrame.Text
@@ -14,21 +31,11 @@ local function updateTextLayout()
     if not barW or barW <= 0 then return end
     local usable = barW - 2 * TEXT_PADDING
     if usable <= 0 then return end
-    local textW = text.GetUnboundedStringWidth and text:GetUnboundedStringWidth() or text:GetStringWidth()
+    local full = text:GetText() or ""
+    truncateToWidth(text, full, usable)
     text:ClearAllPoints()
-    if textW > usable then
-        text:SetPoint("LEFT", CastingBarFrame, "LEFT", TEXT_PADDING, 0)
-        text:SetJustifyH("LEFT")
-        if text.SetAlphaGradient and usable > FADE_WIDTH then
-            text:SetAlphaGradient(usable - FADE_WIDTH, FADE_WIDTH)
-        end
-    else
-        text:SetPoint("CENTER", CastingBarFrame, "CENTER", 0, 0)
-        text:SetJustifyH("CENTER")
-        if text.ClearAlphaGradient then
-            text:ClearAlphaGradient()
-        end
-    end
+    text:SetPoint("CENTER", CastingBarFrame, "CENTER", 0, 0)
+    text:SetJustifyH("CENTER")
 end
 
 local function applyAnchor()

@@ -299,6 +299,14 @@ CleanClassicUILayout.castbarYOffsetAboveAB2 = function()
     return topAboveAB2 + OUTER_BAR_GAP
 end
 
+-- Screen-Y where CastingBarFrame.BOTTOM would land if a stance bar row sat above
+-- AB2, regardless of current class/state. Used by Auto Position so unit frames
+-- adopt the higher peripheral-vision position even when no pet/stance bar exists.
+CleanClassicUILayout.castBottomWithStanceOrPet = function()
+    if not petStanceBase then return nil end
+    return petStanceBase + INNER_BAR_GAP + STANCE_BTN_SIZE + OUTER_BAR_GAP
+end
+
 hooksecurefunc("ActionButton_OnUpdate", function(self)
     if not self or not self.action then return end
     local usable = IsUsableAction(self.action)
