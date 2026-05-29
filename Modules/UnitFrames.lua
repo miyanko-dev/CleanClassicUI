@@ -6,10 +6,23 @@ local function getStore()
     return CleanClassicUIDB[DB_KEY]
 end
 
+-- Reposition from inside the restricted environment: an insecure SetPoint on
+-- TargetFrame taints it, which blocks Blizzard's TargetofTarget_Update ->
+-- TargetFrameToT:Show() in combat and breaks the target-of-target frame.
+local secureMover = CreateFrame("Frame", "CleanClassicUISecureMover", UIParent, "SecureHandlerBaseTemplate")
+secureMover:SetFrameRef("anchor", UIParent)
+
 local function applyPosition(frame, pos)
-    if not (frame and pos) then return end
-    frame:ClearAllPoints()
-    frame:SetPoint(pos.point, UIParent, pos.relativePoint, pos.x, pos.y)
+    if not (frame and pos and pos.point and pos.relativePoint and pos.x and pos.y) then return end
+    if InCombatLockdown() then return end
+
+    secureMover:SetFrameRef("target", frame)
+    secureMover:Execute(([[
+        local target = self:GetFrameRef("target")
+        local anchor = self:GetFrameRef("anchor")
+        target:ClearAllPoints()
+        target:SetPoint("%s", anchor, "%s", %d, %d)
+    ]]):format(pos.point, pos.relativePoint, math.floor(pos.x + 0.5), math.floor(pos.y + 0.5)))
 end
 
 local function placeFrames()
