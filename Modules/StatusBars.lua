@@ -2,19 +2,22 @@ local BG_TEXTURE = "Interface/Buttons/WHITE8x8"
 
 local function addBg(bar)
     if not bar or bar.cleanBg then return end
-    local bg = CreateFrame("Frame", nil, bar)
+    local bg  = CreateFrame("Frame", nil, bar)
     bg:SetAllPoints()
     bg:SetFrameLevel(math.max(0, bar:GetFrameLevel() - 1))
+
     local tex = bg:CreateTexture(nil, "BACKGROUND")
     tex:SetAllPoints()
     tex:SetTexture(BG_TEXTURE)
     tex:SetVertexColor(0, 0, 0, 0.4)
+
     bar.cleanBg = bg
 end
 
 local function stripTextures(bar)
     if not bar then return end
     bar:SetStatusBarTexture(CleanClassicUI.BAR_TEXTURE)
+
     local fill = bar:GetStatusBarTexture()
     for i = 1, bar:GetNumRegions() do
         local region = select(i, bar:GetRegions())
@@ -42,21 +45,26 @@ local function addXPTooltip(bar)
     bar.cleanTip = true
 end
 
-local function applyStyle()
-    if MainMenuExpBar then
-        addBg(MainMenuExpBar)
-        stripTextures(MainMenuExpBar)
-        addXPTooltip(MainMenuExpBar)
-        CleanClassicUI.ApplyBorder(MainMenuExpBar)
-        CleanClassicUI.HideForever(ExhaustionTick)
-        if ExhaustionLevelFillBar then ExhaustionLevelFillBar:Hide() end
-    end
+local function styleXPBar()
+    if not MainMenuExpBar then return end
+    addBg(MainMenuExpBar)
+    stripTextures(MainMenuExpBar)
+    addXPTooltip(MainMenuExpBar)
+    CleanClassicUI.ApplyBorder(MainMenuExpBar)
+    CleanClassicUI.HideForever(ExhaustionTick)
+    if ExhaustionLevelFillBar then ExhaustionLevelFillBar:Hide() end
+end
 
-    if ReputationWatchStatusBar then
-        addBg(ReputationWatchStatusBar)
-        stripTextures(ReputationWatchStatusBar)
-        CleanClassicUI.ApplyBorder(ReputationWatchStatusBar)
-    end
+local function styleRepBar()
+    if not ReputationWatchStatusBar then return end
+    addBg(ReputationWatchStatusBar)
+    stripTextures(ReputationWatchStatusBar)
+    CleanClassicUI.ApplyBorder(ReputationWatchStatusBar)
+end
+
+local function applyStyle()
+    styleXPBar()
+    styleRepBar()
 end
 
 CleanClassicUI.OnEvent(function()

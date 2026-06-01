@@ -1,13 +1,13 @@
-local BAR_H = 20
+local BAR_H       = 20
 local TEXT_PADDING = 6
-local ELLIPSIS = "..."
+local ELLIPSIS    = "..."
 
 local HIDDEN = { "Border", "BorderShield", "Spark", "Flash", "Icon" }
 
 local isApplying = false
-local isPending = false
+local isPending  = false
 
--- Shorten text and append "..." until it fits within maxWidth.
+-- Binary-search the longest prefix that fits, then append "...".
 local function truncateToWidth(text, full, maxWidth)
     text:SetText(full)
     if text:GetStringWidth() <= maxWidth then return end
@@ -31,8 +31,7 @@ local function updateTextLayout()
     if not barW or barW <= 0 then return end
     local usable = barW - 2 * TEXT_PADDING
     if usable <= 0 then return end
-    local full = text:GetText() or ""
-    truncateToWidth(text, full, usable)
+    truncateToWidth(text, text:GetText() or "", usable)
     text:ClearAllPoints()
     text:SetPoint("CENTER", CastingBarFrame, "CENTER", 0, 0)
     text:SetJustifyH("CENTER")
@@ -41,14 +40,14 @@ end
 local function applyAnchor()
     isPending = false
     if not isApplying then
-        local leftBtn = MultiBarBottomLeftButton5
+        local leftBtn  = MultiBarBottomLeftButton5
         local rightBtn = MultiBarBottomLeftButton8
-        local layout = CleanClassicUILayout
-        local yOffset = layout and layout.castbarYOffsetAboveAB2 and layout.castbarYOffsetAboveAB2()
+        local layout   = CleanClassicUILayout
+        local yOffset  = layout and layout.castbarYOffsetAboveAB2 and layout.castbarYOffsetAboveAB2()
         if leftBtn and rightBtn and yOffset then
             isApplying = true
             CastingBarFrame:ClearAllPoints()
-            CastingBarFrame:SetPoint("BOTTOMLEFT", leftBtn, "TOPLEFT", 0, yOffset)
+            CastingBarFrame:SetPoint("BOTTOMLEFT",  leftBtn,  "TOPLEFT",  0, yOffset)
             CastingBarFrame:SetPoint("BOTTOMRIGHT", rightBtn, "TOPRIGHT", 0, yOffset)
             CastingBarFrame:SetHeight(BAR_H)
             isApplying = false
@@ -95,7 +94,7 @@ end,
 "PLAYER_ENTERING_WORLD", "PET_BAR_UPDATE", "UNIT_PET", "UPDATE_SHAPESHIFT_FORM",
 "UPDATE_BONUS_ACTIONBAR", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")
 
-events:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
+events:RegisterUnitEvent("UNIT_SPELLCAST_START",         "player")
 events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "player")
 
 CastingBarFrame.ignoreFramePositionManager = true
@@ -108,7 +107,7 @@ table.insert(CleanClassicUILayout.afterLayout, scheduleAnchor)
 
 hooksecurefunc("CastingBarFrame_FinishSpell", function(bar)
     if bar == CastingBarFrame then
-        bar.flash = nil
+        bar.flash   = nil
         bar.fadeOut = nil
         bar:Hide()
     end

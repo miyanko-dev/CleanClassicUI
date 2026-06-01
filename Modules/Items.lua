@@ -1,6 +1,6 @@
 local QUALITY_COLORS = ITEM_QUALITY_COLORS
 local BORDER_TEXTURE = [[Interface\Common\WhiteIconFrame]]
-local QUEST_COLOR = CleanClassicUI.COLOR.YELLOW
+local QUEST_COLOR    = CleanClassicUI.COLOR.YELLOW
 
 -- Skip Poor and Common to keep grey and white items uncluttered.
 local MIN_QUALITY = 2
@@ -40,7 +40,7 @@ end)
 -- Quest items in bags: override the quality color with quest yellow.
 hooksecurefunc("ContainerFrame_Update", function(frame)
     local bagID = frame:GetID()
-    local name = frame:GetName()
+    local name  = frame:GetName()
     for i = 1, frame.size do
         local btn = _G[name .. "Item" .. i]
         if btn then

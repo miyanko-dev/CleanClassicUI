@@ -47,11 +47,11 @@ function CleanClassicUI.HideForever(frame)
     frame:SetScript("OnShow", frame.Hide)
 end
 
-function CleanClassicUI.OnEvent(handler, ...)
+function CleanClassicUI.OnEvent(callback, ...)
     local frame = CreateFrame("Frame")
     for i = 1, select("#", ...) do
         frame:RegisterEvent((select(i, ...)))
     end
-    frame:SetScript("OnEvent", handler)
+    frame:SetScript("OnEvent", callback)
     return frame
 end

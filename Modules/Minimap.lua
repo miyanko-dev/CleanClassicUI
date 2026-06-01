@@ -6,7 +6,7 @@ local SIZE_DELTA = (MAP_SIZE - DEFAULT_SIZE) / 2
 local CLUSTER_X = (17 - SIZE_DELTA) - MARGIN
 local CLUSTER_Y = (22 - SIZE_DELTA) - MARGIN
 
-local EDGE_SCALE = 1.0
+local EDGE_SCALE  = 1.0
 local EDGE_RADIUS = (MAP_SIZE / 2) / EDGE_SCALE
 
 local HIDDEN = {
@@ -48,8 +48,8 @@ local function dragUpdate(icon, key)
     local cx, cy = Minimap:GetCenter()
     if not cx then return end
     local mx, my = GetCursorPosition()
-    local scale = Minimap:GetEffectiveScale()
-    local angle = math.deg(math.atan2(my / scale - cy, mx / scale - cx))
+    local scale  = Minimap:GetEffectiveScale()
+    local angle  = math.deg(math.atan2(my / scale - cy, mx / scale - cx))
     CleanClassicUIDB.iconAngles[key] = angle
     placeOnEdge(icon, angle)
 end
@@ -70,8 +70,8 @@ local function setupEdgeIcon(icon, key, defaultAngle)
 end
 
 local function adjustEdgeIcons()
-    setupEdgeIcon(MiniMapTracking, "tracking", 135)
-    setupEdgeIcon(MiniMapMailFrame, "mail", 45)
+    setupEdgeIcon(MiniMapTracking,       "tracking",    135)
+    setupEdgeIcon(MiniMapMailFrame,      "mail",         45)
     setupEdgeIcon(MiniMapBattlefieldFrame, "battlefield", 225)
 end
 
@@ -82,25 +82,30 @@ end)
 
 local function applyMinimap()
     applyLayout()
+
     for _, name in ipairs(HIDDEN) do
         local region = _G[name]
         if region then region:Hide() end
     end
+
     if TimeManagerClockButton then
         TimeManagerClockButton:Show()
         TimeManagerClockButton:SetSize(60, 20)
         TimeManagerClockButton:ClearAllPoints()
         TimeManagerClockButton:SetPoint("TOP", Minimap, "BOTTOM", 0, -12)
         TimeManagerClockButton:SetHitRectInsets(0, 0, 0, 0)
+
         for _, region in pairs({ TimeManagerClockButton:GetRegions() }) do
             if region:IsObjectType("Texture") then
                 region:Hide()
             end
         end
+
         TimeManagerClockTicker:SetFont(TimeManagerClockTicker:GetFont(), 14, "OUTLINE")
         TimeManagerClockTicker:ClearAllPoints()
         TimeManagerClockTicker:SetPoint("CENTER", TimeManagerClockButton, "CENTER", 0, 0)
     end
+
     CleanClassicUIDB = CleanClassicUIDB or {}
     CleanClassicUIDB.iconAngles = CleanClassicUIDB.iconAngles or {}
     adjustEdgeIcons()

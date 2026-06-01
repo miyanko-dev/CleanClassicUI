@@ -1,4 +1,4 @@
-local MARGIN = CleanClassicUI.SPACING.LG
+local MARGIN      = CleanClassicUI.SPACING.LG
 local BTN_OVERLAP = -3
 
 local isActive = false
@@ -16,12 +16,14 @@ end
 -- Move CharacterMicroButton only so the row anchors bottom-right while buttons keep their parent.
 local function reposition()
     if InCombatLockdown() or isActive then return end
+
     local first = CharacterMicroButton
     if not first then return end
 
     local count = shownCount()
     if count == 0 then return end
-    local btnWidth = first:GetWidth() or 28
+
+    local btnWidth   = first:GetWidth() or 28
     local totalWidth = count * btnWidth + (count - 1) * BTN_OVERLAP
 
     isActive = true

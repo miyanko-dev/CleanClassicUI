@@ -1,11 +1,12 @@
 local SPACING = CleanClassicUI.SPACING
 local C = CleanClassicUI.COLOR
 
-local BUFF_GAP = 40
-local DEBUFF_GAP = 40
-local AURA_GAP = SPACING.SM
-local DURATION_Y = -6
+local BUFF_GAP    = 40
+local DEBUFF_GAP  = 40
+local AURA_GAP    = SPACING.SM
+local DURATION_Y  = -6
 
+-- Blizzard reads this global to space buff icons horizontally.
 BUFF_HORIZ_SPACING = -AURA_GAP
 
 local DEBUFF_COLORS = {
@@ -17,12 +18,16 @@ local DEBUFF_COLORS = {
 
 local function styleAura(btn, color)
     if not btn then return end
+
     local border = CleanClassicUI.ApplyBorder(btn)
     if border then border:SetBackdropBorderColor(unpack(color)) end
+
     local icon = _G[btn:GetName() .. "Icon"]
     if icon then icon:SetTexCoord(0.05, 0.95, 0.05, 0.95) end
+
     local nativeBorder = _G[btn:GetName() .. "Border"]
     if nativeBorder then nativeBorder:Hide() end
+
     local duration = _G[btn:GetName() .. "Duration"]
     if duration then
         duration:ClearAllPoints()
@@ -33,6 +38,7 @@ end
 hooksecurefunc("AuraButton_Update", function(name, index, filter)
     local btn = _G[name .. index]
     if not btn then return end
+
     if filter == "HARMFUL" then
         local debuffType = select(5, UnitDebuff("player", index))
         styleAura(btn, DEBUFF_COLORS[debuffType] or C.RED)

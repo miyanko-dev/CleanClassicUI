@@ -18,3 +18,12 @@ Minimalist UI addon for World of Warcraft Classic Era (1.15.x).
 - Scaled-down world map that fades while moving
 - Tooltips anchored above the bag buttons with item level
 - Questie nameplate icon positioning
+- Auto-position the player and target frames via the unit frame right-click menu
+
+## Notes
+
+**Auto Position** (right-click the player or target frame → "Auto Position") snaps the
+frames to a clean spot near the action bars. WoW saves the placement natively, so it
+sticks across sessions. Positioning a protected frame from an addon taints it until the
+next reload, so a reload prompt appears — until you reload, interacting with a unit may
+log a one-time, harmless "action blocked" error. Reloading clears it.

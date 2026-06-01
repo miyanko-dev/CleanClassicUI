@@ -24,9 +24,10 @@ end
 -- Nameplate border needs HIGH strata, so ApplyBorder can't be reused (inherits parent strata).
 local function addBorder(bar, plate)
     if bar.cleanBorder then return end
+
     local border = CreateFrame("Frame", nil, plate, "BackdropTemplate")
-    border:SetPoint("TOPLEFT", bar, "TOPLEFT", -CleanClassicUI.BORDER, CleanClassicUI.BORDER)
-    border:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", CleanClassicUI.BORDER, -CleanClassicUI.BORDER)
+    border:SetPoint("TOPLEFT",     bar, "TOPLEFT",     -CleanClassicUI.BORDER,  CleanClassicUI.BORDER)
+    border:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT",  CleanClassicUI.BORDER, -CleanClassicUI.BORDER)
     border:SetBackdrop({ edgeFile = CleanClassicUI.EDGE_FILE, edgeSize = 12 })
     border:SetBackdropBorderColor(unpack(C.GREY))
     border:SetFrameStrata("HIGH")
@@ -67,6 +68,7 @@ end
 CleanClassicUI.OnEvent(function(_, event, unit)
     local plate = C_NamePlate.GetNamePlateForUnit(unit)
     if not plate then return end
+
     if event == "NAME_PLATE_UNIT_ADDED" then
         stylePlate(plate, unit)
     else
@@ -75,10 +77,10 @@ CleanClassicUI.OnEvent(function(_, event, unit)
 end, "NAME_PLATE_UNIT_ADDED", "UNIT_THREAT_SITUATION_UPDATE", "UNIT_THREAT_LIST_UPDATE")
 
 CleanClassicUI.OnEvent(function()
-    SetCVar("nameplateMinScale", 0.8)
+    SetCVar("nameplateMinScale",      0.8)
     SetCVar("nameplateSelectedScale", 1)
-    SetCVar("nameplateMaxScale", 1)
-    SetCVar("nameplateOverlapH", 1)
-    SetCVar("nameplateOverlapV", 1)
-    SetCVar("nameplateMaxDistance", 40)
+    SetCVar("nameplateMaxScale",      1)
+    SetCVar("nameplateOverlapH",      1)
+    SetCVar("nameplateOverlapV",      1)
+    SetCVar("nameplateMaxDistance",   40)
 end, "PLAYER_ENTERING_WORLD")

@@ -1,7 +1,7 @@
 local BTN_SIZE = CleanClassicUI.BTN_SIZE
 local ICON_SIZE = 40
-local OFFSET_X = -4
-local OFFSET_Y = -12
+local OFFSET_X  = -4
+local OFFSET_Y  = -12
 
 local function placeButton()
     if LFGMinimapFrameBorder then LFGMinimapFrameBorder:Hide() end

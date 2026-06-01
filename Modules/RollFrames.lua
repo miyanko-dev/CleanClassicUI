@@ -1,10 +1,10 @@
 local SPACING = CleanClassicUI.SPACING
 
-local FRAME_GAP = SPACING.XS
-local LEFT_MARGIN = 24
+local FRAME_GAP           = SPACING.XS
+local LEFT_MARGIN         = 24
 local DEFAULT_FRAME_HEIGHT = 85
-local ANCHOR_SIZE = 24
-local DB_KEY = "rollFramesAnchor"
+local ANCHOR_SIZE         = 24
+local DB_KEY              = "rollFramesAnchor"
 
 local function getDB()
     CleanClassicUIDB = CleanClassicUIDB or {}
@@ -30,14 +30,15 @@ local function frameHeight()
 end
 
 local function applyDefaultPosition()
-    local stack = frameCount() * frameHeight() + (frameCount() - 1) * FRAME_GAP
+    local stackHeight = frameCount() * frameHeight() + (frameCount() - 1) * FRAME_GAP
     anchor:ClearAllPoints()
-    anchor:SetPoint("TOPLEFT", UIParent, "LEFT", LEFT_MARGIN, stack / 2)
+    anchor:SetPoint("TOPLEFT", UIParent, "LEFT", LEFT_MARGIN, stackHeight / 2)
 end
 
 local function savePosition()
     local point, _, relPoint, x, y = anchor:GetPoint(1)
     if not point then return end
+
     local db = getDB()
     db.point, db.relPoint, db.x, db.y = point, relPoint, x, y
 end
@@ -55,6 +56,7 @@ end
 local function attachDrag(frame)
     if frame.cleanCCUIDragHooked then return end
     frame.cleanCCUIDragHooked = true
+
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", function() anchor:StartMoving() end)

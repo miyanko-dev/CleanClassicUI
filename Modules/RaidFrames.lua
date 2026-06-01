@@ -1,8 +1,9 @@
-local function skinBars(uf)
-    if not uf then return end
-    if uf.healthBar then uf.healthBar:SetStatusBarTexture(CleanClassicUI.BAR_TEXTURE) end
-    if uf.powerBar then uf.powerBar:SetStatusBarTexture(CleanClassicUI.BAR_TEXTURE) end
+local function skinBars(frame)
+    if not frame then return end
+
+    if frame.healthBar then frame.healthBar:SetStatusBarTexture(CleanClassicUI.BAR_TEXTURE) end
+    if frame.powerBar  then frame.powerBar:SetStatusBarTexture(CleanClassicUI.BAR_TEXTURE)  end
 end
 
 hooksecurefunc("CompactUnitFrame_UpdateHealth", skinBars)
-hooksecurefunc("CompactUnitFrame_UpdatePower", skinBars)
+hooksecurefunc("CompactUnitFrame_UpdatePower",  skinBars)

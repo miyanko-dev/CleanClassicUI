@@ -72,13 +72,18 @@ end
 
 local function styleBtn(btn)
     if not btn then return end
+
     local name = btn:GetName()
-    local norm = _G[name .. "NormalTexture"]
-    if norm then norm:SetAlpha(0) end
-    local float = _G[name .. "FloatingBG"]
-    if float then float:SetAlpha(0) end
+
+    local normalTexture = _G[name .. "NormalTexture"]
+    if normalTexture then normalTexture:SetAlpha(0) end
+
+    local floatingBackground = _G[name .. "FloatingBG"]
+    if floatingBackground then floatingBackground:SetAlpha(0) end
+
     local icon = _G[name .. "Icon"]
     if icon then icon:SetTexCoord(0.1, 0.9, 0.1, 0.9) end
+
     CleanClassicUI.ApplyBorder(btn)
     syncBorder(btn)
 end
@@ -193,9 +198,9 @@ local function styleAllButtons()
     for i = 1, NUM_STANCE_SLOTS do
         local btn = _G["StanceButton" .. i]
         if btn then
-            for j = 1, 3 do
-                local tex = _G[btn:GetName() .. "NormalTexture" .. j]
-                if tex then tex:SetAlpha(0) end
+            for layer = 1, 3 do
+                local texture = _G[btn:GetName() .. "NormalTexture" .. layer]
+                if texture then texture:SetAlpha(0) end
             end
             styleBtn(btn)
         end
@@ -204,8 +209,8 @@ local function styleAllButtons()
         local btn = _G["PetActionButton" .. i]
         if btn then
             for _, suffix in ipairs({ "NormalTexture", "NormalTexture2" }) do
-                local n = _G[btn:GetName() .. suffix]
-                if n then n:SetAlpha(0) end
+                local texture = _G[btn:GetName() .. suffix]
+                if texture then texture:SetAlpha(0) end
             end
             local icon = _G[btn:GetName() .. "Icon"]
             if icon then icon:SetTexCoord(0.1, 0.9, 0.1, 0.9) end
@@ -333,7 +338,7 @@ local function runLayout()
     syncAllBorders()
     placePet()
     placeStance()
-    for _, cb in ipairs(CleanClassicUILayout.afterLayout) do cb() end
+    for _, callback in ipairs(CleanClassicUILayout.afterLayout) do callback() end
 end
 
 -- Blizzard runs MultiActionBar_Update whenever bars 4 or 5 are toggled on/off.

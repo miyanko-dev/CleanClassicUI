@@ -1,5 +1,5 @@
-local FRAME_SCALE = 0.9
-local MAX_CANVAS_ZOOM = 4.0
+local FRAME_SCALE      = 0.9
+local MAX_CANVAS_ZOOM  = 4.0
 local CANVAS_ZOOM_STEP = 0.25
 
 local function applyLayout()
@@ -29,7 +29,7 @@ scrollContainer.GetScaleForMinZoom = function(self)
     if not (layers and layers[1]) then
         return (self.zoomLevels and self.zoomLevels[1] and self.zoomLevels[1].scale) or 1
     end
-    local widthScale = self:GetWidth() / layers[1].layerWidth
+    local widthScale  = self:GetWidth()  / layers[1].layerWidth
     local heightScale = self:GetHeight() / layers[1].layerHeight
     return math.max(widthScale, heightScale)
 end
@@ -37,9 +37,8 @@ end
 -- Snap zoom directly to the new scale and anchor pan at the cursor's canvas point.
 scrollContainer:SetScript("OnMouseWheel", function(self, delta)
     local currentScale = self:GetCanvasScale()
-    local step = CANVAS_ZOOM_STEP * (self.baseScale or 1)
-    local newScale = currentScale + delta * step
-    newScale = math.max(self:GetScaleForMinZoom(), math.min(self:GetScaleForMaxZoom(), newScale))
+    local step         = CANVAS_ZOOM_STEP * (self.baseScale or 1)
+    local newScale     = math.max(self:GetScaleForMinZoom(), math.min(self:GetScaleForMaxZoom(), currentScale + delta * step))
     if newScale == currentScale then return end
 
     local cursorX, cursorY = self:GetCursorPosition()

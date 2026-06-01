@@ -24,7 +24,8 @@ end
 
 local function computeAverage()
     local total, count = 0, 0
-    local pending = false
+    local hasPending = false
+
     for _, slot in ipairs(SLOTS) do
         local link = GetInventoryItemLink("player", slot)
         if link then
@@ -33,24 +34,25 @@ local function computeAverage()
                 total = total + ilvl
                 count = count + 1
             else
-                pending = true
+                hasPending = true
             end
         end
     end
-    if count == 0 then return nil, pending end
-    return total / count, pending
+
+    if count == 0 then return nil, hasPending end
+    return total / count, hasPending
 end
 
 local function updateText()
     if not ilvlText then return end
-    local avg, pending = computeAverage()
+    local avg, hasPending = computeAverage()
     if avg then
         ilvlText:SetFormattedText("Item Level: %.0f", avg)
         ilvlText:Show()
     else
         ilvlText:Hide()
     end
-    pendingRetry = pending
+    pendingRetry = hasPending
 end
 
 CleanClassicUI.OnEvent(function(_, event)

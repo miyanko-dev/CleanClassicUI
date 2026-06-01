@@ -1,9 +1,9 @@
 local SPACING = CleanClassicUI.SPACING
-local BORDER = CleanClassicUI.BORDER
+local BORDER  = CleanClassicUI.BORDER
 local BTN_SIZE = CleanClassicUI.BTN_SIZE
 
-local BAG_BTN_GAP = 6
-local BAR_SCALE = (CleanClassicUILayout and CleanClassicUILayout.bar3Scale) or 0.8
+local BAG_BTN_GAP  = 6
+local BAR_SCALE    = (CleanClassicUILayout and CleanClassicUILayout.bar3Scale) or 0.8
 local CONTAINER_GAP = SPACING.XS
 
 CleanClassicUILayout = CleanClassicUILayout or {}

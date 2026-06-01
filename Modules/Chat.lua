@@ -19,26 +19,28 @@ local CHAT_FRAME_TEXTURE_SUFFIXES = {
 local function stripChatFrameTextures(chatFrame)
     local name = chatFrame:GetName()
     for _, suffix in ipairs(CHAT_FRAME_TEXTURE_SUFFIXES) do
-        local tex = _G[name .. suffix]
-        if tex then tex:SetTexture(nil) end
+        local texture = _G[name .. suffix]
+        if texture then texture:SetTexture(nil) end
     end
 end
 
 local function styleTab(tab)
     if not tab or tab.cleanStyled then return end
+
     local name = tab:GetName()
     for _, suffix in ipairs(TAB_TEXTURE_SUFFIXES) do
-        local tex = _G[name .. suffix]
-        if tex then tex:SetTexture(nil) end
+        local texture = _G[name .. suffix]
+        if texture then texture:SetTexture(nil) end
     end
+
     local text = _G[name .. "Text"]
     if text then
         local font = text:GetFont()
         text:SetFont(font, TAB_FONT_SIZE, "OUTLINE")
     end
 
-    local convoIcon = tab.conversationIcon or _G[name .. "ConversationIcon"]
-    if convoIcon then convoIcon:Hide() end
+    local conversationIcon = tab.conversationIcon or _G[name .. "ConversationIcon"]
+    if conversationIcon then conversationIcon:Hide() end
 
     tab:HookScript("OnClick", function(self)
         if IsShiftKeyDown() then
@@ -53,8 +55,8 @@ local function styleEditBox(chatFrame, editBox)
     if not editBox or editBox.cleanStyled then return end
 
     for _, suffix in ipairs({ "Left", "Mid", "Right" }) do
-        local tex = _G[editBox:GetName() .. suffix]
-        if tex then tex:Hide() end
+        local texture = _G[editBox:GetName() .. suffix]
+        if texture then texture:Hide() end
     end
 
     editBox:ClearAllPoints()
@@ -68,8 +70,8 @@ local function styleEditBox(chatFrame, editBox)
     if header then
         header:ClearAllPoints()
         header:SetPoint("LEFT", editBox, "LEFT", 8, 0)
-        local hfont, hsize = header:GetFont()
-        header:SetFont(hfont, hsize, "OUTLINE")
+        local headerFont, headerSize = header:GetFont()
+        header:SetFont(headerFont, headerSize, "OUTLINE")
     end
 
     -- $parentHeaderSuffix (the ": " after the chat type) is in the editbox's
@@ -78,8 +80,8 @@ local function styleEditBox(chatFrame, editBox)
     local headerSuffix = _G[editBox:GetName() .. "HeaderSuffix"]
     if headerSuffix then
         headerSuffix:Hide()
-        local sfont, ssize = headerSuffix:GetFont()
-        headerSuffix:SetFont(sfont, ssize, "OUTLINE")
+        local suffixFont, suffixSize = headerSuffix:GetFont()
+        headerSuffix:SetFont(suffixFont, suffixSize, "OUTLINE")
     end
 
     editBox.cleanStyled = true
@@ -170,7 +172,7 @@ local function isInviteModifierDown()
     return IsAltKeyDown()
 end
 
-local _origHyperlinkShow = ChatFrame_OnHyperlinkShow
+local originalHyperlinkShow = ChatFrame_OnHyperlinkShow
 ChatFrame_OnHyperlinkShow = function(self, link, text, button)
     if button == "LeftButton" then
         local name = link:match("^player:([^:]+)")
@@ -184,5 +186,5 @@ ChatFrame_OnHyperlinkShow = function(self, link, text, button)
             end
         end
     end
-    return _origHyperlinkShow(self, link, text, button)
+    return originalHyperlinkShow(self, link, text, button)
 end
