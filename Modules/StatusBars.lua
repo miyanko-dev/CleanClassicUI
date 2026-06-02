@@ -27,22 +27,59 @@ local function stripTextures(bar)
     end
 end
 
-local function addXPTooltip(bar)
+local function percentOf(value, max)
+    return max > 0 and value / max * 100 or 0
+end
+
+-- "value / max (pct%)"
+local function statLine(value, max)
+    return format("%d / %d (%.0f%%)", value, max, percentOf(value, max))
+end
+
+-- "value (pct%)"
+local function shortStat(value, max)
+    return format("%d (%.0f%%)", value, percentOf(value, max))
+end
+
+local function showBarTooltip(bar, buildLines)
+    GameTooltip:SetOwner(bar, "ANCHOR_NONE")
+    GameTooltip:SetPoint("BOTTOM", bar, "TOP", 0, 4)
+    buildLines()
+    GameTooltip:Show()
+end
+
+local function addBarTooltip(bar, buildLines)
     if not bar or bar.cleanTip then return end
     bar:EnableMouse(true)
-    bar:SetScript("OnEnter", function(self)
-        local currentXp, maxXp = UnitXP("player"), UnitXPMax("player")
-        local rested = GetXPExhaustion() or 0
-        GameTooltip:SetOwner(self, "ANCHOR_NONE")
-        GameTooltip:SetPoint("BOTTOM", self, "TOP", 0, 4)
-        GameTooltip:AddLine(format("XP: %d / %d (%.0f%%)", currentXp, maxXp, currentXp / maxXp * 100), 1, 1, 1)
-        if rested > 0 then
-            GameTooltip:AddLine(format("Rested: %d (%.0f%%)", rested, rested / maxXp * 100), 0.2, 0.6, 1)
-        end
-        GameTooltip:Show()
-    end)
+    bar:SetScript("OnEnter", function(self) showBarTooltip(self, buildLines) end)
     bar:SetScript("OnLeave", GameTooltip_Hide)
     bar.cleanTip = true
+end
+
+local function addXPTooltip(bar)
+    addBarTooltip(bar, function()
+        local currentXp, maxXp = UnitXP("player"), UnitXPMax("player")
+        local rested = GetXPExhaustion() or 0
+        local missing = maxXp - currentXp
+        GameTooltip:AddLine(format("XP: %s", statLine(currentXp, maxXp)), 1, 1, 1)
+        GameTooltip:AddLine(format("Missing: %s", shortStat(missing, maxXp)), 1, 0.82, 0)
+        if rested > 0 then
+            GameTooltip:AddLine(format("Rested: %s", shortStat(rested, maxXp)), 0.2, 0.6, 1)
+        end
+    end)
+end
+
+local function addRepTooltip(bar)
+    addBarTooltip(bar, function()
+        local name, standingID, repMin, repMax, repValue = GetWatchedFactionInfo()
+        if not name then return end
+        local current = repValue - repMin
+        local total = repMax - repMin
+        local standing = GetText("FACTION_STANDING_LABEL" .. standingID, UnitSex("player"))
+        GameTooltip:AddLine(format("%s (%s)", name, standing), 1, 1, 1)
+        GameTooltip:AddLine(format("Reputation: %s", statLine(current, total)), 1, 1, 1)
+        GameTooltip:AddLine(format("Missing: %s", shortStat(total - current, total)), 1, 0.82, 0)
+    end)
 end
 
 local function styleXPBar()
@@ -59,6 +96,7 @@ local function styleRepBar()
     if not ReputationWatchStatusBar then return end
     addBg(ReputationWatchStatusBar)
     stripTextures(ReputationWatchStatusBar)
+    addRepTooltip(ReputationWatchStatusBar)
     CleanClassicUI.ApplyBorder(ReputationWatchStatusBar)
 end
 
