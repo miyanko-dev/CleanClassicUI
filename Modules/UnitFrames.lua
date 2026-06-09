@@ -57,8 +57,11 @@ local function placeFrames()
     StaticPopup_Show("CLEANCLASSICUI_POSITION_RELOAD")
 end
 
--- Add Auto Position above Blizzard's native "Move Frame" entry via Menu.ModifyMenu, which
--- runs taint-free. A nil index appends, covering menus with no Move Frame entry.
+-- Add Auto Position to the unit frame menu via Menu.ModifyMenu, which runs taint-free.
+-- Append with no index: SecureArray:Insert only does a (tainting) element move when given an
+-- index. Inserting above "Move Frame" would shift Blizzard's entries from our insecure code,
+-- tainting the protected "Copy Character Name" -> CopyToClipboard entry and triggering
+-- ADDON_ACTION_FORBIDDEN. Appending leaves existing entries untouched, so it stays clean.
 local function addAutoPosition(owner, rootDescription, contextData)
     if not (contextData and (contextData.fromPlayerFrame or contextData.fromTargetFrame)) then
         return
@@ -67,15 +70,7 @@ local function addAutoPosition(owner, rootDescription, contextData)
     local autoPosition = MenuUtil.CreateButton("Auto Position", placeFrames)
     autoPosition:SetEnabled(not InCombatLockdown())
 
-    local moveIndex
-    for index, entry in rootDescription:EnumerateElementDescriptions() do
-        if MenuUtil.GetElementText(entry) == MOVE_FRAME then
-            moveIndex = index
-            break
-        end
-    end
-
-    rootDescription:Insert(autoPosition, moveIndex)
+    rootDescription:Insert(autoPosition)
 end
 
 for which in pairs(UnitPopupMenus) do
