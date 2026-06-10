@@ -6,8 +6,10 @@ local DEBUFF_GAP  = 40
 local AURA_GAP    = SPACING.SM
 local DURATION_Y  = -6
 
--- Blizzard reads this global to space buff icons horizontally.
-BUFF_HORIZ_SPACING = -AURA_GAP
+-- Never write BUFF_HORIZ_SPACING (or any Blizzard-read global): secure code reading an
+-- addon-written global taints the whole execution. Via PlayerFrame_ToPlayerArt ->
+-- BuffFrame_Update at login it tainted PlayerFrame.unit, which TargetofTarget_Update
+-- reads, blocking TargetFrameToT:Show() in combat. arrangeAuras spaces buttons itself.
 
 local DEBUFF_COLORS = {
     Poison  = C.GREEN,

@@ -76,11 +76,19 @@ CleanClassicUI.OnEvent(function(_, event, unit)
     end
 end, "NAME_PLATE_UNIT_ADDED", "UNIT_THREAT_SITUATION_UPDATE", "UNIT_THREAT_LIST_UPDATE")
 
+-- SetCVar from addon code fires CVAR_UPDATE with insecure execution, which can taint
+-- Blizzard's cvar caches for the whole session; only write when the value differs.
+local function ensureCVar(name, value)
+    if GetCVar(name) ~= tostring(value) then
+        SetCVar(name, value)
+    end
+end
+
 CleanClassicUI.OnEvent(function()
-    SetCVar("nameplateMinScale",      0.8)
-    SetCVar("nameplateSelectedScale", 1)
-    SetCVar("nameplateMaxScale",      1)
-    SetCVar("nameplateOverlapH",      1)
-    SetCVar("nameplateOverlapV",      1)
-    SetCVar("nameplateMaxDistance",   40)
+    ensureCVar("nameplateMinScale",      0.8)
+    ensureCVar("nameplateSelectedScale", 1)
+    ensureCVar("nameplateMaxScale",      1)
+    ensureCVar("nameplateOverlapH",      1)
+    ensureCVar("nameplateOverlapV",      1)
+    ensureCVar("nameplateMaxDistance",   40)
 end, "PLAYER_ENTERING_WORLD")

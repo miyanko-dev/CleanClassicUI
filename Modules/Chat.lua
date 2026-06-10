@@ -119,7 +119,10 @@ local function applyStyle()
 end
 
 local function enableClassColors()
-    SetCVar("chatClassColorOverride", "0")
+    -- Guard like NamePlates: a redundant SetCVar fires CVAR_UPDATE under insecure execution.
+    if GetCVar("chatClassColorOverride") ~= "0" then
+        SetCVar("chatClassColorOverride", "0")
+    end
     for chatType in pairs(ChatTypeGroup) do
         SetChatColorNameByClass(chatType, true)
     end

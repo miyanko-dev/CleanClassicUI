@@ -9,17 +9,6 @@ local function place(frame, point, x, y)
     frame:SetUserPlaced(true)
 end
 
--- Reload immediately so the one-time taint never reaches combat.
-StaticPopupDialogs["CLEANCLASSICUI_POSITION_RELOAD"] = {
-    text = "Unit frames positioned. Reload now to finalize -- WoW will then remember the position on its own.\n\nUntil you reload, interacting with a unit may log a harmless \"action blocked\" error. Reloading clears it.",
-    button1 = RELOADUI,
-    button2 = CANCEL,
-    OnAccept = ReloadUI,
-    timeout = 0,
-    whileDead = true,
-    hideOnEscape = true,
-}
-
 local function placeFrames()
     if InCombatLockdown() then
         print("|cffffff00[CleanClassicUI]:|r Unit frames can't be moved during combat.")
@@ -54,7 +43,9 @@ local function placeFrames()
     place(PlayerFrame, "BOTTOMRIGHT", firstButtonLeft, castBottom - playerOffset)
     place(TargetFrame, "BOTTOMLEFT", lastButtonRight, castBottom - targetOffset)
 
-    StaticPopup_Show("CLEANCLASSICUI_POSITION_RELOAD")
+    -- Reload unconditionally: any play time before the reload blocks protected
+    -- TargetFrameToT:Show()/Hide() in combat (ADDON_ACTION_BLOCKED).
+    ReloadUI()
 end
 
 -- Add Auto Position to the unit frame menu via Menu.ModifyMenu, which runs taint-free.
