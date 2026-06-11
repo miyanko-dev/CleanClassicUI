@@ -11,6 +11,7 @@ Modules/MicroMenu.lua
 Modules/ActionBars.lua
 Modules/StatusBars.lua
 Modules/CastBar.lua
+Modules/TimerBars.lua
 Modules/Bags.lua
 Modules/Items.lua
 Modules/LFGButton.lua
