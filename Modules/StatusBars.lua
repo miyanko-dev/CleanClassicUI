@@ -41,17 +41,21 @@ local function shortStat(value, max)
     return format("%d (%.0f%%)", value, percentOf(value, max))
 end
 
-local function showBarTooltip(bar, buildLines)
+-- 4px gap, above the bar (XP, bottom of screen) or below it (rep, top of screen)
+local TIP_ABOVE = { point = "BOTTOM", relativePoint = "TOP", y = 4 }
+local TIP_BELOW = { point = "TOP", relativePoint = "BOTTOM", y = -4 }
+
+local function showBarTooltip(bar, buildLines, anchor)
     GameTooltip:SetOwner(bar, "ANCHOR_NONE")
-    GameTooltip:SetPoint("BOTTOM", bar, "TOP", 0, 4)
+    GameTooltip:SetPoint(anchor.point, bar, anchor.relativePoint, 0, anchor.y)
     buildLines()
     GameTooltip:Show()
 end
 
-local function addBarTooltip(bar, buildLines)
+local function addBarTooltip(bar, buildLines, anchor)
     if not bar or bar.cleanTip then return end
     bar:EnableMouse(true)
-    bar:SetScript("OnEnter", function(self) showBarTooltip(self, buildLines) end)
+    bar:SetScript("OnEnter", function(self) showBarTooltip(self, buildLines, anchor) end)
     bar:SetScript("OnLeave", GameTooltip_Hide)
     bar.cleanTip = true
 end
@@ -66,7 +70,7 @@ local function addXPTooltip(bar)
         if rested > 0 then
             GameTooltip:AddLine(format("Rested: %s", shortStat(rested, maxXp)), 0.2, 0.6, 1)
         end
-    end)
+    end, TIP_ABOVE)
 end
 
 local function addRepTooltip(bar)
@@ -79,7 +83,7 @@ local function addRepTooltip(bar)
         GameTooltip:AddLine(format("%s (%s)", name, standing), 1, 1, 1)
         GameTooltip:AddLine(format("Reputation: %s", statLine(current, total)), 1, 1, 1)
         GameTooltip:AddLine(format("Missing: %s", shortStat(total - current, total)), 1, 0.82, 0)
-    end)
+    end, TIP_BELOW)
 end
 
 local function styleXPBar()
@@ -92,12 +96,45 @@ local function styleXPBar()
     if ExhaustionLevelFillBar then ExhaustionLevelFillBar:Hide() end
 end
 
+-- Center the rep bar at the top edge, 16px below it
+local function positionRepBar()
+    if not ReputationWatchBar then return end
+    ReputationWatchBar:ClearAllPoints()
+    ReputationWatchBar:SetPoint("TOP", UIParent, "TOP", 0, -CleanClassicUI.SPACING.MD)
+end
+
+-- Mirror the XP bar's dimensions so both bars look identical
+local function matchXPBarSize(frame)
+    if not MainMenuExpBar then return end
+    local width, height = MainMenuExpBar:GetWidth(), MainMenuExpBar:GetHeight()
+    frame:SetSize(width, height)
+    frame.StatusBar:SetSize(width, height)
+end
+
+-- Blizzard re-anchors, re-sizes, and re-shows the native art on every update; re-apply ours
+local function hookRepBarLayout()
+    if CleanClassicUI.repBarHooked or not MainMenuTrackingBar_Configure then return end
+    CleanClassicUI.repBarHooked = true
+    hooksecurefunc("MainMenuTrackingBar_Configure", function(frame)
+        if frame ~= ReputationWatchBar then return end
+        stripTextures(frame.StatusBar)
+        matchXPBarSize(frame)
+        positionRepBar()
+    end)
+end
+
 local function styleRepBar()
-    if not ReputationWatchStatusBar then return end
-    addBg(ReputationWatchStatusBar)
-    stripTextures(ReputationWatchStatusBar)
-    addRepTooltip(ReputationWatchStatusBar)
-    CleanClassicUI.ApplyBorder(ReputationWatchStatusBar)
+    local frame = ReputationWatchBar
+    if not frame or not frame.StatusBar then return end
+    addBg(frame.StatusBar)
+    stripTextures(frame.StatusBar)
+    matchXPBarSize(frame)
+    -- Anchor the tooltip to the parent frame: it stays above the StatusBar in hit-testing
+    addRepTooltip(frame)
+    CleanClassicUI.ApplyBorder(frame.StatusBar)
+    CleanClassicUI.HideForever(frame.OverlayFrame)
+    positionRepBar()
+    hookRepBarLayout()
 end
 
 local function applyStyle()
