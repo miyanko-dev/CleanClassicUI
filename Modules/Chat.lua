@@ -126,9 +126,6 @@ local function enableClassColors()
     for chatType in pairs(ChatTypeGroup) do
         SetChatColorNameByClass(chatType, true)
     end
-    for chatType in pairs(CHAT_CONFIG_CHAT_LEFT) do
-        SetChatColorNameByClass(chatType, true)
-    end
     local channels = { GetChannelList() }
     for i = 1, #channels, 3 do
         local id = channels[i]
