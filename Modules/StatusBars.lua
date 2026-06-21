@@ -1,9 +1,19 @@
 local BG_TEXTURE = "Interface/Buttons/WHITE8x8"
 
+local SPACING = CleanClassicUI.SPACING
+local TOP_MARGIN = SPACING.LG
+local BAR_GAP = SPACING.SM
+local BAR_HEIGHT = 8
+local BAR_EDGE = 8
+local BAR_WIDTH_SCALE = 0.5
+
+-- Extend the fill out to the border so no transparent ring shows on a thin bar.
 local function addBg(bar)
     if not bar or bar.cleanBg then return end
+    local outset = CleanClassicUI.BORDER
     local bg  = CreateFrame("Frame", nil, bar)
-    bg:SetAllPoints()
+    bg:SetPoint("TOPLEFT", bar, "TOPLEFT", -outset, outset)
+    bg:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", outset, -outset)
     bg:SetFrameLevel(math.max(0, bar:GetFrameLevel() - 1))
 
     local tex = bg:CreateTexture(nil, "BACKGROUND")
@@ -41,8 +51,7 @@ local function shortStat(value, max)
     return format("%d (%.0f%%)", value, percentOf(value, max))
 end
 
--- 4px gap, above the bar (XP, bottom of screen) or below it (rep, top of screen)
-local TIP_ABOVE = { point = "BOTTOM", relativePoint = "TOP", y = 4 }
+-- 4px gap below the bar; both bars sit at the top of the screen
 local TIP_BELOW = { point = "TOP", relativePoint = "BOTTOM", y = -4 }
 
 local function showBarTooltip(bar, buildLines, anchor)
@@ -70,7 +79,7 @@ local function addXPTooltip(bar)
         if rested > 0 then
             GameTooltip:AddLine(format("Rested: %s", shortStat(rested, maxXp)), 0.2, 0.6, 1)
         end
-    end, TIP_ABOVE)
+    end, TIP_BELOW)
 end
 
 local function addRepTooltip(bar)
@@ -86,21 +95,41 @@ local function addRepTooltip(bar)
     end, TIP_BELOW)
 end
 
+-- Match AB3's visible button-row width; thin 8px bar to read as a top strip.
+local function sizeXPBar()
+    if not MainMenuExpBar then return end
+    local width = CleanClassicUILayout and CleanClassicUILayout.xpRepWidth
+        and CleanClassicUILayout.xpRepWidth()
+    if width then MainMenuExpBar:SetWidth(width * BAR_WIDTH_SCALE) end
+    MainMenuExpBar:SetHeight(BAR_HEIGHT)
+end
+
 local function styleXPBar()
     if not MainMenuExpBar then return end
     addBg(MainMenuExpBar)
     stripTextures(MainMenuExpBar)
     addXPTooltip(MainMenuExpBar)
-    CleanClassicUI.ApplyBorder(MainMenuExpBar)
+    CleanClassicUI.ApplyBorder(MainMenuExpBar, nil, BAR_EDGE)
     CleanClassicUI.HideForever(ExhaustionTick)
     if ExhaustionLevelFillBar then ExhaustionLevelFillBar:Hide() end
+    sizeXPBar()
 end
 
--- Center the rep bar at the top edge, 16px below it
-local function positionRepBar()
-    if not ReputationWatchBar then return end
-    ReputationWatchBar:ClearAllPoints()
-    ReputationWatchBar:SetPoint("TOP", UIParent, "TOP", 0, -CleanClassicUI.SPACING.MD)
+-- XP bar at the top edge; rep bar 8px below it, or in the top slot itself when the
+-- XP bar is hidden (e.g. max level).
+local function positionBars()
+    if MainMenuExpBar then
+        MainMenuExpBar:ClearAllPoints()
+        MainMenuExpBar:SetPoint("TOP", UIParent, "TOP", 0, -TOP_MARGIN)
+    end
+    if ReputationWatchBar then
+        ReputationWatchBar:ClearAllPoints()
+        if MainMenuExpBar and MainMenuExpBar:IsShown() then
+            ReputationWatchBar:SetPoint("TOP", MainMenuExpBar, "BOTTOM", 0, -BAR_GAP)
+        else
+            ReputationWatchBar:SetPoint("TOP", UIParent, "TOP", 0, -TOP_MARGIN)
+        end
+    end
 end
 
 -- Mirror the XP bar's dimensions so both bars look identical
@@ -119,7 +148,7 @@ local function hookRepBarLayout()
         if frame ~= ReputationWatchBar then return end
         stripTextures(frame.StatusBar)
         matchXPBarSize(frame)
-        positionRepBar()
+        positionBars()
     end)
 end
 
@@ -131,15 +160,15 @@ local function styleRepBar()
     matchXPBarSize(frame)
     -- Anchor the tooltip to the parent frame: it stays above the StatusBar in hit-testing
     addRepTooltip(frame)
-    CleanClassicUI.ApplyBorder(frame.StatusBar)
+    CleanClassicUI.ApplyBorder(frame.StatusBar, nil, BAR_EDGE)
     CleanClassicUI.HideForever(frame.OverlayFrame)
-    positionRepBar()
     hookRepBarLayout()
 end
 
 local function applyStyle()
     styleXPBar()
     styleRepBar()
+    positionBars()
 end
 
 CleanClassicUI.OnEvent(function()

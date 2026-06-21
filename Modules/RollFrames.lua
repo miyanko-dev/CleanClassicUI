@@ -1,7 +1,7 @@
 local SPACING = CleanClassicUI.SPACING
 
 local FRAME_GAP           = SPACING.XS
-local LEFT_MARGIN         = 24
+local LEFT_MARGIN         = SPACING.LG
 local DEFAULT_FRAME_HEIGHT = 85
 local ANCHOR_SIZE         = 24
 local DB_KEY              = "rollFramesAnchor"

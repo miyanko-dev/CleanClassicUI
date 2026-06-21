@@ -3,8 +3,8 @@ local BORDER = CleanClassicUI.BORDER
 local BTN_SIZE = CleanClassicUI.BTN_SIZE
 
 local MARGIN = SPACING.LG
-local BAR_GAP = SPACING.MD
-local TIGHT_GAP = SPACING.XS
+local BAR_GAP = SPACING.LG
+local TIGHT_GAP = SPACING.SM
 
 -- Vertical offset between MainMenuBar frame bottom and ActionButton1 frame bottom.
 local AB1_INSET = 4
@@ -55,6 +55,9 @@ local function xpRepWidth()
     return outer - 2 * BORDER
 end
 
+-- StatusBars.lua sizes the XP/rep bars (now at the top of the screen) to match.
+CleanClassicUILayout.xpRepWidth = xpRepWidth
+
 -- True while the cursor holds an action or the spellbook is open.
 local gridShown = false
 
@@ -101,37 +104,12 @@ end
 -- Captured from placeBars; used as the pet/stance base (AB2 visible top in screen px).
 local petStanceBase = nil
 
--- Position XP/rep and action bars 1-5. Returns the screen-Y of AB2's visible top.
+-- Position action bars 1-5. Returns the screen-Y of AB2's visible top.
+-- AB3 anchors to the screen bottom directly, so the 1-3 block keeps its position
+-- regardless of XP/rep visibility (those bars now live at the top, see StatusBars.lua).
 local function placeBars()
-    local xpRepFrameBottom = MARGIN + BORDER
-    local stackTop = xpRepFrameBottom
-    local xpRepShown = false
-
-    if MainMenuExpBar then
-        MainMenuExpBar:ClearAllPoints()
-        MainMenuExpBar:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, xpRepFrameBottom)
-        MainMenuExpBar:SetWidth(xpRepWidth())
-        if MainMenuExpBar:IsShown() then
-            stackTop = stackTop + MainMenuExpBar:GetHeight()
-            xpRepShown = true
-        end
-    end
-
-    if ReputationWatchBar then
-        ReputationWatchBar:ClearAllPoints()
-        ReputationWatchBar:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, stackTop)
-        ReputationWatchBar:SetWidth(xpRepWidth())
-        if ReputationWatchStatusBar then ReputationWatchStatusBar:SetWidth(xpRepWidth()) end
-        if ReputationWatchBar:IsShown() then
-            stackTop = stackTop + ReputationWatchBar:GetHeight()
-            xpRepShown = true
-        end
-    end
-
-    local xpRepVisibleTop = xpRepShown and (stackTop + BORDER) or 0
-
     local ab3Border = BORDER * BAR3_SCALE
-    local ab3FrameBottomScreen = xpRepVisibleTop + BAR_GAP + ab3Border
+    local ab3FrameBottomScreen = MARGIN + ab3Border
     MultiBarBottomRight:SetMovable(true)
     MultiBarBottomRight:SetUserPlaced(true)
     MultiBarBottomRight:Show()
@@ -160,16 +138,16 @@ local function placeBars()
     return ab2VisibleTop
 end
 
--- MultiBarRight (bar 4) and MultiBarLeft (bar 5) live inside VerticalMultiBarsContainer.
--- MultiBarRight is anchored TOPRIGHT at (0,0) inside a 141x503 container that
--- matches its height, so the container's BOTTOMRIGHT coincides with MultiBarRight's
--- BOTTOMRIGHT. Anchor the container to the backpack button: horizontal margin
--- matches ContainerFrame1 (see Bags.lua), vertical gap is fixed at SPACING.XXL so
--- AB4/AB5 sit a comfortable distance above the bag row.
+-- Anchor MultiBarRight (bar 4); MultiBarLeft (bar 5) is anchored to MultiBarRight's
+-- bottom in Blizzard's XML, so it follows for free. Horizontal margin matches
+-- ContainerFrame1 (see Bags.lua); vertical gap is fixed at SPACING.XXL so AB4/AB5
+-- sit a comfortable distance above the bag row.
 local function placeVerticalBars()
-    if InCombatLockdown() or not VerticalMultiBarsContainer or not MainMenuBarBackpackButton then return end
-    VerticalMultiBarsContainer:ClearAllPoints()
-    VerticalMultiBarsContainer:SetPoint("BOTTOMRIGHT", MainMenuBarBackpackButton, "TOPRIGHT", SPACING.XS, SPACING.XXL)
+    if InCombatLockdown() or not MultiBarRight or not MainMenuBarBackpackButton then return end
+    MultiBarRight:SetMovable(true)
+    MultiBarRight:SetUserPlaced(true)
+    MultiBarRight:ClearAllPoints()
+    MultiBarRight:SetPoint("BOTTOMRIGHT", MainMenuBarBackpackButton, "TOPRIGHT", SPACING.XS, SPACING.XXL)
 end
 
 local function hideChrome()

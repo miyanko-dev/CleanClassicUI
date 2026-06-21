@@ -28,12 +28,12 @@ CleanClassicUI.COLOR = {
 
 local EDGE_SIZE = 12
 
-function CleanClassicUI.ApplyBorder(frame, level)
+function CleanClassicUI.ApplyBorder(frame, level, edgeSize)
     if not frame or frame.cleanBorder then return frame and frame.cleanBorder end
     local border = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     border:SetPoint("TOPLEFT", frame, "TOPLEFT", -CleanClassicUI.BORDER, CleanClassicUI.BORDER)
     border:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", CleanClassicUI.BORDER, -CleanClassicUI.BORDER)
-    border:SetBackdrop({ edgeFile = CleanClassicUI.EDGE_FILE, edgeSize = EDGE_SIZE })
+    border:SetBackdrop({ edgeFile = CleanClassicUI.EDGE_FILE, edgeSize = edgeSize or EDGE_SIZE })
     border:SetBackdropBorderColor(unpack(CleanClassicUI.COLOR.GREY))
     border:SetFrameStrata(frame:GetFrameStrata())
     border:SetFrameLevel((level or frame:GetFrameLevel()) + 5)
