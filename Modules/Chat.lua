@@ -147,6 +147,12 @@ hooksecurefunc("FCF_SetTemporaryWindowType", function(chatFrame)
     styleEditBox(chatFrame, _G[chatFrame:GetName() .. "EditBox"])
 end)
 
+-- New messages in a background tab call FCF_StartAlertFlash, which sets the tab
+-- to alerting and pins its idle alpha to CHAT_FRAME_TAB_ALERTING_NOMOUSE_ALPHA (1.0);
+-- constant channel traffic leaves the tab permanently lit. Suppress it so
+-- background tabs stay dimmed until hovered.
+FCF_StartAlertFlash = function() end
+
 hooksecurefunc("ChatEdit_UpdateHeader", function(editBox)
     local headerSuffix = _G[editBox:GetName() .. "HeaderSuffix"]
     if headerSuffix then
