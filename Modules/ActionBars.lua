@@ -2,9 +2,8 @@ local SPACING = CleanClassicUI.SPACING
 local BORDER = CleanClassicUI.BORDER
 local BTN_SIZE = CleanClassicUI.BTN_SIZE
 
-local MARGIN = SPACING.LG
-local BAR_GAP = SPACING.LG
-local TIGHT_GAP = SPACING.SM
+local OUTER_GAP = SPACING.MD
+local TIGHT_GAP = SPACING.XS
 
 -- Vertical offset between MainMenuBar frame bottom and ActionButton1 frame bottom.
 local AB1_INSET = 4
@@ -14,6 +13,18 @@ local BAR3_SCALE = 0.8
 local BAR3_BTN_W = 36
 local BAR3_BTN_GAP = 6
 local BAR3_BTN_COUNT = 12
+
+-- XP/rep bars dock at the screen bottom, below AB3 (see StatusBars.lua). AB3 reserves
+-- the whole stack's height whether or not the bars are shown, so the action bar stack
+-- never shifts when a faction is (un)watched or the XP bar vanishes at max level.
+local XP_REP_EDGE = 2                                 -- bar border offset; the fill runs out to it
+local XP_REP_BAR_HEIGHT = 10                          -- StatusBar fill height (StatusBars reads this)
+local XP_REP_BAR = XP_REP_BAR_HEIGHT + 2 * XP_REP_EDGE  -- visible strip: fill + border
+local XP_EDGE_MARGIN = SPACING.LG                    -- screen edge -> xp bar
+local XP_REP_GAP = SPACING.XS                        -- xp bar -> rep bar
+local REP_AB3_GAP = SPACING.MD                       -- rep bar -> ab3
+-- Screen-Y of AB3's visible bottom border = top of the reserved xp/rep stack.
+local XP_REP_RESERVE = XP_EDGE_MARGIN + XP_REP_BAR + XP_REP_GAP + XP_REP_BAR + REP_AB3_GAP
 
 local PET_SCALE = 0.8
 
@@ -31,10 +42,14 @@ local STANCE_BTN_GAP = 7
 local STANCE_BTN1_INSET_X = 11
 local STANCE_BTN1_INSET_Y = 3
 
--- AB1 to AB2 spacing (TIGHT_GAP + 2*BORDER) used between AB2 and the pet/stance bar above it.
--- AB3 to AB1 spacing (BAR_GAP + BORDER) used between the topmost bottom-bar element and the castbar.
-local INNER_BAR_GAP = TIGHT_GAP + 2 * BORDER
-local OUTER_BAR_GAP = BAR_GAP + BORDER
+-- AB1 to AB2 spacing is TIGHT_GAP + 2*BORDER (both rows at scale 1; see placeBars).
+-- Pet/stance rows render at PET_SCALE, so their borders shrink; each transition gets its own
+-- raw offset to land TIGHT_GAP px (visible, border-to-border) above the row directly below it.
+local PET_ABOVE_AB2 = TIGHT_GAP + BORDER * PET_SCALE                -- AB2 border-top -> pet button bottom
+local STANCE_ABOVE_AB2 = TIGHT_GAP + BORDER                        -- AB2 border-top -> stance button bottom
+local STANCE_ABOVE_PET = TIGHT_GAP + BORDER + BORDER * PET_SCALE   -- pet button-top -> stance button bottom
+-- OUTER_GAP visible spacing between the topmost bottom-bar element and the castbar.
+local OUTER_BAR_GAP = OUTER_GAP + 2 * BORDER
 
 local BAR_PREFIXES = {
     "ActionButton",
@@ -49,14 +64,20 @@ CleanClassicUILayout.bar3Scale = BAR3_SCALE
 CleanClassicUILayout.btnSize = BTN_SIZE
 CleanClassicUILayout.afterLayout = CleanClassicUILayout.afterLayout or {}
 
--- Visible width of the XP/rep stack, sized to match action bar 3's visible button row.
+-- Visible width of the XP/rep stack, sized so the fill plus its border matches AB3's row.
 local function xpRepWidth()
     local outer = (BAR3_BTN_COUNT * BAR3_BTN_W + (BAR3_BTN_COUNT - 1) * BAR3_BTN_GAP + 2 * BORDER) * BAR3_SCALE
-    return outer - 2 * BORDER
+    return outer - 2 * XP_REP_EDGE
 end
 
--- StatusBars.lua sizes the XP/rep bars (now at the top of the screen) to match.
+-- StatusBars.lua sizes/positions the XP/rep bars from these; the border offset (xpRepEdge)
+-- keeps the fill running out to the border with the strip still as wide as AB3.
 CleanClassicUILayout.xpRepWidth = xpRepWidth
+CleanClassicUILayout.xpRepBarHeight = XP_REP_BAR_HEIGHT
+CleanClassicUILayout.xpRepEdge = XP_REP_EDGE
+-- Screen-Y (px above the bottom edge) of each XP/rep slot's visible bottom border.
+CleanClassicUILayout.xpRepBottomSlot = XP_EDGE_MARGIN
+CleanClassicUILayout.xpRepUpperSlot = XP_EDGE_MARGIN + XP_REP_BAR + XP_REP_GAP
 
 -- True while the cursor holds an action or the spellbook is open.
 local gridShown = false
@@ -105,11 +126,11 @@ end
 local petStanceBase = nil
 
 -- Position action bars 1-5. Returns the screen-Y of AB2's visible top.
--- AB3 anchors to the screen bottom directly, so the 1-3 block keeps its position
--- regardless of XP/rep visibility (those bars now live at the top, see StatusBars.lua).
+-- AB3 sits above the reserved XP/rep stack at the screen bottom, so the 1-3 block keeps
+-- its position regardless of XP/rep visibility (see StatusBars.lua + XP_REP_RESERVE).
 local function placeBars()
     local ab3Border = BORDER * BAR3_SCALE
-    local ab3FrameBottomScreen = MARGIN + ab3Border
+    local ab3FrameBottomScreen = XP_REP_RESERVE + ab3Border
     MultiBarBottomRight:SetMovable(true)
     MultiBarBottomRight:SetUserPlaced(true)
     MultiBarBottomRight:Show()
@@ -118,7 +139,7 @@ local function placeBars()
     MultiBarBottomRight:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, ab3FrameBottomScreen / BAR3_SCALE)
     local ab3VisibleTop = ab3FrameBottomScreen + BTN_SIZE * BAR3_SCALE + ab3Border
 
-    local ab1FrameBottomScreen = ab3VisibleTop + BAR_GAP + BORDER
+    local ab1FrameBottomScreen = ab3VisibleTop + OUTER_GAP + BORDER
     MainMenuBar:SetMovable(true)
     MainMenuBar:SetUserPlaced(true)
     MainMenuBar:SetWidth(MAIN_BAR_WIDTH)
@@ -221,10 +242,10 @@ local function placePetBar(self)
 
     self:SetScale(PET_SCALE)
 
-    -- Pet button BOTTOM sits INNER_BAR_GAP above AB2's visible top, matching AB1 to AB2.
-    -- PetActionButton1 is inset PET_BTN1_INSET_Y self-units above PetActionBarFrame.BOTTOM,
-    -- so subtract that scaled inset so the visible row (not the frame) lands at the gap.
-    local petFrameBottomScreen = petStanceBase + INNER_BAR_GAP - PET_BTN1_INSET_Y * PET_SCALE
+    -- Pet button BOTTOM sits TIGHT_GAP px (visible) above AB2's border top. PetActionButton1
+    -- is inset PET_BTN1_INSET_Y self-units above PetActionBarFrame.BOTTOM, so subtract that
+    -- scaled inset so the visible row (not the frame) lands at the gap.
+    local petFrameBottomScreen = petStanceBase + PET_ABOVE_AB2 - PET_BTN1_INSET_Y * PET_SCALE
 
     self:ClearAllPoints()
     self:SetPoint("BOTTOM", UIParent, "BOTTOM",
@@ -240,15 +261,15 @@ local function placeStance()
     local numForms = GetNumShapeshiftForms()
     if not (StanceBarFrame and StanceBarFrame:IsShown() and numForms > 0) then return end
 
-    -- Stance button BOTTOM sits INNER_BAR_GAP above whatever bar is directly below it:
-    -- pet button TOP if the pet bar is visible, otherwise AB2's visible top.
+    -- Stance button BOTTOM sits TIGHT_GAP px (visible) above whatever bar is directly below
+    -- it: pet button TOP if the pet bar is visible, otherwise AB2's border top.
     local stanceBtnBottomScreen
     if isPetVisible() then
-        local petBtnBottomScreen = petStanceBase + INNER_BAR_GAP
+        local petBtnBottomScreen = petStanceBase + PET_ABOVE_AB2
         local petBtnTopScreen = petBtnBottomScreen + PET_BTN_SIZE * PET_SCALE
-        stanceBtnBottomScreen = petBtnTopScreen + INNER_BAR_GAP
+        stanceBtnBottomScreen = petBtnTopScreen + STANCE_ABOVE_PET
     else
-        stanceBtnBottomScreen = petStanceBase + INNER_BAR_GAP
+        stanceBtnBottomScreen = petStanceBase + STANCE_ABOVE_AB2
     end
     local stanceFrameBottomScreen = stanceBtnBottomScreen - STANCE_BTN1_INSET_Y
 
@@ -267,17 +288,21 @@ local function placeStance()
 end
 
 -- Returns the Y delta (screen px) from AB2 visible top to where CastingBarFrame.BOTTOM
--- should land, so the cast bar sits OUTER_BAR_GAP above the topmost visible bottom-bar
--- element (stance if shown, else pet if shown, else AB2 itself).
+-- should land, so the cast bar sits OUTER_GAP above the topmost visible bottom-bar element
+-- (stance if shown, else pet if shown, else AB2 itself). Includes the topmost element's
+-- top border so the visible gap is exactly OUTER_GAP in every pet/stance state.
 CleanClassicUILayout.castbarYOffsetAboveAB2 = function()
     if not petStanceBase then return OUTER_BAR_GAP end
-    local topAboveAB2 = 0
-    if isPetVisible() then
-        topAboveAB2 = INNER_BAR_GAP + PET_BTN_SIZE * PET_SCALE
-    end
+    local petShown = isPetVisible()
     local numForms = GetNumShapeshiftForms and GetNumShapeshiftForms() or 0
-    if StanceBarFrame and StanceBarFrame:IsShown() and numForms > 0 then
-        topAboveAB2 = topAboveAB2 + INNER_BAR_GAP + STANCE_BTN_SIZE
+    local stanceShown = StanceBarFrame and StanceBarFrame:IsShown() and numForms > 0
+    local topAboveAB2 = 0
+    if stanceShown and petShown then
+        topAboveAB2 = PET_ABOVE_AB2 + PET_BTN_SIZE * PET_SCALE + STANCE_ABOVE_PET + STANCE_BTN_SIZE + BORDER
+    elseif stanceShown then
+        topAboveAB2 = STANCE_ABOVE_AB2 + STANCE_BTN_SIZE + BORDER
+    elseif petShown then
+        topAboveAB2 = PET_ABOVE_AB2 + PET_BTN_SIZE * PET_SCALE + BORDER * PET_SCALE
     end
     return topAboveAB2 + OUTER_BAR_GAP
 end
@@ -287,7 +312,7 @@ end
 -- adopt the higher peripheral-vision position even when no pet/stance bar exists.
 CleanClassicUILayout.castBottomWithStanceOrPet = function()
     if not petStanceBase then return nil end
-    return petStanceBase + INNER_BAR_GAP + STANCE_BTN_SIZE + OUTER_BAR_GAP
+    return petStanceBase + STANCE_ABOVE_AB2 + STANCE_BTN_SIZE + OUTER_BAR_GAP
 end
 
 hooksecurefunc("ActionButton_OnUpdate", function(self)
