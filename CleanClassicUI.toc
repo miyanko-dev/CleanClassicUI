@@ -16,6 +16,7 @@ Modules/Bags.lua
 Modules/Items.lua
 Modules/LFGButton.lua
 Modules/Minimap.lua
+Modules/Framerate.lua
 Modules/NamePlates.lua
 Modules/Auras.lua
 Modules/Chat.lua
