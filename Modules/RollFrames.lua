@@ -53,36 +53,79 @@ local function loadPosition()
     end
 end
 
+-- Blizzard resets a dragged frame too; restore where the player left it
+local function restoreDraggedPosition(frame)
+    local saved = frame.cleanCCUIDragPoint
+    if not saved then return end
+
+    frame:ClearAllPoints()
+    frame:SetPoint(saved[1], UIParent, saved[2], saved[3], saved[4])
+end
+
 local function attachDrag(frame)
     if frame.cleanCCUIDragHooked then return end
     frame.cleanCCUIDragHooked = true
 
+    frame:SetMovable(true)
+    frame:SetClampedToScreen(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
-    frame:SetScript("OnDragStart", function() anchor:StartMoving() end)
-    frame:SetScript("OnDragStop", function()
-        anchor:StopMovingOrSizing()
-        savePosition()
+
+    frame:SetScript("OnDragStart", function(self)
+        if IsShiftKeyDown() then
+            self.cleanCCUIMovingStack = true
+            anchor:StartMoving()
+        else
+            self.cleanCCUIDragged = true
+            self:StartMoving()
+        end
+    end)
+
+    frame:SetScript("OnDragStop", function(self)
+        if self.cleanCCUIMovingStack then
+            self.cleanCCUIMovingStack = nil
+            anchor:StopMovingOrSizing()
+            savePosition()
+        else
+            self:StopMovingOrSizing()
+            local point, _, relPoint, x, y = self:GetPoint(1)
+            self.cleanCCUIDragPoint = { point, relPoint, x, y }
+        end
+    end)
+
+    frame:HookScript("OnHide", function(self)
+        self.cleanCCUIDragged = nil
+        self.cleanCCUIDragPoint = nil
     end)
 end
 
 local function arrangeRollFrames()
+    local previous
+
     for i = 1, frameCount() do
         local frame = _G["GroupLootFrame" .. i]
         if frame then
-            frame:ClearAllPoints()
-            if i == 1 then
-                frame:SetPoint("TOPLEFT", anchor, "TOPLEFT", 0, 0)
-            else
-                frame:SetPoint("TOPLEFT", _G["GroupLootFrame" .. (i - 1)], "BOTTOMLEFT", 0, -FRAME_GAP)
-            end
             attachDrag(frame)
+
+            if frame.cleanCCUIDragged then
+                restoreDraggedPosition(frame)
+            else
+                frame:ClearAllPoints()
+                if previous then
+                    frame:SetPoint("TOPLEFT", previous, "BOTTOMLEFT", 0, -FRAME_GAP)
+                else
+                    frame:SetPoint("TOPLEFT", anchor, "TOPLEFT", 0, 0)
+                end
+                previous = frame
+            end
         end
     end
 end
 
-if type(GroupLootFrame_OpenNewFrame) == "function" then
-    hooksecurefunc("GroupLootFrame_OpenNewFrame", arrangeRollFrames)
+-- Runs on every add AND remove; hooking only GroupLootFrame_OpenNewFrame
+-- misses the reset that GroupLootContainer_RemoveFrame triggers
+if type(GroupLootContainer_Update) == "function" then
+    hooksecurefunc("GroupLootContainer_Update", arrangeRollFrames)
 end
 
 CleanClassicUI.OnEvent(function()
