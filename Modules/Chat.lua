@@ -149,9 +149,9 @@ end)
 
 -- New messages in a background tab call FCF_StartAlertFlash, which sets the tab
 -- to alerting and pins its idle alpha to CHAT_FRAME_TAB_ALERTING_NOMOUSE_ALPHA (1.0);
--- constant channel traffic leaves the tab permanently lit. Suppress it so
--- background tabs stay dimmed until hovered.
-FCF_StartAlertFlash = function() end
+-- constant channel traffic leaves the tab permanently lit. Replacing the global
+-- taints Blizzard's message handling, so cancel the flash from a post-hook instead.
+hooksecurefunc("FCF_StartAlertFlash", FCF_StopAlertFlash)
 
 hooksecurefunc("ChatEdit_UpdateHeader", function(editBox)
     local headerSuffix = _G[editBox:GetName() .. "HeaderSuffix"]
@@ -178,19 +178,35 @@ local function isInviteModifierDown()
     return IsAltKeyDown()
 end
 
-local originalHyperlinkShow = ChatFrame_OnHyperlinkShow
-ChatFrame_OnHyperlinkShow = function(self, link, text, button)
-    if button == "LeftButton" then
-        local name = link:match("^player:([^:]+)")
-        if name and name ~= "" then
-            if IsControlKeyDown() then
-                FCF_OpenTemporaryWindow("WHISPER", name, self, true)
-                return
-            elseif isInviteModifierDown() then
-                InviteUnit(name)
-                return
-            end
-        end
-    end
-    return originalHyperlinkShow(self, link, text, button)
+local function isFriendModifierDown()
+    if isMacClient then return IsAltKeyDown() end
+    return IsMetaKeyDown()
 end
+
+-- Replacing the global ChatFrame_OnHyperlinkShow taints Blizzard's whole click path:
+-- the dropdown opened by right-clicking a player name inherits the taint and its
+-- protected Copy Character Name -> CopyToClipboard() call fires ADDON_ACTION_FORBIDDEN.
+-- A post-hook stays off the secure path; Blizzard's default left-click action
+-- (ChatFrame_SendTell -> whisper edit box) runs first, so deactivate that edit box
+-- before applying our modifier-click behavior.
+hooksecurefunc("ChatFrame_OnHyperlinkShow", function(self, link, text, button)
+    if button ~= "LeftButton" then return end
+    local name = link:match("^player:([^:]+)")
+    if not name or name == "" then return end
+
+    local wantsWhisperTab = IsControlKeyDown()
+    local wantsInvite = not wantsWhisperTab and isInviteModifierDown()
+    local wantsFriend = not (wantsWhisperTab or wantsInvite) and isFriendModifierDown()
+    if not (wantsWhisperTab or wantsInvite or wantsFriend) then return end
+
+    local editBox = ChatEdit_GetActiveWindow()
+    if editBox then ChatEdit_DeactivateChat(editBox) end
+
+    if wantsWhisperTab then
+        FCF_OpenTemporaryWindow("WHISPER", name, self, true)
+    elseif wantsInvite then
+        InviteUnit(name)
+    else
+        C_FriendList.AddFriend(name)
+    end
+end)
