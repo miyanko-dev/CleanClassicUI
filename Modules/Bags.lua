@@ -1,13 +1,13 @@
-local SPACING = CleanClassicUI.SPACING
-local BORDER  = CleanClassicUI.BORDER
-local BTN_SIZE = CleanClassicUI.BTN_SIZE
+local SPACING = CleanClassicExperience.SPACING
+local BORDER  = CleanClassicExperience.BORDER
+local BTN_SIZE = CleanClassicExperience.BTN_SIZE
 
 local BAG_BTN_GAP  = 6
-local BAR_SCALE    = (CleanClassicUILayout and CleanClassicUILayout.bar3Scale) or 0.8
+local BAR_SCALE    = (CleanClassicExperienceLayout and CleanClassicExperienceLayout.bar3Scale) or 0.8
 local CONTAINER_GAP = SPACING.XS
 
-CleanClassicUILayout = CleanClassicUILayout or {}
-CleanClassicUILayout.bagScale = BAR_SCALE
+CleanClassicExperienceLayout = CleanClassicExperienceLayout or {}
+CleanClassicExperienceLayout.bagScale = BAR_SCALE
 
 local BAG_BTNS = {
     "MainMenuBarBackpackButton",
@@ -19,7 +19,7 @@ local BAG_BTNS = {
 }
 
 -- Scale the row by scaling this container; individual buttons inherit through reparenting.
-local bagContainer = CreateFrame("Frame", "CleanClassicUIBagContainer", UIParent)
+local bagContainer = CreateFrame("Frame", "CleanClassicExperienceBagContainer", UIParent)
 bagContainer:SetSize(BTN_SIZE, BTN_SIZE)
 bagContainer:SetScale(BAR_SCALE)
 
@@ -53,7 +53,7 @@ local function styleBtn(btn)
         icon:SetAllPoints(btn)
         icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
     end
-    CleanClassicUI.ApplyBorder(btn)
+    CleanClassicExperience.ApplyBorder(btn)
 end
 
 local function arrangeBtns()
@@ -105,7 +105,7 @@ end
 
 hooksecurefunc("UpdateContainerFrameAnchors", arrangeContainers)
 
-CleanClassicUI.OnEvent(function(_, event)
+CleanClassicExperience.OnEvent(function(_, event)
     if event == "BANKFRAME_OPENED" then
         for id = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do OpenBag(id) end
     else
@@ -113,5 +113,5 @@ CleanClassicUI.OnEvent(function(_, event)
     end
 end, "BANKFRAME_OPENED", "BANKFRAME_CLOSED")
 
-CleanClassicUI.OnEvent(arrangeBtns,
+CleanClassicExperience.OnEvent(arrangeBtns,
     "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")

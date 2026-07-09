@@ -1,4 +1,4 @@
-local C = CleanClassicUI.COLOR
+local C = CleanClassicExperience.COLOR
 
 local function colorBar(plate, unit)
     local bar = plate.UnitFrame and plate.UnitFrame.healthBar
@@ -26,9 +26,9 @@ local function addBorder(bar, plate)
     if bar.cleanBorder then return end
 
     local border = CreateFrame("Frame", nil, plate, "BackdropTemplate")
-    border:SetPoint("TOPLEFT",     bar, "TOPLEFT",     -CleanClassicUI.BORDER,  CleanClassicUI.BORDER)
-    border:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT",  CleanClassicUI.BORDER, -CleanClassicUI.BORDER)
-    border:SetBackdrop({ edgeFile = CleanClassicUI.EDGE_FILE, edgeSize = 12 })
+    border:SetPoint("TOPLEFT",     bar, "TOPLEFT",     -CleanClassicExperience.BORDER,  CleanClassicExperience.BORDER)
+    border:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT",  CleanClassicExperience.BORDER, -CleanClassicExperience.BORDER)
+    border:SetBackdrop({ edgeFile = CleanClassicExperience.EDGE_FILE, edgeSize = 12 })
     border:SetBackdropBorderColor(unpack(C.GREY))
     border:SetFrameStrata("HIGH")
     bar.cleanBorder = border
@@ -39,7 +39,7 @@ local function stylePlate(plate, unit)
     if not uf then return end
 
     local bar = uf.healthBar
-    bar:SetStatusBarTexture(CleanClassicUI.BAR_TEXTURE)
+    bar:SetStatusBarTexture(CleanClassicExperience.BAR_TEXTURE)
 
     if bar.border then bar.border:Hide() end
     if uf.LevelFrame then uf.LevelFrame:Hide() end
@@ -65,7 +65,7 @@ local function stylePlate(plate, unit)
     colorBar(plate, unit)
 end
 
-CleanClassicUI.OnEvent(function(_, event, unit)
+CleanClassicExperience.OnEvent(function(_, event, unit)
     local plate = C_NamePlate.GetNamePlateForUnit(unit)
     if not plate then return end
 
@@ -84,7 +84,7 @@ local function ensureCVar(name, value)
     end
 end
 
-CleanClassicUI.OnEvent(function()
+CleanClassicExperience.OnEvent(function()
     ensureCVar("nameplateMinScale",      0.8)
     ensureCVar("nameplateSelectedScale", 1)
     ensureCVar("nameplateMaxScale",      1)

@@ -54,7 +54,7 @@ local function fadeOnMove()
     UIFrameFadeOut(WorldMapFrame, 0.1, WorldMapFrame:GetAlpha(), alpha)
 end
 
-CleanClassicUI.OnEvent(fadeOnMove, "PLAYER_STARTED_MOVING", "PLAYER_STOPPED_MOVING")
+CleanClassicExperience.OnEvent(fadeOnMove, "PLAYER_STARTED_MOVING", "PLAYER_STOPPED_MOVING")
 
 WorldMapFrame:HookScript("OnUpdate", applyLayout)
 WorldMapFrame:HookScript("OnShow", function()

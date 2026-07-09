@@ -1,4 +1,4 @@
-local BTN_SIZE = CleanClassicUI.BTN_SIZE
+local BTN_SIZE = CleanClassicExperience.BTN_SIZE
 local ICON_SIZE = 40
 local OFFSET_X  = -4
 local OFFSET_Y  = -12
@@ -18,6 +18,6 @@ local function placeButton()
     end
 end
 
-CleanClassicUI.OnEvent(function()
+CleanClassicExperience.OnEvent(function()
     C_Timer.After(0, placeButton)
 end, "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")

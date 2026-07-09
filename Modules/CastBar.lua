@@ -42,7 +42,7 @@ local function applyAnchor()
     if not isApplying then
         local leftBtn  = MultiBarBottomLeftButton5
         local rightBtn = MultiBarBottomLeftButton8
-        local layout   = CleanClassicUILayout
+        local layout   = CleanClassicExperienceLayout
         local yOffset  = layout and layout.castbarYOffsetAboveAB2 and layout.castbarYOffsetAboveAB2()
         if leftBtn and rightBtn and yOffset then
             isApplying = true
@@ -64,7 +64,7 @@ end
 
 local function styleCastBar()
     CastingBarFrame:SetHeight(BAR_H)
-    CastingBarFrame:SetStatusBarTexture(CleanClassicUI.BAR_TEXTURE)
+    CastingBarFrame:SetStatusBarTexture(CleanClassicExperience.BAR_TEXTURE)
 
     for _, key in ipairs(HIDDEN) do
         local region = CastingBarFrame[key]
@@ -79,12 +79,12 @@ local function styleCastBar()
         CastingBarFrame.Text:SetNonSpaceWrap(false)
     end
 
-    CleanClassicUI.ApplyBorder(CastingBarFrame)
+    CleanClassicExperience.ApplyBorder(CastingBarFrame)
 end
 
 local isStyled = false
 
-local events = CleanClassicUI.OnEvent(function()
+local events = CleanClassicExperience.OnEvent(function()
     if not isStyled then
         styleCastBar()
         isStyled = true
@@ -101,9 +101,9 @@ CastingBarFrame.ignoreFramePositionManager = true
 
 hooksecurefunc(CastingBarFrame, "SetPoint", scheduleAnchor)
 
-CleanClassicUILayout = CleanClassicUILayout or {}
-CleanClassicUILayout.afterLayout = CleanClassicUILayout.afterLayout or {}
-table.insert(CleanClassicUILayout.afterLayout, scheduleAnchor)
+CleanClassicExperienceLayout = CleanClassicExperienceLayout or {}
+CleanClassicExperienceLayout.afterLayout = CleanClassicExperienceLayout.afterLayout or {}
+table.insert(CleanClassicExperienceLayout.afterLayout, scheduleAnchor)
 
 hooksecurefunc("CastingBarFrame_FinishSpell", function(bar)
     if bar == CastingBarFrame then

@@ -55,7 +55,7 @@ local function updateText()
     pendingRetry = hasPending
 end
 
-CleanClassicUI.OnEvent(function(_, event)
+CleanClassicExperience.OnEvent(function(_, event)
     if event == "PLAYER_LOGIN" then
         createText()
         shiftLevelText()

@@ -1,7 +1,7 @@
 local BAR_H = 20
 
 -- Border art extends 3px past each frame edge; pad the stack gap so it stays visible.
-local STACK_GAP = CleanClassicUI.SPACING.SM + 2 * CleanClassicUI.BORDER
+local STACK_GAP = CleanClassicExperience.SPACING.SM + 2 * CleanClassicExperience.BORDER
 
 local function styleTimer(index)
     local frame     = _G["MirrorTimer" .. index]
@@ -15,7 +15,7 @@ local function styleTimer(index)
 
     statusbar:ClearAllPoints()
     statusbar:SetAllPoints(frame)
-    statusbar:SetStatusBarTexture(CleanClassicUI.BAR_TEXTURE)
+    statusbar:SetStatusBarTexture(CleanClassicExperience.BAR_TEXTURE)
 
     -- Stretch the template's anonymous black backdrop behind the full bar.
     for _, region in ipairs({ frame:GetRegions() }) do
@@ -28,7 +28,7 @@ local function styleTimer(index)
     text:ClearAllPoints()
     text:SetPoint("CENTER", frame, "CENTER", 0, 0)
 
-    CleanClassicUI.ApplyBorder(frame)
+    CleanClassicExperience.ApplyBorder(frame)
 
     if index > 1 then
         frame:ClearAllPoints()

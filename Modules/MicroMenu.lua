@@ -1,4 +1,4 @@
-local MARGIN      = CleanClassicUI.SPACING.LG
+local MARGIN      = CleanClassicExperience.SPACING.LG
 local BTN_OVERLAP = -3
 
 local isActive = false
@@ -34,5 +34,5 @@ end
 
 hooksecurefunc("MoveMicroButtons", reposition)
 
-CleanClassicUI.OnEvent(reposition,
+CleanClassicExperience.OnEvent(reposition,
     "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")

@@ -1,4 +1,4 @@
-local MARGIN = CleanClassicUI.SPACING.MD
+local MARGIN = CleanClassicExperience.SPACING.MD
 
 -- The FPS readout is a WorldFrame label + number. Pin the label to the
 -- top-left and force the number to sit on its right so both move together.
@@ -25,4 +25,4 @@ if ToggleFramerate then
     hooksecurefunc("ToggleFramerate", styleFramerate)
 end
 
-CleanClassicUI.OnEvent(styleFramerate, "PLAYER_ENTERING_WORLD")
+CleanClassicExperience.OnEvent(styleFramerate, "PLAYER_ENTERING_WORLD")

@@ -9,7 +9,7 @@ local BAR_EDGE = 8
 -- the border line, and the bar is sized so the progress fill runs out to that same line.
 local function addChrome(bar)
     if not bar or bar.cleanBg then return end
-    local edge = (CleanClassicUILayout and CleanClassicUILayout.xpRepEdge) or CleanClassicUI.BORDER
+    local edge = (CleanClassicExperienceLayout and CleanClassicExperienceLayout.xpRepEdge) or CleanClassicExperience.BORDER
     local barLevel = bar:GetFrameLevel()
 
     -- Backdrop (bottom): dark fill, tucked 1px under the border line.
@@ -28,15 +28,15 @@ local function addChrome(bar)
     border:SetPoint("TOPLEFT", bar, "TOPLEFT", -edge, edge)
     border:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", edge, -edge)
     border:SetFrameLevel(barLevel + 5)
-    border:SetBackdrop({ edgeFile = CleanClassicUI.EDGE_FILE, edgeSize = BAR_EDGE })
-    border:SetBackdropBorderColor(unpack(CleanClassicUI.COLOR.GREY))
+    border:SetBackdrop({ edgeFile = CleanClassicExperience.EDGE_FILE, edgeSize = BAR_EDGE })
+    border:SetBackdropBorderColor(unpack(CleanClassicExperience.COLOR.GREY))
 
     bar.cleanBg = backdrop
 end
 
 local function stripTextures(bar)
     if not bar then return end
-    bar:SetStatusBarTexture(CleanClassicUI.BAR_TEXTURE)
+    bar:SetStatusBarTexture(CleanClassicExperience.BAR_TEXTURE)
 
     local fill = bar:GetStatusBarTexture()
     for i = 1, bar:GetNumRegions() do
@@ -108,7 +108,7 @@ end
 -- Match AB3's visible width (fill + border) so the bars read as one strip with the bar stack.
 local function sizeXPBar()
     if not MainMenuExpBar then return end
-    local layout = CleanClassicUILayout
+    local layout = CleanClassicExperienceLayout
     local width = layout and layout.xpRepWidth and layout.xpRepWidth()
     if width then MainMenuExpBar:SetWidth(width) end
     MainMenuExpBar:SetHeight((layout and layout.xpRepBarHeight) or BAR_HEIGHT)
@@ -119,7 +119,7 @@ local function styleXPBar()
     addChrome(MainMenuExpBar)
     stripTextures(MainMenuExpBar)
     addXPTooltip(MainMenuExpBar)
-    CleanClassicUI.HideForever(ExhaustionTick)
+    CleanClassicExperience.HideForever(ExhaustionTick)
     if ExhaustionLevelFillBar then ExhaustionLevelFillBar:Hide() end
     sizeXPBar()
 end
@@ -128,8 +128,8 @@ end
 -- bottom slot itself when the XP bar is hidden (max level). AB3 reserves both slots
 -- regardless of visibility (see ActionBars.lua), so the action bar stack never shifts.
 local function positionBars()
-    local layout = CleanClassicUILayout
-    local edge = (layout and layout.xpRepEdge) or CleanClassicUI.BORDER
+    local layout = CleanClassicExperienceLayout
+    local edge = (layout and layout.xpRepEdge) or CleanClassicExperience.BORDER
     local bottomSlot = (layout and layout.xpRepBottomSlot or 0) + edge
     local upperSlot = (layout and layout.xpRepUpperSlot or 0) + edge
     local xpShown = MainMenuExpBar and MainMenuExpBar:IsShown()
@@ -154,8 +154,8 @@ end
 
 -- Blizzard re-anchors, re-sizes, and re-shows the native art on every update; re-apply ours
 local function hookRepBarLayout()
-    if CleanClassicUI.repBarHooked or not MainMenuTrackingBar_Configure then return end
-    CleanClassicUI.repBarHooked = true
+    if CleanClassicExperience.repBarHooked or not MainMenuTrackingBar_Configure then return end
+    CleanClassicExperience.repBarHooked = true
     hooksecurefunc("MainMenuTrackingBar_Configure", function(frame)
         if frame ~= ReputationWatchBar then return end
         stripTextures(frame.StatusBar)
@@ -172,7 +172,7 @@ local function styleRepBar()
     matchXPBarSize(frame)
     -- Anchor the tooltip to the parent frame: it stays above the StatusBar in hit-testing
     addRepTooltip(frame)
-    CleanClassicUI.HideForever(frame.OverlayFrame)
+    CleanClassicExperience.HideForever(frame.OverlayFrame)
     hookRepBarLayout()
 end
 
@@ -182,6 +182,6 @@ local function applyStyle()
     positionBars()
 end
 
-CleanClassicUI.OnEvent(function()
+CleanClassicExperience.OnEvent(function()
     C_Timer.After(0, applyStyle)
 end, "PLAYER_ENTERING_WORLD", "PLAYER_LEVEL_UP", "UPDATE_FACTION")

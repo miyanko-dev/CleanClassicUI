@@ -1,13 +1,13 @@
-CleanClassicUI = CleanClassicUI or {}
+CleanClassicExperience = CleanClassicExperience or {}
 
-CleanClassicUI.BAR_TEXTURE = "Interface/RaidFrame/Raid-Bar-Hp-Fill"
-CleanClassicUI.EDGE_FILE = "Interface/Tooltips/UI-Tooltip-Border"
-CleanClassicUI.BG_FILE = "Interface/Tooltips/UI-Tooltip-Background"
+CleanClassicExperience.BAR_TEXTURE = "Interface/RaidFrame/Raid-Bar-Hp-Fill"
+CleanClassicExperience.EDGE_FILE = "Interface/Tooltips/UI-Tooltip-Border"
+CleanClassicExperience.BG_FILE = "Interface/Tooltips/UI-Tooltip-Background"
 
-CleanClassicUI.BORDER = 3
-CleanClassicUI.BTN_SIZE = 36
+CleanClassicExperience.BORDER = 3
+CleanClassicExperience.BTN_SIZE = 36
 
-CleanClassicUI.SPACING = {
+CleanClassicExperience.SPACING = {
     XS  = 4,
     SM  = 8,
     MD  = 16,
@@ -16,7 +16,7 @@ CleanClassicUI.SPACING = {
     XXL = 48,
 }
 
-CleanClassicUI.COLOR = {
+CleanClassicExperience.COLOR = {
     RED    = { 0.980, 0.153, 0.184 },
     GREEN  = { 0.188, 0.996, 0.192 },
     BLUE   = { 0.157, 0.443, 0.851 },
@@ -28,26 +28,26 @@ CleanClassicUI.COLOR = {
 
 local EDGE_SIZE = 12
 
-function CleanClassicUI.ApplyBorder(frame, level, edgeSize)
+function CleanClassicExperience.ApplyBorder(frame, level, edgeSize)
     if not frame or frame.cleanBorder then return frame and frame.cleanBorder end
     local border = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    border:SetPoint("TOPLEFT", frame, "TOPLEFT", -CleanClassicUI.BORDER, CleanClassicUI.BORDER)
-    border:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", CleanClassicUI.BORDER, -CleanClassicUI.BORDER)
-    border:SetBackdrop({ edgeFile = CleanClassicUI.EDGE_FILE, edgeSize = edgeSize or EDGE_SIZE })
-    border:SetBackdropBorderColor(unpack(CleanClassicUI.COLOR.GREY))
+    border:SetPoint("TOPLEFT", frame, "TOPLEFT", -CleanClassicExperience.BORDER, CleanClassicExperience.BORDER)
+    border:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", CleanClassicExperience.BORDER, -CleanClassicExperience.BORDER)
+    border:SetBackdrop({ edgeFile = CleanClassicExperience.EDGE_FILE, edgeSize = edgeSize or EDGE_SIZE })
+    border:SetBackdropBorderColor(unpack(CleanClassicExperience.COLOR.GREY))
     border:SetFrameStrata(frame:GetFrameStrata())
     border:SetFrameLevel((level or frame:GetFrameLevel()) + 5)
     frame.cleanBorder = border
     return border
 end
 
-function CleanClassicUI.HideForever(frame)
+function CleanClassicExperience.HideForever(frame)
     if not frame then return end
     frame:Hide()
     frame:SetScript("OnShow", frame.Hide)
 end
 
-function CleanClassicUI.OnEvent(callback, ...)
+function CleanClassicExperience.OnEvent(callback, ...)
     local frame = CreateFrame("Frame")
     for i = 1, select("#", ...) do
         frame:RegisterEvent((select(i, ...)))

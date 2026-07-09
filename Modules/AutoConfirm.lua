@@ -3,25 +3,25 @@
 -- confirm the action and dismiss the popup.
 
 -- Rolling need or greed on a bind-on-pickup item.
-CleanClassicUI.OnEvent(function(_, _, rollID, rollType)
+CleanClassicExperience.OnEvent(function(_, _, rollID, rollType)
     ConfirmLootRoll(rollID, rollType)
     StaticPopup_Hide("CONFIRM_LOOT_ROLL", rollID)
 end, "CONFIRM_LOOT_ROLL")
 
 -- Looting a bind-on-pickup item directly from a corpse or chest.
-CleanClassicUI.OnEvent(function(_, _, slot)
+CleanClassicExperience.OnEvent(function(_, _, slot)
     ConfirmLootSlot(slot)
     StaticPopup_Hide("LOOT_BIND", slot)
 end, "LOOT_BIND_CONFIRM")
 
 -- Using a bind-on-use item.
-CleanClassicUI.OnEvent(function()
+CleanClassicExperience.OnEvent(function()
     C_Item.ConfirmBindOnUse()
     StaticPopup_Hide("USE_BIND")
 end, "USE_BIND_CONFIRM")
 
 -- Selling an item that is still tradeable within its 2-hour group loot window.
-CleanClassicUI.OnEvent(function()
+CleanClassicExperience.OnEvent(function()
     SellCursorItem()
     StaticPopup_Hide("CONFIRM_MERCHANT_TRADE_TIMER_REMOVAL")
 end, "MERCHANT_CONFIRM_TRADE_TIMER_REMOVAL")

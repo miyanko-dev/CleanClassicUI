@@ -11,17 +11,17 @@ end
 
 local function placeFrames()
     if InCombatLockdown() then
-        print("|cffffff00[CleanClassicUI]:|r Unit frames can't be moved during combat.")
+        print("|cffffff00[CleanClassicExperience]:|r Unit frames can't be moved during combat.")
         return
     end
     if not (PlayerFrame and TargetFrame and CastingBarFrame and ActionButton1 and ActionButton12) then
-        print("|cffffff00[CleanClassicUI]:|r Required frames not ready, try again after login.")
+        print("|cffffff00[CleanClassicExperience]:|r Required frames not ready, try again after login.")
         return
     end
 
     -- Virtual cast-bottom (assumes a stance/pet row above AB2) keeps the frames at the same
     -- peripheral-vision height for every class.
-    local layout = CleanClassicUILayout
+    local layout = CleanClassicExperienceLayout
     local castBottom = (layout and layout.castBottomWithStanceOrPet and layout.castBottomWithStanceOrPet())
         or CastingBarFrame:GetBottom()
     local firstButtonLeft = ActionButton1:GetLeft()
@@ -32,7 +32,7 @@ local function placeFrames()
     local targetFrameBottom = TargetFrame:GetBottom()
     if not (castBottom and firstButtonLeft and lastButtonRight
         and playerPortraitBottom and targetPortraitBottom and playerFrameBottom and targetFrameBottom) then
-        print("|cffffff00[CleanClassicUI]:|r Anchor frames not measurable yet.")
+        print("|cffffff00[CleanClassicExperience]:|r Anchor frames not measurable yet.")
         return
     end
 

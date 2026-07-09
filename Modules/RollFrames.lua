@@ -1,4 +1,4 @@
-local SPACING = CleanClassicUI.SPACING
+local SPACING = CleanClassicExperience.SPACING
 
 local FRAME_GAP           = SPACING.XS
 local LEFT_MARGIN         = SPACING.LG
@@ -7,12 +7,12 @@ local ANCHOR_SIZE         = 24
 local DB_KEY              = "rollFramesAnchor"
 
 local function getDB()
-    CleanClassicUIDB = CleanClassicUIDB or {}
-    CleanClassicUIDB[DB_KEY] = CleanClassicUIDB[DB_KEY] or {}
-    return CleanClassicUIDB[DB_KEY]
+    CleanClassicExperienceDB = CleanClassicExperienceDB or {}
+    CleanClassicExperienceDB[DB_KEY] = CleanClassicExperienceDB[DB_KEY] or {}
+    return CleanClassicExperienceDB[DB_KEY]
 end
 
-local anchor = CreateFrame("Frame", "CleanClassicUIRollAnchor", UIParent)
+local anchor = CreateFrame("Frame", "CleanClassicExperienceRollAnchor", UIParent)
 anchor:SetSize(ANCHOR_SIZE, ANCHOR_SIZE)
 anchor:SetFrameStrata("MEDIUM")
 anchor:SetMovable(true)
@@ -128,7 +128,7 @@ if type(GroupLootContainer_Update) == "function" then
     hooksecurefunc("GroupLootContainer_Update", arrangeRollFrames)
 end
 
-CleanClassicUI.OnEvent(function()
+CleanClassicExperience.OnEvent(function()
     loadPosition()
     arrangeRollFrames()
 end, "PLAYER_LOGIN")

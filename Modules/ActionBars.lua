@@ -1,6 +1,6 @@
-local SPACING = CleanClassicUI.SPACING
-local BORDER = CleanClassicUI.BORDER
-local BTN_SIZE = CleanClassicUI.BTN_SIZE
+local SPACING = CleanClassicExperience.SPACING
+local BORDER = CleanClassicExperience.BORDER
+local BTN_SIZE = CleanClassicExperience.BTN_SIZE
 
 local OUTER_GAP = SPACING.MD
 local TIGHT_GAP = SPACING.XS
@@ -59,10 +59,10 @@ local BAR_PREFIXES = {
     "MultiBarLeftButton",
 }
 
-CleanClassicUILayout = CleanClassicUILayout or {}
-CleanClassicUILayout.bar3Scale = BAR3_SCALE
-CleanClassicUILayout.btnSize = BTN_SIZE
-CleanClassicUILayout.afterLayout = CleanClassicUILayout.afterLayout or {}
+CleanClassicExperienceLayout = CleanClassicExperienceLayout or {}
+CleanClassicExperienceLayout.bar3Scale = BAR3_SCALE
+CleanClassicExperienceLayout.btnSize = BTN_SIZE
+CleanClassicExperienceLayout.afterLayout = CleanClassicExperienceLayout.afterLayout or {}
 
 -- Visible width of the XP/rep stack, sized so the fill plus its border matches AB3's row.
 local function xpRepWidth()
@@ -72,12 +72,12 @@ end
 
 -- StatusBars.lua sizes/positions the XP/rep bars from these; the border offset (xpRepEdge)
 -- keeps the fill running out to the border with the strip still as wide as AB3.
-CleanClassicUILayout.xpRepWidth = xpRepWidth
-CleanClassicUILayout.xpRepBarHeight = XP_REP_BAR_HEIGHT
-CleanClassicUILayout.xpRepEdge = XP_REP_EDGE
+CleanClassicExperienceLayout.xpRepWidth = xpRepWidth
+CleanClassicExperienceLayout.xpRepBarHeight = XP_REP_BAR_HEIGHT
+CleanClassicExperienceLayout.xpRepEdge = XP_REP_EDGE
 -- Screen-Y (px above the bottom edge) of each XP/rep slot's visible bottom border.
-CleanClassicUILayout.xpRepBottomSlot = XP_EDGE_MARGIN
-CleanClassicUILayout.xpRepUpperSlot = XP_EDGE_MARGIN + XP_REP_BAR + XP_REP_GAP
+CleanClassicExperienceLayout.xpRepBottomSlot = XP_EDGE_MARGIN
+CleanClassicExperienceLayout.xpRepUpperSlot = XP_EDGE_MARGIN + XP_REP_BAR + XP_REP_GAP
 
 -- True while the cursor holds an action or the spellbook is open.
 local gridShown = false
@@ -108,7 +108,7 @@ local function styleBtn(btn)
     local icon = _G[name .. "Icon"]
     if icon then icon:SetTexCoord(0.1, 0.9, 0.1, 0.9) end
 
-    CleanClassicUI.ApplyBorder(btn)
+    CleanClassicExperience.ApplyBorder(btn)
     syncBorder(btn)
 end
 
@@ -180,13 +180,13 @@ local function hideChrome()
     MainMenuBarMaxLevelBar:Hide()
     MainMenuBarOverlayFrame:Hide()
     if MainMenuBarTextureExtender then MainMenuBarTextureExtender:Hide() end
-    CleanClassicUI.HideForever(MainMenuBarPerformanceBarFrame)
+    CleanClassicExperience.HideForever(MainMenuBarPerformanceBarFrame)
     for i = 0, 3 do
         if _G["MainMenuBarTexture" .. i] then _G["MainMenuBarTexture" .. i]:Hide() end
         if _G["MainMenuMaxLevelBar" .. i] then _G["MainMenuMaxLevelBar" .. i]:Hide() end
     end
     for i = 0, 1 do
-        CleanClassicUI.HideForever(_G["SlidingActionBarTexture" .. i])
+        CleanClassicExperience.HideForever(_G["SlidingActionBarTexture" .. i])
     end
 end
 
@@ -213,7 +213,7 @@ local function styleAllButtons()
             end
             local icon = _G[btn:GetName() .. "Icon"]
             if icon then icon:SetTexCoord(0.1, 0.9, 0.1, 0.9) end
-            CleanClassicUI.ApplyBorder(btn)
+            CleanClassicExperience.ApplyBorder(btn)
         end
     end
 end
@@ -291,7 +291,7 @@ end
 -- should land, so the cast bar sits OUTER_GAP above the topmost visible bottom-bar element
 -- (stance if shown, else pet if shown, else AB2 itself). Includes the topmost element's
 -- top border so the visible gap is exactly OUTER_GAP in every pet/stance state.
-CleanClassicUILayout.castbarYOffsetAboveAB2 = function()
+CleanClassicExperienceLayout.castbarYOffsetAboveAB2 = function()
     if not petStanceBase then return OUTER_BAR_GAP end
     local petShown = isPetVisible()
     local numForms = GetNumShapeshiftForms and GetNumShapeshiftForms() or 0
@@ -310,7 +310,7 @@ end
 -- Screen-Y where CastingBarFrame.BOTTOM would land if a stance bar row sat above
 -- AB2, regardless of current class/state. Used by Auto Position so unit frames
 -- adopt the higher peripheral-vision position even when no pet/stance bar exists.
-CleanClassicUILayout.castBottomWithStanceOrPet = function()
+CleanClassicExperienceLayout.castBottomWithStanceOrPet = function()
     if not petStanceBase then return nil end
     return petStanceBase + STANCE_ABOVE_AB2 + STANCE_BTN_SIZE + OUTER_BAR_GAP
 end
@@ -341,21 +341,21 @@ local function runLayout()
     syncAllBorders()
     placePet()
     placeStance()
-    for _, callback in ipairs(CleanClassicUILayout.afterLayout) do callback() end
+    for _, callback in ipairs(CleanClassicExperienceLayout.afterLayout) do callback() end
 end
 
 -- Blizzard runs MultiActionBar_Update whenever bars 4 or 5 are toggled on/off.
 if MultiActionBar_Update then hooksecurefunc("MultiActionBar_Update", placeVerticalBars) end
 
-CleanClassicUILayout.scheduleLayout = runLayout
-CleanClassicUILayout.relayout = runLayout
+CleanClassicExperienceLayout.scheduleLayout = runLayout
+CleanClassicExperienceLayout.relayout = runLayout
 
 -- Events from Gethe/wow-ui-source classic_era:
 --   PetActionBar.lua/PetActionBar_OnEvent drives Show/HidePetActionBar on
 --     PET_BAR_UPDATE, UNIT_PET (arg1=="player"), PET_UI_UPDATE,
 --     UPDATE_VEHICLE_ACTIONBAR. PLAYER_MOUNT_DISPLAY_CHANGED also registered.
 --   StanceBar reacts to UPDATE_SHAPESHIFT_FORM(S).
-CleanClassicUI.OnEvent(function(self, event, arg1)
+CleanClassicExperience.OnEvent(function(self, event, arg1)
     if event == "PLAYER_ENTERING_WORLD" then
         runLayout()
     elseif event == "UNIT_PET" then
