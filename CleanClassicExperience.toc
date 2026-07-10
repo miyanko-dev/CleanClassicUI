@@ -29,4 +29,5 @@ Modules/WorldMap.lua
 Modules/AddonSupport.lua
 Modules/Tooltips.lua
 Modules/UnitFrames.lua
+Modules/UnitFrameStyle.lua
 Modules/Character.lua
