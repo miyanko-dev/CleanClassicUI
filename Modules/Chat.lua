@@ -16,6 +16,15 @@ local CHAT_FRAME_TEXTURE_SUFFIXES = {
     "LeftTexture", "RightTexture", "TopTexture", "BottomTexture",
 }
 
+-- TBC 2.5.6 replaced the ChatEdit_*/ChatFrame_* globals with ChatFrameUtil and
+-- editbox/chat-frame mixin methods, and hands ChatFrame1's position to Edit Mode;
+-- era 1.15 keeps all the old globals.
+local modernChat = ChatEdit_UpdateHeader == nil
+
+local getActiveWindow = ChatEdit_GetActiveWindow or ChatFrameUtil.GetActiveWindow
+local deactivateChat = ChatEdit_DeactivateChat or ChatFrameUtil.DeactivateChat
+local inviteUnit = InviteUnit or C_PartyInfo.InviteUnit
+
 local function stripChatFrameTextures(chatFrame)
     local name = chatFrame:GetName()
     for _, suffix in ipairs(CHAT_FRAME_TEXTURE_SUFFIXES) do
@@ -51,6 +60,24 @@ local function styleTab(tab)
     tab.cleanStyled = true
 end
 
+local function updateHeaderExtras(editBox)
+    local headerSuffix = _G[editBox:GetName() .. "HeaderSuffix"]
+    if headerSuffix then
+        headerSuffix:Hide()
+        if editBox.header then
+            editBox:SetTextInsets(15 + editBox.header:GetWidth(), 13, 0, 0)
+        end
+    end
+
+    if editBox:GetAttribute("chatType") ~= "WHISPER" then return end
+    local whisperColor = ChatTypeInfo["WHISPER_INFORM"]
+    if not whisperColor then return end
+    editBox:SetTextColor(whisperColor.r, whisperColor.g, whisperColor.b)
+    if editBox.header then
+        editBox.header:SetTextColor(whisperColor.r, whisperColor.g, whisperColor.b)
+    end
+end
+
 local function styleEditBox(chatFrame, editBox)
     if not editBox or editBox.cleanStyled then return end
 
@@ -76,12 +103,18 @@ local function styleEditBox(chatFrame, editBox)
 
     -- $parentHeaderSuffix (the ": " after the chat type) is in the editbox's
     -- ARTWORK layer and leaks at dimmed alpha when Blizzard fades the box out
-    -- on deactivate; visibility is bound to the header via ChatEdit_UpdateHeader below.
+    -- on deactivate; visibility is bound to the header via updateHeaderExtras.
     local headerSuffix = _G[editBox:GetName() .. "HeaderSuffix"]
     if headerSuffix then
         headerSuffix:Hide()
         local suffixFont, suffixSize = headerSuffix:GetFont()
         headerSuffix:SetFont(suffixFont, suffixSize, "OUTLINE")
+    end
+
+    -- On TBC UpdateHeader is a mixin method copied onto each editbox, so the
+    -- post-hook has to be installed per object instead of on a global.
+    if modernChat then
+        hooksecurefunc(editBox, "UpdateHeader", updateHeaderExtras)
     end
 
     editBox.cleanStyled = true
@@ -102,7 +135,8 @@ local function applyStyle()
     CleanClassicExperience.HideForever(ChatFrameMenuButton)
     CleanClassicExperience.HideForever(ChatFrameChannelButton)
 
-    for i = 1, NUM_CHAT_WINDOWS do
+    local maxWindows = NUM_CHAT_WINDOWS or Constants.ChatFrameConstants.MaxChatWindows
+    for i = 1, maxWindows do
         local chatFrame = _G["ChatFrame" .. i]
         if chatFrame then
             local editBox = _G[chatFrame:GetName() .. "EditBox"]
@@ -111,7 +145,8 @@ local function applyStyle()
             stripChatFrameTextures(chatFrame)
             styleTab(tab)
             styleEditBox(chatFrame, editBox)
-            if chatFrame == ChatFrame1 then
+            -- Edit Mode owns ChatFrame1's position on TBC.
+            if chatFrame == ChatFrame1 and not modernChat then
                 positionChatFrame(chatFrame, editBox)
             end
         end
@@ -153,23 +188,9 @@ end)
 -- taints Blizzard's message handling, so cancel the flash from a post-hook instead.
 hooksecurefunc("FCF_StartAlertFlash", FCF_StopAlertFlash)
 
-hooksecurefunc("ChatEdit_UpdateHeader", function(editBox)
-    local headerSuffix = _G[editBox:GetName() .. "HeaderSuffix"]
-    if headerSuffix then
-        headerSuffix:Hide()
-        if editBox.header then
-            editBox:SetTextInsets(15 + editBox.header:GetWidth(), 13, 0, 0)
-        end
-    end
-
-    if editBox:GetAttribute("chatType") ~= "WHISPER" then return end
-    local whisperColor = ChatTypeInfo["WHISPER_INFORM"]
-    if not whisperColor then return end
-    editBox:SetTextColor(whisperColor.r, whisperColor.g, whisperColor.b)
-    if editBox.header then
-        editBox.header:SetTextColor(whisperColor.r, whisperColor.g, whisperColor.b)
-    end
-end)
+if not modernChat then
+    hooksecurefunc("ChatEdit_UpdateHeader", updateHeaderExtras)
+end
 
 local isMacClient = IsMacClient and IsMacClient()
 
@@ -187,9 +208,9 @@ end
 -- the dropdown opened by right-clicking a player name inherits the taint and its
 -- protected Copy Character Name -> CopyToClipboard() call fires ADDON_ACTION_FORBIDDEN.
 -- A post-hook stays off the secure path; Blizzard's default left-click action
--- (ChatFrame_SendTell -> whisper edit box) runs first, so deactivate that edit box
+-- (send-tell -> whisper edit box) runs first, so deactivate that edit box
 -- before applying our modifier-click behavior.
-hooksecurefunc("ChatFrame_OnHyperlinkShow", function(self, link, text, button)
+local function onHyperlinkClick(chatFrame, link, text, button)
     if button ~= "LeftButton" then return end
     local name = link:match("^player:([^:]+)")
     if not name or name == "" then return end
@@ -199,14 +220,22 @@ hooksecurefunc("ChatFrame_OnHyperlinkShow", function(self, link, text, button)
     local wantsFriend = not (wantsWhisperTab or wantsInvite) and isFriendModifierDown()
     if not (wantsWhisperTab or wantsInvite or wantsFriend) then return end
 
-    local editBox = ChatEdit_GetActiveWindow()
-    if editBox then ChatEdit_DeactivateChat(editBox) end
+    local editBox = getActiveWindow()
+    if editBox then deactivateChat(editBox) end
 
     if wantsWhisperTab then
-        FCF_OpenTemporaryWindow("WHISPER", name, self, true)
+        FCF_OpenTemporaryWindow("WHISPER", name, chatFrame, true)
     elseif wantsInvite then
-        InviteUnit(name)
+        inviteUnit(name)
     else
         C_FriendList.AddFriend(name)
     end
-end)
+end
+
+if modernChat then
+    EventRegistry:RegisterCallback("ChatFrame.OnHyperlinkClick", function(_, chatFrame, link, text, button)
+        onHyperlinkClick(chatFrame, link, text, button)
+    end, CleanClassicExperience)
+else
+    hooksecurefunc("ChatFrame_OnHyperlinkShow", onHyperlinkClick)
+end

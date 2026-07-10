@@ -7,7 +7,10 @@ local function createText()
     if ilvlText or not CharacterLevelText then return end
     local parent = CharacterLevelText:GetParent()
     ilvlText = parent:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
-    ilvlText:SetPoint("TOP", CharacterLevelText, "BOTTOM", 0, -1)
+
+    -- TBC's title dropdown occupies the slot directly below the level text.
+    local anchor = PlayerTitleDropdown or CharacterLevelText
+    ilvlText:SetPoint("TOP", anchor, "BOTTOM", 0, -1)
 
     -- Push guild text below the new line so they don't overlap.
     if CharacterGuildText then
@@ -29,7 +32,7 @@ local function computeAverage()
     for _, slot in ipairs(SLOTS) do
         local link = GetInventoryItemLink("player", slot)
         if link then
-            local _, _, _, ilvl = GetItemInfo(link)
+            local _, _, _, ilvl = C_Item.GetItemInfo(link)
             if ilvl then
                 total = total + ilvl
                 count = count + 1

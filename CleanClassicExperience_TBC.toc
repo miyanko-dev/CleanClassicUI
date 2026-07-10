@@ -1,24 +1,22 @@
-## Interface: 11508
+## Interface: 20506
 ## Title: CleanClassicExperience
-## Notes: Minimalist layout for action bars, bags, micro menu, status bars, minimap, auras, and tooltips.
+## Notes: Minimalist styling for bags, minimap, chat, nameplates, and tooltips. Bar and frame layout is handled by the game's Edit Mode.
 ## Version: 2.2.0
 ## Author: MIYANKO
 ## IconTexture: 133004
 ## SavedVariables: CleanClassicExperienceDB
 
+# ActionBars, MicroMenu, StatusBars, CastBar, Auras, UnitFrames, and LFGButton are
+# vanilla-only: on TBC 2.5.6 Edit Mode natively owns everything they position, and
+# the vanilla globals they hook no longer exist.
+
 Modules/Styles.lua
-Modules/MicroMenu.lua
-Modules/ActionBars.lua
-Modules/StatusBars.lua
-Modules/CastBar.lua
 Modules/TimerBars.lua
 Modules/Bags.lua
 Modules/Items.lua
-Modules/LFGButton.lua
 Modules/Minimap.lua
 Modules/Framerate.lua
 Modules/NamePlates.lua
-Modules/Auras.lua
 Modules/Chat.lua
 Modules/RaidFrames.lua
 Modules/RollFrames.lua
@@ -28,5 +26,4 @@ Modules/FastSellRepair.lua
 Modules/WorldMap.lua
 Modules/AddonSupport.lua
 Modules/Tooltips.lua
-Modules/UnitFrames.lua
 Modules/Character.lua

@@ -79,7 +79,13 @@ local function arrangeBtns()
     end
 end
 
-hooksecurefunc("MoveMicroButtons", arrangeBtns)
+-- The custom bag row only exists on the vanilla UI. On TBC 2.5.6 MoveMicroButtons is
+-- gone and Edit Mode owns the BagsBar, so reparenting its buttons would fight it.
+local managesBagRow = MoveMicroButtons ~= nil
+
+if managesBagRow then
+    hooksecurefunc("MoveMicroButtons", arrangeBtns)
+end
 
 -- Fully re-anchor every bag in Blizzard's open-order chain. Blizzard anchors
 -- each new column to UIParent's right edge, so we cannot let it set columns.
@@ -113,5 +119,7 @@ CleanClassicExperience.OnEvent(function(_, event)
     end
 end, "BANKFRAME_OPENED", "BANKFRAME_CLOSED")
 
-CleanClassicExperience.OnEvent(arrangeBtns,
-    "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")
+if managesBagRow then
+    CleanClassicExperience.OnEvent(arrangeBtns,
+        "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")
+end

@@ -6,8 +6,11 @@ local SIZE_DELTA = (MAP_SIZE - DEFAULT_SIZE) / 2
 local CLUSTER_X = (17 - SIZE_DELTA) - MARGIN
 local CLUSTER_Y = (22 - SIZE_DELTA) - MARGIN
 
-local EDGE_SCALE  = 1.0
-local EDGE_RADIUS = (MAP_SIZE / 2) / EDGE_SCALE
+local EDGE_SCALE = 1.0
+
+-- Edit Mode owns the cluster's anchor, scale, and size on TBC 2.5.6; only the
+-- vanilla UI lets us place and enlarge the map ourselves.
+local modernCluster = MinimapCluster and MinimapCluster.MinimapContainer ~= nil
 
 local HIDDEN = {
     "MinimapBorder",
@@ -22,6 +25,7 @@ local HIDDEN = {
 }
 
 local function applyLayout()
+    if modernCluster then return end
     Minimap:SetSize(MAP_SIZE, MAP_SIZE)
     MinimapCluster:SetScale(1.0)
     MinimapCluster:ClearAllPoints()
@@ -40,8 +44,9 @@ end
 
 local function placeOnEdge(icon, angle)
     local rad = math.rad(angle)
+    local radius = (Minimap:GetWidth() / 2) / EDGE_SCALE
     icon:ClearAllPoints()
-    icon:SetPoint("CENTER", Minimap, "CENTER", math.cos(rad) * EDGE_RADIUS, math.sin(rad) * EDGE_RADIUS)
+    icon:SetPoint("CENTER", Minimap, "CENTER", math.cos(rad) * radius, math.sin(rad) * radius)
 end
 
 local function dragUpdate(icon, key)
@@ -86,6 +91,11 @@ local function applyMinimap()
     for _, name in ipairs(HIDDEN) do
         local region = _G[name]
         if region then region:Hide() end
+    end
+
+    -- On TBC the top banner is a parentKey texture, not the MinimapBorderTop global.
+    if modernCluster and MinimapCluster.BorderTop then
+        MinimapCluster.BorderTop:Hide()
     end
 
     if TimeManagerClockButton then
