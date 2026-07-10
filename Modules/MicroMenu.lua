@@ -1,3 +1,7 @@
+-- Vanilla UI only: on the modern Edit Mode clients (TBC 2.5.6, likely era 1.15.9)
+-- this global is gone and Edit Mode owns the micro menu natively.
+if not MoveMicroButtons then return end
+
 local MARGIN      = CleanClassicExperience.SPACING.LG
 local BTN_OVERLAP = -3
 

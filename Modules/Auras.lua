@@ -1,3 +1,7 @@
+-- Vanilla UI only: on the modern Edit Mode clients (TBC 2.5.6, likely era 1.15.9)
+-- buff buttons are anonymous pooled frames and Edit Mode owns the aura layout.
+if not AuraButton_Update then return end
+
 local SPACING = CleanClassicExperience.SPACING
 local C = CleanClassicExperience.COLOR
 

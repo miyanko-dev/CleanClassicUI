@@ -1,3 +1,7 @@
+-- Vanilla UI only: the modern Edit Mode clients (TBC 2.5.6, likely era 1.15.9)
+-- renamed this frame PlayerCastingBarFrame and Edit Mode owns its position.
+if not CastingBarFrame then return end
+
 local BAR_H       = 20
 local TEXT_PADDING = 6
 local ELLIPSIS    = "..."

@@ -1,3 +1,7 @@
+-- Vanilla UI only: on the modern Edit Mode clients (TBC 2.5.6, likely era 1.15.9)
+-- this global is gone and Edit Mode owns the bar layout natively.
+if not ActionButton_Update then return end
+
 local SPACING = CleanClassicExperience.SPACING
 local BORDER = CleanClassicExperience.BORDER
 local BTN_SIZE = CleanClassicExperience.BTN_SIZE

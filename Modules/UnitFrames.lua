@@ -1,3 +1,7 @@
+-- Vanilla UI only: on the modern Edit Mode clients (TBC 2.5.6, likely era 1.15.9)
+-- Edit Mode moves unit frames natively and the addon bar layout this aligns to is off.
+if not CastingBarFrame then return end
+
 -- Positioning PlayerFrame/TargetFrame from Lua taints them for the session, which blocks
 -- Blizzard's TargetofTarget_Update -> TargetFrameToT:Show()/Hide() in combat. SetUserPlaced
 -- hands the position to WoW's native layout cache, so a single /reload clears the one-time
