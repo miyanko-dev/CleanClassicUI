@@ -1,7 +1,7 @@
 -- Player/target frame styling shared across every client. Pure styling (no move
 -- or reparent), so it is safe on the Edit Mode clients where these frames are
 -- position-managed:
---   * recolor the ornate frame art to the action-button grey,
+--   * recolor the ornate frame art (player, target, target-of-target, pet) to grey,
 --   * swap the health/power fill to the cast bar (raid) texture,
 --   * give the target name the player frame's plain black backing.
 local FRAME_COLOR = CleanClassicExperience.COLOR.GREY
@@ -32,13 +32,17 @@ end
 local function styleFrames()
     tint(PlayerFrameTexture)
     tint(TargetFrameTextureFrameTexture)
+    tint(TargetFrameToTTextureFrameTexture)
+    tint(PetFrameTexture)
 
     if PlayerFrameHealthBar then PlayerFrameHealthBar:SetStatusBarTexture(BAR_TEXTURE) end
     if TargetFrameHealthBar then TargetFrameHealthBar:SetStatusBarTexture(BAR_TEXTURE) end
     if PetFrameHealthBar then PetFrameHealthBar:SetStatusBarTexture(BAR_TEXTURE) end
+    if TargetFrameToTHealthBar then TargetFrameToTHealthBar:SetStatusBarTexture(BAR_TEXTURE) end
     applyPowerBar(PlayerFrameManaBar)
     applyPowerBar(TargetFrameManaBar)
     applyPowerBar(PetFrameManaBar)
+    applyPowerBar(TargetFrameToTManaBar)
 
     -- Match PlayerFrameBackground (flat black, 0.5 alpha). A color texture ignores
     -- the faction vertex tint (black x reaction = black), so it holds untouched.
