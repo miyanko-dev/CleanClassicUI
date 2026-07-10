@@ -24,6 +24,25 @@ local HIDDEN = {
     "GameTimeFrame",
 }
 
+local BUTTON_SIZE = 33
+
+-- The circular MiniMap-TrackingBorder rings stay; desaturating before the grey
+-- vertex color is required because tinting the gold art alone only darkens it.
+local RING_COLOR = CleanClassicExperience.COLOR.GREY
+
+local RINGS = {
+    "MiniMapMailBorder",
+    "MiniMapBattlefieldBorder",
+    "MiniMapTrackingBorder",        -- era
+    "MiniMapTrackingButtonBorder",  -- tbc
+}
+
+local function recolorRing(ring)
+    if not ring then return end
+    ring:SetDesaturated(true)
+    ring:SetVertexColor(unpack(RING_COLOR))
+end
+
 local function applyLayout()
     if modernCluster then return end
     Minimap:SetSize(MAP_SIZE, MAP_SIZE)
@@ -32,12 +51,16 @@ local function applyLayout()
     MinimapCluster:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", CLUSTER_X, CLUSTER_Y)
 end
 
+-- Match addon buttons to the Blizzard edge buttons: same size, grey ring.
+-- Refresh never resets size or border color, so this sticks.
 local function refreshAddonIcons()
     if not LibStub then return end
     local lib = LibStub("LibDBIcon-1.0", true)
     if not (lib and lib.objects and lib.Refresh) then return end
     if lib.SetButtonRadius then lib:SetButtonRadius(0) end
-    for name in pairs(lib.objects) do
+    for name, btn in pairs(lib.objects) do
+        btn:SetSize(BUTTON_SIZE, BUTTON_SIZE)
+        recolorRing(btn.border)
         lib:Refresh(name)
     end
 end
@@ -59,15 +82,18 @@ local function dragUpdate(icon, key)
     placeOnEdge(icon, angle)
 end
 
-local function setupEdgeIcon(icon, key, defaultAngle)
+-- dragHandle: the frame that receives mouse input when it differs from the
+-- moved frame (TBC's tracking dropdown child covers its parent entirely).
+local function setupEdgeIcon(icon, key, defaultAngle, dragHandle)
     if not icon then return end
+    local handle = dragHandle or icon
     icon:SetScale(EDGE_SCALE)
     icon:SetMovable(true)
-    icon:RegisterForDrag("LeftButton")
-    icon:SetScript("OnDragStart", function(self)
-        self:SetScript("OnUpdate", function(this) dragUpdate(this, key) end)
+    handle:RegisterForDrag("LeftButton")
+    handle:SetScript("OnDragStart", function(self)
+        self:SetScript("OnUpdate", function() dragUpdate(icon, key) end)
     end)
-    icon:SetScript("OnDragStop", function(self)
+    handle:SetScript("OnDragStop", function(self)
         self:SetScript("OnUpdate", nil)
     end)
     local angle = CleanClassicExperienceDB.iconAngles[key] or defaultAngle
@@ -75,9 +101,39 @@ local function setupEdgeIcon(icon, key, defaultAngle)
 end
 
 local function adjustEdgeIcons()
-    setupEdgeIcon(MiniMapTracking,       "tracking",    135)
+    setupEdgeIcon(MiniMapTracking,       "tracking",    135, MiniMapTrackingButton)
     setupEdgeIcon(MiniMapMailFrame,      "mail",         45)
     setupEdgeIcon(MiniMapBattlefieldFrame, "battlefield", 225)
+end
+
+local function sizeEdgeButton(btn)
+    if btn then btn:SetSize(BUTTON_SIZE, BUTTON_SIZE) end
+end
+
+-- Grey rings and one shared frame size; the native icon/ring geometry stays.
+local function styleEdgeButtons()
+    for _, name in ipairs(RINGS) do
+        recolorRing(_G[name])
+    end
+
+    sizeEdgeButton(MiniMapTracking)
+    sizeEdgeButton(MiniMapMailFrame)
+    sizeEdgeButton(MiniMapBattlefieldFrame)
+
+    -- Era draws the tracking ring at 64px while every other button uses 52;
+    -- normalize it, shifted by the icon's (2,-2) center offset.
+    if MiniMapTrackingBorder then
+        MiniMapTrackingBorder:SetSize(52, 52)
+        MiniMapTrackingBorder:ClearAllPoints()
+        MiniMapTrackingBorder:SetPoint("TOPLEFT", 2, -2)
+    end
+
+    -- TBC wraps tracking in a child dropdown button; keep the click target
+    -- matched to the resized frame.
+    if MiniMapTrackingButton then
+        MiniMapTrackingButton:ClearAllPoints()
+        MiniMapTrackingButton:SetAllPoints(MiniMapTracking)
+    end
 end
 
 Minimap:EnableMouseWheel(true)
@@ -118,6 +174,7 @@ local function applyMinimap()
 
     CleanClassicExperienceDB = CleanClassicExperienceDB or {}
     CleanClassicExperienceDB.iconAngles = CleanClassicExperienceDB.iconAngles or {}
+    styleEdgeButtons()
     adjustEdgeIcons()
     refreshAddonIcons()
 end
