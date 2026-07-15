@@ -232,14 +232,14 @@ local function isPetVisible()
     return true
 end
 
--- Replace PetActionBarMixin.UpdatePositionValues on the frame so every Blizzard
+-- Post-hooked onto PetActionBarFrame.UpdatePositionValues so every Blizzard
 -- caller (ShowPetActionBar, PetActionBar_OnUpdate, UIParentManageFramePositions)
--- runs our placement instead of Blizzard's, which would otherwise re-anchor the
--- bar against MainMenuBar.TOP and fight our SetPoint. The replacement is insecure
--- Lua, but the InCombatLockdown guard means it never calls SetPoint while combat
--- protection is active, so it can't trigger ADDON_ACTION_BLOCKED when the panel
--- manager reruns it. Anchoring directly to UIParent (no SetUserPlaced) avoids
--- the original taint source.
+-- runs our placement right after Blizzard's, overriding its re-anchor against
+-- MainMenuBar.TOP. Must be a hooksecurefunc, never a replacement: an insecure
+-- function stored in that slot taints ShowPetActionBar's execution and blocks
+-- the protected PetActionBarFrame:Show() when a pet is called in combat. In
+-- combat the guard skips our SetPoint (protected frame), Blizzard's position
+-- wins until PLAYER_REGEN_ENABLED reruns placePet.
 local function placePetBar(self)
     if InCombatLockdown() or not petStanceBase then return end
     if not (self and PetActionButton1) then return end
@@ -326,13 +326,8 @@ hooksecurefunc("ActionButton_OnUpdate", function(self)
     self.icon:SetAlpha((not usable or inRange == false) and 0.9 or 1.0)
 end)
 
--- Install our placement as PetActionBarFrame:UpdatePositionValues so every
--- Blizzard caller routes through it. The original Blizzard method is replaced
--- on the frame instance (PetActionBarMixin copies methods onto the frame at
--- creation), so calls via PetActionBarFrame:UpdatePositionValues() resolve to
--- placePetBar instead of Blizzard's anchor-against-parent routine.
 if PetActionBarFrame then
-    PetActionBarFrame.UpdatePositionValues = placePetBar
+    hooksecurefunc(PetActionBarFrame, "UpdatePositionValues", placePetBar)
 end
 
 local function runLayout()

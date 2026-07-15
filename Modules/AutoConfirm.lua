@@ -1,6 +1,9 @@
 -- Auto-accept "will be soulbound" warning popups. UIParent registered these
 -- events first, so its handler has already shown each popup when ours runs;
 -- confirm the action and dismiss the popup.
+--
+-- The item-delete popup can't be handled the same way: DeleteCursorItem()
+-- is protected on current clients and triggers ADDON_ACTION_BLOCKED.
 
 -- Rolling need or greed on a bind-on-pickup item.
 CleanClassicExperience.OnEvent(function(_, _, rollID, rollType)
