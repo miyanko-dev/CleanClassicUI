@@ -41,6 +41,17 @@ local function styleAura(btn, color)
     end
 end
 
+-- Blizzard rounds anything past an hour to whole hours ("2 h"); show exact minutes instead
+hooksecurefunc("AuraButton_UpdateDuration", function(btn, timeLeft)
+    if not (btn.duration and timeLeft) then return end
+
+    if timeLeft >= 3600 and timeLeft < 86400 then
+        btn.duration:SetFormattedText(MINUTE_ONELETTER_ABBR, math.ceil(timeLeft / 60))
+    end
+
+    btn.duration:SetVertexColor(1, 1, 1)
+end)
+
 hooksecurefunc("AuraButton_Update", function(name, index, filter)
     local btn = _G[name .. index]
     if not btn then return end

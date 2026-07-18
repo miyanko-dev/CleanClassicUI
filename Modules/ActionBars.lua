@@ -83,18 +83,30 @@ CleanClassicExperienceLayout.xpRepEdge = XP_REP_EDGE
 CleanClassicExperienceLayout.xpRepBottomSlot = XP_EDGE_MARGIN
 CleanClassicExperienceLayout.xpRepUpperSlot = XP_EDGE_MARGIN + XP_REP_BAR + XP_REP_GAP
 
--- True while the cursor holds an action or the spellbook is open.
+-- True while ACTIONBAR_SHOWGRID is in flight (cursor drag).
 local gridShown = false
 
--- Hide cleanBorder on empty slots unless the grid is being shown for drag/spellbook.
-local function syncBorder(btn)
-    if not btn or not btn.cleanBorder or not btn.action then return end
-    btn.cleanBorder:SetShown(HasAction(btn.action) or gridShown)
+-- Trust the grid only while the cursor really holds something: 1.15.8 leaves
+-- Blizzard's secure showgrid counter (and a missed HIDEGRID) stuck on, which
+-- kept empty slots visible as if "Always Show Action Bars" were enabled.
+local function gridActive()
+    return gridShown and GetCursorInfo() ~= nil
 end
 
-local function syncAllBorders()
+-- Empty slots hide button and border unless a drag needs the grid; don't rely
+-- on Blizzard hiding them, its stuck showgrid counter never reaches zero.
+local function syncButton(btn)
+    if not btn or not btn.action then return end
+    local shown = HasAction(btn.action) or gridActive()
+    if btn.cleanBorder then btn.cleanBorder:SetShown(shown) end
+    if not InCombatLockdown() and not btn:GetAttribute("statehidden") then
+        btn:SetShown(shown)
+    end
+end
+
+local function syncAllButtons()
     for _, prefix in ipairs(BAR_PREFIXES) do
-        for i = 1, 12 do syncBorder(_G[prefix .. i]) end
+        for i = 1, 12 do syncButton(_G[prefix .. i]) end
     end
 end
 
@@ -113,12 +125,12 @@ local function styleBtn(btn)
     if icon then icon:SetTexCoord(0.1, 0.9, 0.1, 0.9) end
 
     CleanClassicExperience.ApplyBorder(btn)
-    syncBorder(btn)
+    syncButton(btn)
 end
 
-hooksecurefunc("ActionButton_Update", syncBorder)
-hooksecurefunc("ActionButton_ShowGrid", syncBorder)
-hooksecurefunc("ActionButton_HideGrid", syncBorder)
+hooksecurefunc("ActionButton_Update", syncButton)
+hooksecurefunc("ActionButton_ShowGrid", syncButton)
+hooksecurefunc("ActionButton_HideGrid", syncButton)
 
 -- Force action bars 2 and 3 on; bars 4 and 5 remain user-controlled.
 local function enableBars()
@@ -337,7 +349,7 @@ local function runLayout()
     placeVerticalBars()
     hideChrome()
     styleAllButtons()
-    syncAllBorders()
+    syncAllButtons()
     placePet()
     placeStance()
     for _, callback in ipairs(CleanClassicExperienceLayout.afterLayout) do callback() end
@@ -370,13 +382,14 @@ CleanClassicExperience.OnEvent(function(self, event, arg1)
         placeStance()
     elseif event == "ACTIONBAR_SHOWGRID" then
         gridShown = true
-        syncAllBorders()
+        syncAllButtons()
     elseif event == "ACTIONBAR_HIDEGRID" then
         gridShown = false
-        syncAllBorders()
+        syncAllButtons()
     elseif event == "PLAYER_REGEN_ENABLED" then
         placePet()
         placeStance()
+        syncAllButtons()
     end
 end,
 "PLAYER_ENTERING_WORLD",

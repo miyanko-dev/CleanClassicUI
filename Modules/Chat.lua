@@ -117,6 +117,11 @@ local function styleEditBox(chatFrame, editBox)
         hooksecurefunc(editBox, "UpdateHeader", updateHeaderExtras)
     end
 
+    -- The template ships with ignoreArrows="true", which requires Alt for
+    -- cursor movement; disabling it lets plain left/right move the cursor
+    -- and plain up/down cycle the native input history.
+    editBox:SetAltArrowKeyMode(false)
+
     editBox.cleanStyled = true
 end
 

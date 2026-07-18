@@ -128,6 +128,15 @@ local function styleEdgeButtons()
         MiniMapTrackingBorder:SetPoint("TOPLEFT", 2, -2)
     end
 
+    -- The native 24px icon fits the 64px ring; shrink it to the mail button's
+    -- 18px-under-52px geometry (icon center on the ring opening) so the ring
+    -- art crops it again. SetTexture on tracking swaps never resets this.
+    if MiniMapTrackingIcon then
+        MiniMapTrackingIcon:SetSize(18, 18)
+        MiniMapTrackingIcon:ClearAllPoints()
+        MiniMapTrackingIcon:SetPoint("TOPLEFT", 9, -8)
+    end
+
     -- TBC wraps tracking in a child dropdown button; keep the click target
     -- matched to the resized frame.
     if MiniMapTrackingButton then

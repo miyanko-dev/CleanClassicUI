@@ -48,18 +48,16 @@ scrollContainer:SetScript("OnMouseWheel", function(self, delta)
     self:InstantPanAndZoom(newScale, cursorNormX, cursorNormY)
 end)
 
-local function fadeOnMove()
-    if not WorldMapFrame:IsShown() then return end
-    local alpha = IsPlayerMoving() and 0.5 or 1
-    UIFrameFadeOut(WorldMapFrame, 0.1, WorldMapFrame:GetAlpha(), alpha)
-end
-
-CleanClassicExperience.OnEvent(fadeOnMove, "PLAYER_STARTED_MOVING", "PLAYER_STOPPED_MOVING")
-
 WorldMapFrame:HookScript("OnUpdate", applyLayout)
-WorldMapFrame:HookScript("OnShow", function()
-    local alpha = IsPlayerMoving() and 0.5 or 1
-    WorldMapFrame:SetAlpha(0)
-    UIFrameFadeIn(WorldMapFrame, 0.1, 0, alpha)
+
+-- Wire up the native movement fader the retail map uses; the era client ships it but never hooks it in.
+WorldMapFrame:HookScript("OnShow", function(self)
+    PlayerMovementFrameFader.AddDeferredFrame(self, 0.5, 1.0, 0.5, function()
+        return GetCVarBool("mapFade") and not self:IsMouseOver()
+    end)
     applyLayout()
+end)
+
+WorldMapFrame:HookScript("OnHide", function(self)
+    PlayerMovementFrameFader.RemoveFrame(self)
 end)
