@@ -37,6 +37,30 @@ hooksecurefunc("PaperDollItemSlotButton_Update", function(button)
     end
 end)
 
+-- Inspected gear: same as PaperDoll, but Blizzard_InspectUI is load-on-demand.
+local function hookInspectSlots()
+    hooksecurefunc("InspectPaperDollItemSlotButton_Update", function(button)
+        local unit    = InspectFrame and InspectFrame.unit
+        local quality = unit and GetInventoryItemQuality(unit, button:GetID())
+        if quality and quality >= MIN_QUALITY then
+            colorByQuality(button, quality)
+        else
+            hideBorder(button)
+        end
+    end)
+end
+
+if C_AddOns.IsAddOnLoaded("Blizzard_InspectUI") then
+    hookInspectSlots()
+else
+    CleanClassicExperience.OnEvent(function(frame, _, addonName)
+        if addonName == "Blizzard_InspectUI" then
+            frame:UnregisterEvent("ADDON_LOADED")
+            hookInspectSlots()
+        end
+    end, "ADDON_LOADED")
+end
+
 -- Quest items in bags: override the quality color with quest yellow.
 hooksecurefunc("ContainerFrame_Update", function(frame)
     local bagID = frame:GetID()
