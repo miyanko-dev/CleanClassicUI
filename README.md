@@ -1,40 +1,32 @@
 # CleanClassicExperience
 
-Minimalist UI addon for World of Warcraft Classic Era (1.15.x).
+A minimalist UI addon for World of Warcraft Classic Era. It restyles the default
+interface and adds a handful of quality-of-life tweaks. Frame layout stays with
+Blizzard's Edit Mode.
 
 ## Features
 
-- Action bars with clean bordered buttons and centered layout
-- XP and reputation bars docked at the bottom below the action bars
-- Minimal centered cast bar
-- Restyled mirror timers (breath, fatigue)
-- Bordered bags with stacked containers and one-key toggle
-- Quality-colored item borders on bag and character slots
-- Average item level on the character panel
-- Item level in item tooltips
-- Tooltips anchored to a fixed screen position
-- Right-aligned micro menu along the bottom edge
-- LFG button detached from the minimap
-- Enlarged minimap with scroll-to-zoom
-- FPS readout pinned to the top-left corner
-- Nameplates with threat coloring
-- Color-coded buffs and debuffs anchored near the minimap
+- Clean action, stance, and pet buttons with tooltip-style borders and cropped icons
+- XP and reputation bars restyled with detailed mouseover tooltips
+- Minimal cast bar with no border art, spark, or icon
+- Restyled breath and fatigue timers
+- Bordered bag buttons, stacked bag windows, and bank bags that open with the bank
+- Item level shown in item tooltips
+- Tooltip anchor placeable through Edit Mode
+- Clean minimap with uniform grey-ringed buttons, scroll-to-zoom, and draggable buttons
+- Group-finder eye docked next to the micro menu
+- Color-coded buffs and debuffs, with remaining minutes on long durations
+- Grey-tinted player, target, target-of-target, and pet frames
 - Streamlined chat with class-colored names
-- Click shortcuts on player names: Ctrl for a whisper tab, Alt/Cmd to invite or add friend
-- Shift-click a chat tab to scroll it to the newest message
-- Raid frames with class colors and custom textures
-- Free-draggable loot roll frames with saved position
-- Auto-accept for soulbound loot, bind-on-use, and trade-timer popups
-- Instant looting with the loot window hidden unless something can't be looted
-- Auto repair and grey item selling at vendors
-- Scaled-down centered world map with mouse-wheel zoom that fades while moving
-- Questie nameplate icon positioning
-- Auto-position the player and target frames via the unit frame right-click menu
+- Shift-click a chat tab to jump to the newest message
+- Restyled raid frames
+- Free-draggable loot roll frames that remember their position
+- Instant looting, with the loot window hidden unless something can't be looted
+- Auto repair and grey-item selling at vendors
+- Smaller, centered world map with scroll-to-zoom
+- Draggable clock and alarm panel that remembers where you put it
 
-## Notes
+## Moving frames
 
-**Auto Position** (right-click the player or target frame → "Auto Position") snaps the
-frames to a clean spot near the action bars. WoW saves the placement natively, so it
-sticks across sessions. Positioning a protected frame from an addon taints it until the
-next reload, so a reload prompt appears — until you reload, interacting with a unit may
-log a one-time, harmless "action blocked" error. Reloading clears it.
+The addon never moves anything. Arrange your UI with Edit Mode (`/editmode`) and
+the addon keeps it all styled.

@@ -2,17 +2,15 @@ local FRAME_SCALE      = 0.9
 local MAX_CANVAS_ZOOM  = 4.0
 local CANVAS_ZOOM_STEP = 0.25
 
-local function applyLayout()
-    WorldMapFrame:ClearAllPoints()
-    WorldMapFrame:SetScale(FRAME_SCALE)
-    WorldMapFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-    WorldMapFrame.BlackoutFrame.Show = function(self) self:Hide() end
-    WorldMapFrame.ScrollContainer:EnableMouseWheel(true)
-end
+local worldMap        = WorldMapFrame
+local scrollContainer = worldMap.ScrollContainer
 
-local scrollContainer = WorldMapFrame.ScrollContainer
+-- One-time setup: fixed scale, wheel zoom, and a blackout backdrop that never shows.
+worldMap:SetScale(FRAME_SCALE)
+worldMap.BlackoutFrame.Show = worldMap.BlackoutFrame.Hide
+scrollContainer:EnableMouseWheel(true)
 
--- Compensate cursor lookup for the scaled WorldMapFrame so pin hit-tests stay aligned.
+-- Compensate cursor lookup for the scaled frame so pin hit-tests stay aligned.
 scrollContainer.GetCursorPosition = function(self)
     local x, y = MapCanvasScrollControllerMixin.GetCursorPosition(self)
     return x / FRAME_SCALE, y / FRAME_SCALE
@@ -48,16 +46,8 @@ scrollContainer:SetScript("OnMouseWheel", function(self, delta)
     self:InstantPanAndZoom(newScale, cursorNormX, cursorNormY)
 end)
 
-WorldMapFrame:HookScript("OnUpdate", applyLayout)
-
--- Wire up the native movement fader the retail map uses; the era client ships it but never hooks it in.
-WorldMapFrame:HookScript("OnShow", function(self)
-    PlayerMovementFrameFader.AddDeferredFrame(self, 0.5, 1.0, 0.5, function()
-        return GetCVarBool("mapFade") and not self:IsMouseOver()
-    end)
-    applyLayout()
-end)
-
-WorldMapFrame:HookScript("OnHide", function(self)
-    PlayerMovementFrameFader.RemoveFrame(self)
+-- The panel manager keeps tucking the map aside, so re-centre it every frame it's shown.
+worldMap:HookScript("OnUpdate", function(self)
+    self:ClearAllPoints()
+    self:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 end)

@@ -1,3 +1,4 @@
+-- Stack the loot roll frames on a movable anchor; drag one frame free, shift-drag to move the whole stack.
 local SPACING = CleanClassicExperience.SPACING
 
 local FRAME_GAP           = SPACING.XS
@@ -53,9 +54,9 @@ local function loadPosition()
     end
 end
 
--- Blizzard resets a dragged frame too; restore where the player left it
+-- Blizzard resets a dragged frame too; restore where the player left it.
 local function restoreDraggedPosition(frame)
-    local saved = frame.cleanCCUIDragPoint
+    local saved = frame.cleanDragPoint
     if not saved then return end
 
     frame:ClearAllPoints()
@@ -63,8 +64,8 @@ local function restoreDraggedPosition(frame)
 end
 
 local function attachDrag(frame)
-    if frame.cleanCCUIDragHooked then return end
-    frame.cleanCCUIDragHooked = true
+    if frame.cleanDragHooked then return end
+    frame.cleanDragHooked = true
 
     frame:SetMovable(true)
     frame:SetClampedToScreen(true)
@@ -73,29 +74,29 @@ local function attachDrag(frame)
 
     frame:SetScript("OnDragStart", function(self)
         if IsShiftKeyDown() then
-            self.cleanCCUIMovingStack = true
+            self.cleanMovingStack = true
             anchor:StartMoving()
         else
-            self.cleanCCUIDragged = true
+            self.cleanDragged = true
             self:StartMoving()
         end
     end)
 
     frame:SetScript("OnDragStop", function(self)
-        if self.cleanCCUIMovingStack then
-            self.cleanCCUIMovingStack = nil
+        if self.cleanMovingStack then
+            self.cleanMovingStack = nil
             anchor:StopMovingOrSizing()
             savePosition()
         else
             self:StopMovingOrSizing()
             local point, _, relPoint, x, y = self:GetPoint(1)
-            self.cleanCCUIDragPoint = { point, relPoint, x, y }
+            self.cleanDragPoint = { point, relPoint, x, y }
         end
     end)
 
     frame:HookScript("OnHide", function(self)
-        self.cleanCCUIDragged = nil
-        self.cleanCCUIDragPoint = nil
+        self.cleanDragged = nil
+        self.cleanDragPoint = nil
     end)
 end
 
@@ -107,7 +108,7 @@ local function arrangeRollFrames()
         if frame then
             attachDrag(frame)
 
-            if frame.cleanCCUIDragged then
+            if frame.cleanDragged then
                 restoreDraggedPosition(frame)
             else
                 frame:ClearAllPoints()
@@ -122,8 +123,7 @@ local function arrangeRollFrames()
     end
 end
 
--- Runs on every add AND remove; hooking only GroupLootFrame_OpenNewFrame
--- misses the reset that GroupLootContainer_RemoveFrame triggers
+-- GroupLootContainer_Update runs on add and remove; hooking only OpenNewFrame would miss removals.
 if type(GroupLootContainer_Update) == "function" then
     hooksecurefunc("GroupLootContainer_Update", arrangeRollFrames)
 end

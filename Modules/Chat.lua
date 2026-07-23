@@ -1,6 +1,6 @@
+-- Both 1.15.9 and 2.5.6 run the modern chat code; Edit Mode owns ChatFrame1's position and size.
 local SPACING = CleanClassicExperience.SPACING
 local BLOCK_GAP = SPACING.XS
-local SCREEN_MARGIN = SPACING.MD
 local TAB_FONT_SIZE = 14
 
 local TAB_TEXTURE_SUFFIXES = {
@@ -15,15 +15,6 @@ local CHAT_FRAME_TEXTURE_SUFFIXES = {
     "TopLeftTexture", "TopRightTexture", "BottomLeftTexture", "BottomRightTexture",
     "LeftTexture", "RightTexture", "TopTexture", "BottomTexture",
 }
-
--- TBC 2.5.6 replaced the ChatEdit_*/ChatFrame_* globals with ChatFrameUtil and
--- editbox/chat-frame mixin methods, and hands ChatFrame1's position to Edit Mode;
--- era 1.15 keeps all the old globals.
-local modernChat = ChatEdit_UpdateHeader == nil
-
-local getActiveWindow = ChatEdit_GetActiveWindow or ChatFrameUtil.GetActiveWindow
-local deactivateChat = ChatEdit_DeactivateChat or ChatFrameUtil.DeactivateChat
-local inviteUnit = InviteUnit or C_PartyInfo.InviteUnit
 
 local function stripChatFrameTextures(chatFrame)
     local name = chatFrame:GetName()
@@ -101,9 +92,7 @@ local function styleEditBox(chatFrame, editBox)
         header:SetFont(headerFont, headerSize, "OUTLINE")
     end
 
-    -- $parentHeaderSuffix (the ": " after the chat type) is in the editbox's
-    -- ARTWORK layer and leaks at dimmed alpha when Blizzard fades the box out
-    -- on deactivate; visibility is bound to the header via updateHeaderExtras.
+    -- The ": " suffix leaks at dimmed alpha when Blizzard fades the box out; bind its visibility to the header.
     local headerSuffix = _G[editBox:GetName() .. "HeaderSuffix"]
     if headerSuffix then
         headerSuffix:Hide()
@@ -111,29 +100,13 @@ local function styleEditBox(chatFrame, editBox)
         headerSuffix:SetFont(suffixFont, suffixSize, "OUTLINE")
     end
 
-    -- On TBC UpdateHeader is a mixin method copied onto each editbox, so the
-    -- post-hook has to be installed per object instead of on a global.
-    if modernChat then
-        hooksecurefunc(editBox, "UpdateHeader", updateHeaderExtras)
-    end
+    -- UpdateHeader is a mixin method copied onto each editbox, so hook every object.
+    hooksecurefunc(editBox, "UpdateHeader", updateHeaderExtras)
 
-    -- The template ships with ignoreArrows="true", which requires Alt for
-    -- cursor movement; disabling it lets plain left/right move the cursor
-    -- and plain up/down cycle the native input history.
+    -- The template's ignoreArrows demands Alt for cursor movement; plain arrows now move and cycle history.
     editBox:SetAltArrowKeyMode(false)
 
     editBox.cleanStyled = true
-end
-
-local function positionChatFrame(chatFrame, editBox)
-    chatFrame:SetMovable(true)
-    chatFrame:ClearAllPoints()
-    chatFrame:SetPoint(
-        "BOTTOMLEFT", UIParent, "BOTTOMLEFT",
-        SCREEN_MARGIN,
-        SCREEN_MARGIN + BLOCK_GAP + editBox:GetHeight()
-    )
-    chatFrame:SetUserPlaced(true)
 end
 
 local function applyStyle()
@@ -150,16 +123,12 @@ local function applyStyle()
             stripChatFrameTextures(chatFrame)
             styleTab(tab)
             styleEditBox(chatFrame, editBox)
-            -- Edit Mode owns ChatFrame1's position on TBC.
-            if chatFrame == ChatFrame1 and not modernChat then
-                positionChatFrame(chatFrame, editBox)
-            end
         end
     end
 end
 
 local function enableClassColors()
-    -- Guard like NamePlates: a redundant SetCVar fires CVAR_UPDATE under insecure execution.
+    -- A redundant SetCVar fires CVAR_UPDATE under insecure execution, so only set on change.
     if GetCVar("chatClassColorOverride") ~= "0" then
         SetCVar("chatClassColorOverride", "0")
     end
@@ -178,7 +147,7 @@ CleanClassicExperience.OnEvent(function()
     enableClassColors()
 end, "PLAYER_ENTERING_WORLD", "UPDATE_FLOATING_CHAT_WINDOWS")
 
--- FCF_SetTemporaryWindowType receives the new chatFrame as its first argument, so we can style brand-new temp tabs (ChatFrameNTab where N > NUM_CHAT_WINDOWS) directly.
+-- Style brand-new temporary tabs directly from the frame the hook receives.
 hooksecurefunc("FCF_SetTemporaryWindowType", function(chatFrame)
     if not chatFrame then return end
     CleanClassicExperience.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
@@ -187,60 +156,5 @@ hooksecurefunc("FCF_SetTemporaryWindowType", function(chatFrame)
     styleEditBox(chatFrame, _G[chatFrame:GetName() .. "EditBox"])
 end)
 
--- New messages in a background tab call FCF_StartAlertFlash, which sets the tab
--- to alerting and pins its idle alpha to CHAT_FRAME_TAB_ALERTING_NOMOUSE_ALPHA (1.0);
--- constant channel traffic leaves the tab permanently lit. Replacing the global
--- taints Blizzard's message handling, so cancel the flash from a post-hook instead.
+-- FCF_StartAlertFlash pins an alerting tab's idle alpha to 1; replacing the global taints, so cancel via post-hook.
 hooksecurefunc("FCF_StartAlertFlash", FCF_StopAlertFlash)
-
-if not modernChat then
-    hooksecurefunc("ChatEdit_UpdateHeader", updateHeaderExtras)
-end
-
-local isMacClient = IsMacClient and IsMacClient()
-
-local function isInviteModifierDown()
-    if isMacClient then return IsMetaKeyDown() end
-    return IsAltKeyDown()
-end
-
-local function isFriendModifierDown()
-    if isMacClient then return IsAltKeyDown() end
-    return IsMetaKeyDown()
-end
-
--- Replacing the global ChatFrame_OnHyperlinkShow taints Blizzard's whole click path:
--- the dropdown opened by right-clicking a player name inherits the taint and its
--- protected Copy Character Name -> CopyToClipboard() call fires ADDON_ACTION_FORBIDDEN.
--- A post-hook stays off the secure path; Blizzard's default left-click action
--- (send-tell -> whisper edit box) runs first, so deactivate that edit box
--- before applying our modifier-click behavior.
-local function onHyperlinkClick(chatFrame, link, text, button)
-    if button ~= "LeftButton" then return end
-    local name = link:match("^player:([^:]+)")
-    if not name or name == "" then return end
-
-    local wantsWhisperTab = IsControlKeyDown()
-    local wantsInvite = not wantsWhisperTab and isInviteModifierDown()
-    local wantsFriend = not (wantsWhisperTab or wantsInvite) and isFriendModifierDown()
-    if not (wantsWhisperTab or wantsInvite or wantsFriend) then return end
-
-    local editBox = getActiveWindow()
-    if editBox then deactivateChat(editBox) end
-
-    if wantsWhisperTab then
-        FCF_OpenTemporaryWindow("WHISPER", name, chatFrame, true)
-    elseif wantsInvite then
-        inviteUnit(name)
-    else
-        C_FriendList.AddFriend(name)
-    end
-end
-
-if modernChat then
-    EventRegistry:RegisterCallback("ChatFrame.OnHyperlinkClick", function(_, chatFrame, link, text, button)
-        onHyperlinkClick(chatFrame, link, text, button)
-    end, CleanClassicExperience)
-else
-    hooksecurefunc("ChatFrame_OnHyperlinkShow", onHyperlinkClick)
-end

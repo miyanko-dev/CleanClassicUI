@@ -1,13 +1,6 @@
-local SPACING = CleanClassicExperience.SPACING
-local BORDER  = CleanClassicExperience.BORDER
-local BTN_SIZE = CleanClassicExperience.BTN_SIZE
+-- Edit Mode owns the bag-button row; style the buttons, stack the container windows, and open bank bags with the bank.
 
-local BAG_BTN_GAP  = 6
-local BAR_SCALE    = (CleanClassicExperienceLayout and CleanClassicExperienceLayout.bar3Scale) or 0.8
-local CONTAINER_GAP = SPACING.XS
-
-CleanClassicExperienceLayout = CleanClassicExperienceLayout or {}
-CleanClassicExperienceLayout.bagScale = BAR_SCALE
+local CONTAINER_GAP = CleanClassicExperience.SPACING.XS
 
 local BAG_BTNS = {
     "MainMenuBarBackpackButton",
@@ -15,82 +8,35 @@ local BAG_BTNS = {
     "CharacterBag1Slot",
     "CharacterBag2Slot",
     "CharacterBag3Slot",
-    "KeyRingButton",
 }
 
--- Scale the row by scaling this container; individual buttons inherit through reparenting.
-local bagContainer = CreateFrame("Frame", "CleanClassicExperienceBagContainer", UIParent)
-bagContainer:SetSize(BTN_SIZE, BTN_SIZE)
-bagContainer:SetScale(BAR_SCALE)
+-- Blizzard locks the keyring PUSHED while its bag is open, hiding the key art; show the same art pushed instead.
+local KEYRING_TEXTURE = "Interface/Buttons/UI-Button-KeyRing"
+local KEYRING_LEFT, KEYRING_RIGHT, KEYRING_TOP, KEYRING_BOTTOM = 0, 0.5625, 0, 0.609375
+local KEYRING_ZOOM = 0.05
 
--- Keep the keyring at the shared button size while preserving its native aspect ratio.
-local function lockKeyringSize()
-    if not KeyRingButton or KeyRingButton.cleanSizeLock then return end
-    KeyRingButton.cleanSizeLock = true
-    local w, h = KeyRingButton:GetSize()
-    KeyRingButton.cleanRatio = (h > 0) and (w / h) or 1
-    KeyRingButton:HookScript("OnSizeChanged", function(self, sw, sh)
-        local target = BTN_SIZE * (self.cleanRatio or 1)
-        if sw ~= target or sh ~= BTN_SIZE then
-            self:SetSize(target, BTN_SIZE)
-        end
-    end)
-end
-
-local function styleBtn(btn)
+local function styleKeyring()
+    local btn = KeyRingButton
     if not btn then return end
-    if btn == KeyRingButton then
-        btn:SetSize(BTN_SIZE * (btn.cleanRatio or 1), BTN_SIZE)
-    else
-        btn:SetSize(BTN_SIZE, BTN_SIZE)
+
+    local pushedTexture = btn:GetPushedTexture()
+    if pushedTexture then pushedTexture:SetTexture(KEYRING_TEXTURE) end
+
+    local dx = (KEYRING_RIGHT - KEYRING_LEFT) * KEYRING_ZOOM
+    local dy = (KEYRING_BOTTOM - KEYRING_TOP) * KEYRING_ZOOM
+    for _, tex in ipairs({ btn:GetNormalTexture(), pushedTexture, btn:GetHighlightTexture() }) do
+        tex:SetTexCoord(KEYRING_LEFT + dx, KEYRING_RIGHT - dx, KEYRING_TOP + dy, KEYRING_BOTTOM - dy)
     end
-    local name = btn:GetName()
-    local norm = _G[name .. "NormalTexture"]
-    if norm then norm:SetAlpha(0) end
-    local icon = _G[name .. "IconTexture"] or _G[name .. "Icon"]
-    if icon then
-        icon:ClearAllPoints()
-        icon:SetAllPoints(btn)
-        icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-    end
+
     CleanClassicExperience.ApplyBorder(btn)
 end
 
-local function arrangeBtns()
-    if not HelpMicroButton then return end
-
-    lockKeyringSize()
-
-    bagContainer:ClearAllPoints()
-    bagContainer:SetPoint("BOTTOMRIGHT", HelpMicroButton, "TOPRIGHT", -2, 0)
-
-    for i, name in ipairs(BAG_BTNS) do
-        local btn = _G[name]
-        if not btn then return end
-        btn:SetParent(bagContainer)
-        btn:Show()
-        btn:ClearAllPoints()
-        if i == 1 then
-            btn:SetPoint("BOTTOMRIGHT", bagContainer, "BOTTOMRIGHT", 0, 0)
-        else
-            btn:SetPoint("RIGHT", _G[BAG_BTNS[i - 1]], "LEFT", -BAG_BTN_GAP, 0)
-        end
-        styleBtn(btn)
-    end
+local function styleButtons()
+    for _, name in ipairs(BAG_BTNS) do CleanClassicExperience.StyleButton(_G[name]) end
+    styleKeyring()
 end
 
--- The custom bag row only exists on the vanilla UI. On TBC 2.5.6 MoveMicroButtons is
--- gone and Edit Mode owns the BagsBar, so reparenting its buttons would fight it.
-local managesBagRow = MoveMicroButtons ~= nil
-
-if managesBagRow then
-    hooksecurefunc("MoveMicroButtons", arrangeBtns)
-end
-
--- Fully re-anchor every bag in Blizzard's open-order chain. Blizzard anchors
--- each new column to UIParent's right edge, so we cannot let it set columns.
--- Pair bags two-per-column: even index sits on top of its predecessor, odd
--- index starts a new column to the left of two positions back.
+-- Blizzard anchors each new column to UIParent's right edge, so re-anchor the whole open-order chain two per column.
 local function arrangeContainers()
     local bags = ContainerFrame1 and ContainerFrame1.bags
     if not bags or not bags[1] then return end
@@ -119,7 +65,10 @@ CleanClassicExperience.OnEvent(function(_, event)
     end
 end, "BANKFRAME_OPENED", "BANKFRAME_CLOSED")
 
-if managesBagRow then
-    CleanClassicExperience.OnEvent(arrangeBtns,
-        "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")
-end
+styleButtons()
+
+-- The bag bar's Size setting applies live in Edit Mode before layouts save, so restyle on every applied setting too.
+hooksecurefunc(EditModeManagerFrame, "OnSystemSettingChange", styleButtons)
+
+CleanClassicExperience.OnEvent(styleButtons,
+    "PLAYER_ENTERING_WORLD", "EDIT_MODE_LAYOUTS_UPDATED")

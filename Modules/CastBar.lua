@@ -1,118 +1,61 @@
--- Vanilla UI only: the modern Edit Mode clients (TBC 2.5.6, likely era 1.15.9)
--- renamed this frame PlayerCastingBarFrame and Edit Mode owns its position.
-if not CastingBarFrame then return end
-
-local BAR_H       = 20
-local TEXT_PADDING = 6
-local ELLIPSIS    = "..."
+-- Edit Mode owns the cast bar's position and scale; restyle it and give it a fixed base size Edit Mode scales.
+local castBar = PlayerCastingBarFrame
+if not castBar then return end
 
 local HIDDEN = { "Border", "BorderShield", "Spark", "Flash", "Icon" }
+local BAR_WIDTH, BAR_HEIGHT = 160, 20
 
-local isApplying = false
-local isPending  = false
-
--- Binary-search the longest prefix that fits, then append "...".
-local function truncateToWidth(text, full, maxWidth)
-    text:SetText(full)
-    if text:GetStringWidth() <= maxWidth then return end
-    local lo, hi = 0, #full
-    while lo < hi do
-        local mid = math.floor((lo + hi + 1) / 2)
-        text:SetText(string.sub(full, 1, mid) .. ELLIPSIS)
-        if text:GetStringWidth() <= maxWidth then
-            lo = mid
-        else
-            hi = mid - 1
-        end
-    end
-    text:SetText(string.sub(full, 1, lo) .. ELLIPSIS)
+-- SetLook is the only native writer of the bar's size, so resizing right after it always wins.
+local function applySize()
+    castBar:SetSize(BAR_WIDTH, BAR_HEIGHT)
 end
 
-local function updateTextLayout()
-    local text = CastingBarFrame.Text
+-- Span the bar so the text centers vertically and ellipsizes at the bar's edges natively.
+local function centerText()
+    local text = castBar.Text
     if not text then return end
-    local barW = CastingBarFrame:GetWidth()
-    if not barW or barW <= 0 then return end
-    local usable = barW - 2 * TEXT_PADDING
-    if usable <= 0 then return end
-    truncateToWidth(text, text:GetText() or "", usable)
     text:ClearAllPoints()
-    text:SetPoint("CENTER", CastingBarFrame, "CENTER", 0, 0)
+    text:SetPoint("LEFT")
+    text:SetPoint("RIGHT")
     text:SetJustifyH("CENTER")
 end
 
-local function applyAnchor()
-    isPending = false
-    if not isApplying then
-        local leftBtn  = MultiBarBottomLeftButton5
-        local rightBtn = MultiBarBottomLeftButton8
-        local layout   = CleanClassicExperienceLayout
-        local yOffset  = layout and layout.castbarYOffsetAboveAB2 and layout.castbarYOffsetAboveAB2()
-        if leftBtn and rightBtn and yOffset then
-            isApplying = true
-            CastingBarFrame:ClearAllPoints()
-            CastingBarFrame:SetPoint("BOTTOMLEFT",  leftBtn,  "TOPLEFT",  0, yOffset)
-            CastingBarFrame:SetPoint("BOTTOMRIGHT", rightBtn, "TOPRIGHT", 0, yOffset)
-            CastingBarFrame:SetHeight(BAR_H)
-            isApplying = false
-        end
-    end
-    updateTextLayout()
-end
-
-local function scheduleAnchor()
-    if isApplying or isPending then return end
-    isPending = true
-    C_Timer.After(0, applyAnchor)
-end
-
 local function styleCastBar()
-    CastingBarFrame:SetHeight(BAR_H)
-    CastingBarFrame:SetStatusBarTexture(CleanClassicExperience.BAR_TEXTURE)
+    castBar:SetStatusBarTexture(CleanClassicExperience.BAR_TEXTURE)
 
     for _, key in ipairs(HIDDEN) do
-        local region = CastingBarFrame[key]
+        local region = castBar[key]
         if region then
             region:Hide()
             region:SetScript("OnShow", region.Hide)
         end
     end
 
-    if CastingBarFrame.Text then
-        CastingBarFrame.Text:SetWordWrap(false)
-        CastingBarFrame.Text:SetNonSpaceWrap(false)
-    end
-
-    CleanClassicExperience.ApplyBorder(CastingBarFrame)
+    centerText()
+    CleanClassicExperience.ApplyBorder(castBar)
 end
 
-local isStyled = false
+styleCastBar()
+applySize()
 
-local events = CleanClassicExperience.OnEvent(function()
-    if not isStyled then
-        styleCastBar()
-        isStyled = true
-    end
-    scheduleAnchor()
-end,
-"PLAYER_ENTERING_WORLD", "PET_BAR_UPDATE", "UNIT_PET", "UPDATE_SHAPESHIFT_FORM",
-"UPDATE_BONUS_ACTIONBAR", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")
+-- The text sits inside the bar now, so let the Edit Mode highlight hug the resized frame.
+castBar.editModeSelectionTopOffset = 0
 
-events:RegisterUnitEvent("UNIT_SPELLCAST_START",         "player")
-events:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "player")
-
-CastingBarFrame.ignoreFramePositionManager = true
-
-hooksecurefunc(CastingBarFrame, "SetPoint", scheduleAnchor)
-
-CleanClassicExperienceLayout = CleanClassicExperienceLayout or {}
-CleanClassicExperienceLayout.afterLayout = CleanClassicExperienceLayout.afterLayout or {}
-table.insert(CleanClassicExperienceLayout.afterLayout, scheduleAnchor)
-
-hooksecurefunc("CastingBarFrame_FinishSpell", function(bar)
-    if bar == CastingBarFrame then
-        bar.flash   = nil
-        bar.fadeOut = nil
-        bar:Hide()
-    end
+-- classicStyleCastBar re-applies the stock fill on every cast state change; swap back, keep the color.
+hooksecurefunc(castBar, "UpdateBarFillTexture", function(self)
+    local r, g, b, a = self:GetStatusBarColor()
+    self:SetStatusBarTexture(CleanClassicExperience.BAR_TEXTURE)
+    self:SetStatusBarColor(r, g, b, a)
 end)
+
+-- SetLook re-anchors the text and resets the native size on every layout apply; redo both after.
+hooksecurefunc(castBar, "SetLook", function()
+    centerText()
+    applySize()
+end)
+
+-- BarSize lands as a SetScale that changes the border's coordinate space; re-apply on every applied setting.
+hooksecurefunc(EditModeManagerFrame, "OnSystemSettingChange", styleCastBar)
+
+CleanClassicExperience.OnEvent(styleCastBar,
+    "PLAYER_ENTERING_WORLD", "EDIT_MODE_LAYOUTS_UPDATED")

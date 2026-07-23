@@ -1,23 +1,23 @@
-local BTN_SIZE = CleanClassicExperience.BTN_SIZE
-local ICON_SIZE = 40
-local OFFSET_X  = -4
-local OFFSET_Y  = -12
+-- Dock the group-finder eye left of the character micro button: no ring, native eye art, micro-menu scale.
+local BUTTON_SIZE = 33
+local SCALE       = 1.5
+local MARGIN      = -2
 
-local function placeButton()
+local function placeLFGButton()
+    if not (LFGMinimapFrame and CharacterMicroButton) then return end
     if LFGMinimapFrameBorder then LFGMinimapFrameBorder:Hide() end
-    if not LFGMinimapFrame then return end
-
-    LFGMinimapFrame:SetParent(UIParent)
+    LFGMinimapFrame:SetParent(MicroMenu or UIParent)
+    LFGMinimapFrame:SetSize(BUTTON_SIZE, BUTTON_SIZE)
+    LFGMinimapFrame:SetScale(SCALE)
     LFGMinimapFrame:ClearAllPoints()
-    LFGMinimapFrame:SetSize(BTN_SIZE, BTN_SIZE)
-    LFGMinimapFrame:SetPoint("RIGHT", CharacterMicroButton, "LEFT", OFFSET_X, OFFSET_Y)
 
-    if LFGMinimapFrameIcon then
-        LFGMinimapFrameIcon:SetSize(ICON_SIZE, ICON_SIZE)
-        LFGMinimapFrameIcon:SetPoint("CENTER")
-    end
+    -- Anchor offsets are in the button's scaled units; divide so the margin stays MARGIN in micro-menu units.
+    LFGMinimapFrame:SetPoint("RIGHT", CharacterMicroButton, "LEFT", -MARGIN / SCALE, 0)
 end
 
+placeLFGButton()
+
 CleanClassicExperience.OnEvent(function()
-    C_Timer.After(0, placeButton)
-end, "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED")
+    C_Timer.After(0, placeLFGButton)
+end, "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED",
+"EDIT_MODE_LAYOUTS_UPDATED")

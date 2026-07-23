@@ -1,8 +1,4 @@
--- Loot everything instantly while keeping the loot window hidden, modeled on
--- SpeedyAutoLoot. Blizzard's LootFrame shows itself on LOOT_OPENED, so it is
--- parented to an always-hidden host; it is only brought back when auto-loot
--- is off for this corpse or an item cannot be looted (locked, above the group
--- roll threshold, or bags are full). AutoConfirm.lua covers the bind popups.
+-- Loot everything with the window hidden; it returns for manual loot, locked or roll-threshold items, or full bags.
 
 local LOOT_INTERVAL  = 0.033
 local NO_ROLL        = 10
@@ -20,8 +16,7 @@ local lastNumItems
 local ticker
 local lootedSlots = {}
 
--- An item fits if the keyring takes it, a partial stack absorbs it, or a
--- compatible bag has a free slot.
+-- An item fits if the keyring takes it, a partial stack absorbs it, or a compatible bag has a free slot.
 local function itemFits(itemLink, quantity)
     local stackSize = select(8, C_Item.GetItemInfo(itemLink))
     local itemFamily = C_Item.GetItemFamily(itemLink)
@@ -84,8 +79,7 @@ local function showLootFrame()
     LootFrame:Raise()
 end
 
--- Items at or above the group roll threshold would pop a roll dialog, so they
--- are left to the visible frame.
+-- Items at or above the group roll threshold would pop a roll dialog; leave them to the visible frame.
 local function updateRollThreshold()
     local method = C_PartyInfo.GetLootMethod()
     local rollLoot = method == Enum.LootMethod.Group
@@ -94,8 +88,7 @@ local function updateRollThreshold()
     rollThreshold = (IsInGroup() and rollLoot) and GetLootThreshold() or NO_ROLL
 end
 
--- Loot from the last slot down, one slot per tick; instant lists trip the
--- server's loot throttle.
+-- Loot one slot per tick from the last slot down; instant lists trip the server's loot throttle.
 local function lootAllSlots(numItems)
     if ticker then ticker:Cancel() end
     updateRollThreshold()
@@ -115,8 +108,7 @@ end
 local function onLootOpened(autoLoot)
     isLooting = true
 
-    -- The first event of a loot session decides auto vs manual; repeated
-    -- LOOT_READY spam from fast clicking can carry a flipped flag.
+    -- The first event of a session decides auto vs manual; fast-click LOOT_READY spam can carry a flipped flag.
     if lastNumItems == nil then
         autoLooting = autoLoot
             or C_CVar.GetCVarBool("autoLootDefault") ~= IsModifiedClick("AUTOLOOTTOGGLE")
@@ -147,8 +139,7 @@ local function onLootClosed()
     end
 end
 
--- Classic era can leave a looted stack sitting in its slot; loot it again
--- when the server reports the slot changed.
+-- Era can leave a looted stack sitting in its slot; loot again when the server reports the slot changed.
 local function onSlotChanged(slot)
     if isLooting and lootedSlots[slot] and LootSlotHasItem(slot) then
         tryLootSlot(slot)

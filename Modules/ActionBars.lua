@@ -1,400 +1,83 @@
--- Vanilla UI only: on the modern Edit Mode clients (TBC 2.5.6, likely era 1.15.9)
--- this global is gone and Edit Mode owns the bar layout natively.
-if not ActionButton_Update then return end
+-- Edit Mode owns all bar layout; only style the buttons and hide the styled border on empty action slots.
 
-local SPACING = CleanClassicExperience.SPACING
-local BORDER = CleanClassicExperience.BORDER
-local BTN_SIZE = CleanClassicExperience.BTN_SIZE
-
-local OUTER_GAP = SPACING.MD
-local TIGHT_GAP = SPACING.XS
-
--- Vertical offset between MainMenuBar frame bottom and ActionButton1 frame bottom.
-local AB1_INSET = 4
-local MAIN_BAR_WIDTH = 512
-
-local BAR3_SCALE = 0.8
-local BAR3_BTN_W = 36
-local BAR3_BTN_GAP = 6
-local BAR3_BTN_COUNT = 12
-
--- XP/rep bars dock at the screen bottom, below AB3 (see StatusBars.lua). AB3 reserves
--- the whole stack's height whether or not the bars are shown, so the action bar stack
--- never shifts when a faction is (un)watched or the XP bar vanishes at max level.
-local XP_REP_EDGE = 2                                 -- bar border offset; the fill runs out to it
-local XP_REP_BAR_HEIGHT = 10                          -- StatusBar fill height (StatusBars reads this)
-local XP_REP_BAR = XP_REP_BAR_HEIGHT + 2 * XP_REP_EDGE  -- visible strip: fill + border
-local XP_EDGE_MARGIN = SPACING.LG                    -- screen edge -> xp bar
-local XP_REP_GAP = SPACING.XS                        -- xp bar -> rep bar
-local REP_AB3_GAP = SPACING.MD                       -- rep bar -> ab3
--- Screen-Y of AB3's visible bottom border = top of the reserved xp/rep stack.
-local XP_REP_RESERVE = XP_EDGE_MARGIN + XP_REP_BAR + XP_REP_GAP + XP_REP_BAR + REP_AB3_GAP
-
-local PET_SCALE = 0.8
-
--- Native PetActionBarFrame: 509x43, PetActionButton1 inset (36,2), 10 buttons of 30px with gaps mostly 8 (one 7), row width 371.
-local PET_BAR_WIDTH = 509
-local PET_ROW_WIDTH = 371
-local PET_BTN1_INSET_X = 36
-local PET_BTN1_INSET_Y = 2
-local PET_BTN_SIZE = 30
-local PET_CENTER_SHIFT = (PET_BAR_WIDTH - PET_ROW_WIDTH) / 2 - PET_BTN1_INSET_X
-
--- Native StanceBarFrame: 29x32 (buttons extend beyond), StanceButton1 inset (11,3), 30px buttons with gap 7.
-local STANCE_BTN_SIZE = 30
-local STANCE_BTN_GAP = 7
-local STANCE_BTN1_INSET_X = 11
-local STANCE_BTN1_INSET_Y = 3
-
--- AB1 to AB2 spacing is TIGHT_GAP + 2*BORDER (both rows at scale 1; see placeBars).
--- Pet/stance rows render at PET_SCALE, so their borders shrink; each transition gets its own
--- raw offset to land TIGHT_GAP px (visible, border-to-border) above the row directly below it.
-local PET_ABOVE_AB2 = TIGHT_GAP + BORDER * PET_SCALE                -- AB2 border-top -> pet button bottom
-local STANCE_ABOVE_AB2 = TIGHT_GAP + BORDER                        -- AB2 border-top -> stance button bottom
-local STANCE_ABOVE_PET = TIGHT_GAP + BORDER + BORDER * PET_SCALE   -- pet button-top -> stance button bottom
--- OUTER_GAP visible spacing between the topmost bottom-bar element and the castbar.
-local OUTER_BAR_GAP = OUTER_GAP + 2 * BORDER
-
-local BAR_PREFIXES = {
+-- Standard action bars, whose empty slots should show nothing.
+local ACTION_BAR_PREFIXES = {
     "ActionButton",
     "MultiBarBottomLeftButton",
     "MultiBarBottomRightButton",
     "MultiBarRightButton",
     "MultiBarLeftButton",
+    "MultiBar5Button",
+    "MultiBar6Button",
+    "MultiBar7Button",
 }
 
-CleanClassicExperienceLayout = CleanClassicExperienceLayout or {}
-CleanClassicExperienceLayout.bar3Scale = BAR3_SCALE
-CleanClassicExperienceLayout.btnSize = BTN_SIZE
-CleanClassicExperienceLayout.afterLayout = CleanClassicExperienceLayout.afterLayout or {}
-
--- Visible width of the XP/rep stack, sized so the fill plus its border matches AB3's row.
-local function xpRepWidth()
-    local outer = (BAR3_BTN_COUNT * BAR3_BTN_W + (BAR3_BTN_COUNT - 1) * BAR3_BTN_GAP + 2 * BORDER) * BAR3_SCALE
-    return outer - 2 * XP_REP_EDGE
+-- Stance and pet bars are styled the same but keep their native empty behavior.
+local BAR_PREFIXES = { "StanceButton", "PetActionButton" }
+for _, prefix in ipairs(ACTION_BAR_PREFIXES) do
+    table.insert(BAR_PREFIXES, prefix)
 end
 
--- StatusBars.lua sizes/positions the XP/rep bars from these; the border offset (xpRepEdge)
--- keeps the fill running out to the border with the strip still as wide as AB3.
-CleanClassicExperienceLayout.xpRepWidth = xpRepWidth
-CleanClassicExperienceLayout.xpRepBarHeight = XP_REP_BAR_HEIGHT
-CleanClassicExperienceLayout.xpRepEdge = XP_REP_EDGE
--- Screen-Y (px above the bottom edge) of each XP/rep slot's visible bottom border.
-CleanClassicExperienceLayout.xpRepBottomSlot = XP_EDGE_MARGIN
-CleanClassicExperienceLayout.xpRepUpperSlot = XP_EDGE_MARGIN + XP_REP_BAR + XP_REP_GAP
+-- Stance and pet bars stop at 10; the loop just finds nil past the end.
+local MAX_BUTTONS = 12
 
--- True while ACTIONBAR_SHOWGRID is in flight (cursor drag).
-local gridShown = false
-
--- Trust the grid only while the cursor really holds something: 1.15.8 leaves
--- Blizzard's secure showgrid counter (and a missed HIDEGRID) stuck on, which
--- kept empty slots visible as if "Always Show Action Bars" were enabled.
-local function gridActive()
-    return gridShown and GetCursorInfo() ~= nil
-end
-
--- Empty slots hide button and border unless a drag needs the grid; don't rely
--- on Blizzard hiding them, its stuck showgrid counter never reaches zero.
-local function syncButton(btn)
-    if not btn or not btn.action then return end
-    local shown = HasAction(btn.action) or gridActive()
-    if btn.cleanBorder then btn.cleanBorder:SetShown(shown) end
-    if not InCombatLockdown() and not btn:GetAttribute("statehidden") then
-        btn:SetShown(shown)
+-- The stock slot art is stripped in StyleButton, so the border is what marks a drop target while the grid is up.
+local function updateEmptyBorder(btn)
+    local border = btn.cleanBorder
+    if border and btn.HasAction then
+        border:SetShown(btn:HasAction() or (btn.GetShowGrid and btn:GetShowGrid()))
     end
 end
 
-local function syncAllButtons()
-    for _, prefix in ipairs(BAR_PREFIXES) do
-        for i = 1, 12 do syncButton(_G[prefix .. i]) end
+-- Mixin copies Update and SetShowGrid onto each button, so hook every instance once instead of a shared table.
+local function hookEmptyBorder(btn)
+    if not btn or btn.cleanEmptyHooked then return end
+    if not (btn.Update and btn.HasAction) then return end
+    hooksecurefunc(btn, "Update", updateEmptyBorder)
+    if btn.SetShowGrid then
+        hooksecurefunc(btn, "SetShowGrid", updateEmptyBorder)
+    end
+    btn.cleanEmptyHooked = true
+end
+
+-- Active auto attack marks its slot with the red flash plus the checked glow; keep only the flash.
+local function updateFlashGlow(btn)
+    local checked = btn.GetCheckedTexture and btn:GetCheckedTexture()
+    if checked then
+        checked:SetAlpha(btn:IsFlashing() and 0 or 1)
     end
 end
 
-local function styleBtn(btn)
-    if not btn then return end
-
-    local name = btn:GetName()
-
-    local normalTexture = _G[name .. "NormalTexture"]
-    if normalTexture then normalTexture:SetAlpha(0) end
-
-    local floatingBackground = _G[name .. "FloatingBG"]
-    if floatingBackground then floatingBackground:SetAlpha(0) end
-
-    local icon = _G[name .. "Icon"]
-    if icon then icon:SetTexCoord(0.1, 0.9, 0.1, 0.9) end
-
-    CleanClassicExperience.ApplyBorder(btn)
-    syncButton(btn)
-end
-
-hooksecurefunc("ActionButton_Update", syncButton)
-hooksecurefunc("ActionButton_ShowGrid", syncButton)
-hooksecurefunc("ActionButton_HideGrid", syncButton)
-
--- Force action bars 2 and 3 on; bars 4 and 5 remain user-controlled.
-local function enableBars()
-    if GetCVar("bottomLeftActionBar") ~= "1" then SetCVar("bottomLeftActionBar", "1") end
-    if GetCVar("bottomRightActionBar") ~= "1" then SetCVar("bottomRightActionBar", "1") end
-end
-
--- Captured from placeBars; used as the pet/stance base (AB2 visible top in screen px).
-local petStanceBase = nil
-
--- Position action bars 1-5. Returns the screen-Y of AB2's visible top.
--- AB3 sits above the reserved XP/rep stack at the screen bottom, so the 1-3 block keeps
--- its position regardless of XP/rep visibility (see StatusBars.lua + XP_REP_RESERVE).
-local function placeBars()
-    local ab3Border = BORDER * BAR3_SCALE
-    local ab3FrameBottomScreen = XP_REP_RESERVE + ab3Border
-    MultiBarBottomRight:SetMovable(true)
-    MultiBarBottomRight:SetUserPlaced(true)
-    MultiBarBottomRight:Show()
-    MultiBarBottomRight:SetScale(BAR3_SCALE)
-    MultiBarBottomRight:ClearAllPoints()
-    MultiBarBottomRight:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, ab3FrameBottomScreen / BAR3_SCALE)
-    local ab3VisibleTop = ab3FrameBottomScreen + BTN_SIZE * BAR3_SCALE + ab3Border
-
-    local ab1FrameBottomScreen = ab3VisibleTop + OUTER_GAP + BORDER
-    MainMenuBar:SetMovable(true)
-    MainMenuBar:SetUserPlaced(true)
-    MainMenuBar:SetWidth(MAIN_BAR_WIDTH)
-    MainMenuBar:ClearAllPoints()
-    MainMenuBar:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, ab1FrameBottomScreen - AB1_INSET)
-    local ab1VisibleTop = ab1FrameBottomScreen + BTN_SIZE + BORDER
-
-    -- Anchor AB2 to ActionButton1 so AB2's first button shares X with AB1's first button.
-    local ab2AnchorY = TIGHT_GAP + 2 * BORDER
-    MultiBarBottomLeft:SetMovable(true)
-    MultiBarBottomLeft:SetUserPlaced(true)
-    MultiBarBottomLeft:Show()
-    MultiBarBottomLeft:ClearAllPoints()
-    MultiBarBottomLeft:SetPoint("BOTTOMLEFT", ActionButton1, "TOPLEFT", 0, ab2AnchorY)
-    local ab2VisibleTop = ab1VisibleTop + TIGHT_GAP + BTN_SIZE + 2 * BORDER
-
-    return ab2VisibleTop
-end
-
--- Anchor MultiBarRight (bar 4); MultiBarLeft (bar 5) is anchored to MultiBarRight's
--- bottom in Blizzard's XML, so it follows for free. Horizontal margin matches
--- ContainerFrame1 (see Bags.lua); vertical gap is fixed at SPACING.XXL so AB4/AB5
--- sit a comfortable distance above the bag row.
-local function placeVerticalBars()
-    if InCombatLockdown() or not MultiBarRight or not MainMenuBarBackpackButton then return end
-    MultiBarRight:SetMovable(true)
-    MultiBarRight:SetUserPlaced(true)
-    MultiBarRight:ClearAllPoints()
-    MultiBarRight:SetPoint("BOTTOMRIGHT", MainMenuBarBackpackButton, "TOPRIGHT", SPACING.XS, SPACING.XXL)
-end
-
-local function hideChrome()
-    MainMenuBarLeftEndCap:Hide()
-    MainMenuBarRightEndCap:Hide()
-    MainMenuBarPageNumber:Hide()
-    ActionBarUpButton:Hide()
-    ActionBarDownButton:Hide()
-    MainMenuBarMaxLevelBar:Hide()
-    MainMenuBarOverlayFrame:Hide()
-    if MainMenuBarTextureExtender then MainMenuBarTextureExtender:Hide() end
-    CleanClassicExperience.HideForever(MainMenuBarPerformanceBarFrame)
-    for i = 0, 3 do
-        if _G["MainMenuBarTexture" .. i] then _G["MainMenuBarTexture" .. i]:Hide() end
-        if _G["MainMenuMaxLevelBar" .. i] then _G["MainMenuMaxLevelBar" .. i]:Hide() end
-    end
-    for i = 0, 1 do
-        CleanClassicExperience.HideForever(_G["SlidingActionBarTexture" .. i])
-    end
+-- UpdateFlash re-raises the glow alpha on every flip and StopFlash can fire alone, so hook both.
+local function hookFlashGlow(btn)
+    if btn.cleanFlashHooked then return end
+    if not (btn.UpdateFlash and btn.StopFlash and btn.IsFlashing) then return end
+    hooksecurefunc(btn, "UpdateFlash", updateFlashGlow)
+    hooksecurefunc(btn, "StopFlash", updateFlashGlow)
+    btn.cleanFlashHooked = true
 end
 
 local function styleAllButtons()
     for _, prefix in ipairs(BAR_PREFIXES) do
-        for i = 1, 12 do styleBtn(_G[prefix .. i]) end
+        for i = 1, MAX_BUTTONS do CleanClassicExperience.StyleButton(_G[prefix .. i]) end
     end
-    for i = 1, NUM_STANCE_SLOTS do
-        local btn = _G["StanceButton" .. i]
-        if btn then
-            for layer = 1, 3 do
-                local texture = _G[btn:GetName() .. "NormalTexture" .. layer]
-                if texture then texture:SetAlpha(0) end
+
+    for _, prefix in ipairs(ACTION_BAR_PREFIXES) do
+        for i = 1, MAX_BUTTONS do
+            local btn = _G[prefix .. i]
+            if btn then
+                hookEmptyBorder(btn)
+                updateEmptyBorder(btn)
+                hookFlashGlow(btn)
             end
-            styleBtn(btn)
-        end
-    end
-    for i = 1, NUM_PET_ACTION_SLOTS or 10 do
-        local btn = _G["PetActionButton" .. i]
-        if btn then
-            for _, suffix in ipairs({ "NormalTexture", "NormalTexture2" }) do
-                local texture = _G[btn:GetName() .. suffix]
-                if texture then texture:SetAlpha(0) end
-            end
-            local icon = _G[btn:GetName() .. "Icon"]
-            if icon then icon:SetTexCoord(0.1, 0.9, 0.1, 0.9) end
-            CleanClassicExperience.ApplyBorder(btn)
         end
     end
 end
 
--- Mirrors PetActionBar_OnEvent's show/hide test: PetHasActionBar +
--- UnitIsVisible("pet"). Reads the underlying state so stance repositions
--- immediately on mount, not 0.09s later when the slide-out completes.
-local function isPetVisible()
-    if not (PetActionBarFrame and PetActionButton1) then return false end
-    if PetHasActionBar and not PetHasActionBar() then return false end
-    if UnitIsVisible and not UnitIsVisible("pet") then return false end
-    return true
-end
+styleAllButtons()
 
--- Post-hooked onto PetActionBarFrame.UpdatePositionValues so every Blizzard
--- caller (ShowPetActionBar, PetActionBar_OnUpdate, UIParentManageFramePositions)
--- runs our placement right after Blizzard's, overriding its re-anchor against
--- MainMenuBar.TOP. Must be a hooksecurefunc, never a replacement: an insecure
--- function stored in that slot taints ShowPetActionBar's execution and blocks
--- the protected PetActionBarFrame:Show() when a pet is called in combat. In
--- combat the guard skips our SetPoint (protected frame), Blizzard's position
--- wins until PLAYER_REGEN_ENABLED reruns placePet.
-local function placePetBar(self)
-    if InCombatLockdown() or not petStanceBase then return end
-    if not (self and PetActionButton1) then return end
+-- Icon-size changes apply live in Edit Mode before layouts save, so restyle on every applied setting too.
+hooksecurefunc(EditModeManagerFrame, "OnSystemSettingChange", styleAllButtons)
 
-    self:SetScale(PET_SCALE)
-
-    -- Pet button BOTTOM sits TIGHT_GAP px (visible) above AB2's border top. PetActionButton1
-    -- is inset PET_BTN1_INSET_Y self-units above PetActionBarFrame.BOTTOM, so subtract that
-    -- scaled inset so the visible row (not the frame) lands at the gap.
-    local petFrameBottomScreen = petStanceBase + PET_ABOVE_AB2 - PET_BTN1_INSET_Y * PET_SCALE
-
-    self:ClearAllPoints()
-    self:SetPoint("BOTTOM", UIParent, "BOTTOM",
-        PET_CENTER_SHIFT, petFrameBottomScreen / PET_SCALE)
-end
-
-local function placePet()
-    if PetActionBarFrame then placePetBar(PetActionBarFrame) end
-end
-
-local function placeStance()
-    if InCombatLockdown() or not petStanceBase then return end
-    local numForms = GetNumShapeshiftForms()
-    if not (StanceBarFrame and StanceBarFrame:IsShown() and numForms > 0) then return end
-
-    -- Stance button BOTTOM sits TIGHT_GAP px (visible) above whatever bar is directly below
-    -- it: pet button TOP if the pet bar is visible, otherwise AB2's border top.
-    local stanceBtnBottomScreen
-    if isPetVisible() then
-        local petBtnBottomScreen = petStanceBase + PET_ABOVE_AB2
-        local petBtnTopScreen = petBtnBottomScreen + PET_BTN_SIZE * PET_SCALE
-        stanceBtnBottomScreen = petBtnTopScreen + STANCE_ABOVE_PET
-    else
-        stanceBtnBottomScreen = petStanceBase + STANCE_ABOVE_AB2
-    end
-    local stanceFrameBottomScreen = stanceBtnBottomScreen - STANCE_BTN1_INSET_Y
-
-    StanceBarFrame.ignoreFramePositionManager = true
-    if not StanceBarFrame:IsUserPlaced() then
-        StanceBarFrame:SetMovable(true)
-        StanceBarFrame:SetUserPlaced(true)
-    end
-    local rowWidth = STANCE_BTN_SIZE * numForms + STANCE_BTN_GAP * (numForms - 1)
-    StanceBarFrame:ClearAllPoints()
-    StanceBarFrame:SetPoint("BOTTOMLEFT", UIParent, "BOTTOM",
-        -(STANCE_BTN1_INSET_X + rowWidth / 2), stanceFrameBottomScreen)
-    StanceBarLeft:SetAlpha(0)
-    StanceBarMiddle:SetAlpha(0)
-    StanceBarRight:SetAlpha(0)
-end
-
--- Returns the Y delta (screen px) from AB2 visible top to where CastingBarFrame.BOTTOM
--- should land, so the cast bar sits OUTER_GAP above the topmost visible bottom-bar element
--- (stance if shown, else pet if shown, else AB2 itself). Includes the topmost element's
--- top border so the visible gap is exactly OUTER_GAP in every pet/stance state.
-CleanClassicExperienceLayout.castbarYOffsetAboveAB2 = function()
-    if not petStanceBase then return OUTER_BAR_GAP end
-    local petShown = isPetVisible()
-    local numForms = GetNumShapeshiftForms and GetNumShapeshiftForms() or 0
-    local stanceShown = StanceBarFrame and StanceBarFrame:IsShown() and numForms > 0
-    local topAboveAB2 = 0
-    if stanceShown and petShown then
-        topAboveAB2 = PET_ABOVE_AB2 + PET_BTN_SIZE * PET_SCALE + STANCE_ABOVE_PET + STANCE_BTN_SIZE + BORDER
-    elseif stanceShown then
-        topAboveAB2 = STANCE_ABOVE_AB2 + STANCE_BTN_SIZE + BORDER
-    elseif petShown then
-        topAboveAB2 = PET_ABOVE_AB2 + PET_BTN_SIZE * PET_SCALE + BORDER * PET_SCALE
-    end
-    return topAboveAB2 + OUTER_BAR_GAP
-end
-
--- Screen-Y where CastingBarFrame.BOTTOM would land if a stance bar row sat above
--- AB2, regardless of current class/state. Used by Auto Position so unit frames
--- adopt the higher peripheral-vision position even when no pet/stance bar exists.
-CleanClassicExperienceLayout.castBottomWithStanceOrPet = function()
-    if not petStanceBase then return nil end
-    return petStanceBase + STANCE_ABOVE_AB2 + STANCE_BTN_SIZE + OUTER_BAR_GAP
-end
-
-hooksecurefunc("ActionButton_OnUpdate", function(self)
-    if not self or not self.action then return end
-    local usable = IsUsableAction(self.action)
-    local inRange = IsActionInRange(self.action)
-    self.icon:SetAlpha((not usable or inRange == false) and 0.9 or 1.0)
-end)
-
-if PetActionBarFrame then
-    hooksecurefunc(PetActionBarFrame, "UpdatePositionValues", placePetBar)
-end
-
-local function runLayout()
-    if InCombatLockdown() then return end
-    enableBars()
-    petStanceBase = placeBars()
-    placeVerticalBars()
-    hideChrome()
-    styleAllButtons()
-    syncAllButtons()
-    placePet()
-    placeStance()
-    for _, callback in ipairs(CleanClassicExperienceLayout.afterLayout) do callback() end
-end
-
--- Blizzard runs MultiActionBar_Update whenever bars 4 or 5 are toggled on/off.
-if MultiActionBar_Update then hooksecurefunc("MultiActionBar_Update", placeVerticalBars) end
-
-CleanClassicExperienceLayout.scheduleLayout = runLayout
-CleanClassicExperienceLayout.relayout = runLayout
-
--- Events from Gethe/wow-ui-source classic_era:
---   PetActionBar.lua/PetActionBar_OnEvent drives Show/HidePetActionBar on
---     PET_BAR_UPDATE, UNIT_PET (arg1=="player"), PET_UI_UPDATE,
---     UPDATE_VEHICLE_ACTIONBAR. PLAYER_MOUNT_DISPLAY_CHANGED also registered.
---   StanceBar reacts to UPDATE_SHAPESHIFT_FORM(S).
-CleanClassicExperience.OnEvent(function(self, event, arg1)
-    if event == "PLAYER_ENTERING_WORLD" then
-        runLayout()
-    elseif event == "UNIT_PET" then
-        if arg1 == "player" then
-            placePet()
-            placeStance()
-        end
-    elseif event == "PET_BAR_UPDATE" or event == "PET_UI_UPDATE"
-        or event == "UPDATE_VEHICLE_ACTIONBAR" or event == "PLAYER_MOUNT_DISPLAY_CHANGED" then
-        placePet()
-        placeStance()
-    elseif event == "UPDATE_SHAPESHIFT_FORM" or event == "UPDATE_SHAPESHIFT_FORMS" then
-        placeStance()
-    elseif event == "ACTIONBAR_SHOWGRID" then
-        gridShown = true
-        syncAllButtons()
-    elseif event == "ACTIONBAR_HIDEGRID" then
-        gridShown = false
-        syncAllButtons()
-    elseif event == "PLAYER_REGEN_ENABLED" then
-        placePet()
-        placeStance()
-        syncAllButtons()
-    end
-end,
-"PLAYER_ENTERING_WORLD",
-"PET_BAR_UPDATE", "UNIT_PET", "PET_UI_UPDATE", "UPDATE_VEHICLE_ACTIONBAR",
-"PLAYER_MOUNT_DISPLAY_CHANGED",
-"UPDATE_SHAPESHIFT_FORM", "UPDATE_SHAPESHIFT_FORMS",
-"ACTIONBAR_SHOWGRID", "ACTIONBAR_HIDEGRID",
-"PLAYER_REGEN_ENABLED")
+CleanClassicExperience.OnEvent(styleAllButtons,
+    "PLAYER_ENTERING_WORLD", "EDIT_MODE_LAYOUTS_UPDATED")

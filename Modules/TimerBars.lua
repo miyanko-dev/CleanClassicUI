@@ -1,4 +1,4 @@
-local BAR_H = 20
+local BAR_HEIGHT = 20
 
 -- Border art extends 3px past each frame edge; pad the stack gap so it stays visible.
 local STACK_GAP = CleanClassicExperience.SPACING.SM + 2 * CleanClassicExperience.BORDER
@@ -10,7 +10,7 @@ local function styleTimer(index)
     local border    = _G["MirrorTimer" .. index .. "Border"]
     if not (frame and statusbar and text and border) then return end
 
-    frame:SetHeight(BAR_H)
+    frame:SetHeight(BAR_HEIGHT)
     border:Hide()
 
     statusbar:ClearAllPoints()

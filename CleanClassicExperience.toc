@@ -1,31 +1,27 @@
-## Interface: 11508
+## Interface: 11509, 20506
 ## Title: CleanClassicExperience
-## Notes: Minimalist layout for action bars, bags, micro menu, status bars, minimap, auras, and tooltips.
-## Version: 1.0.0
+## Notes: Minimalist styling for action bars, bags, status bars, minimap, auras, chat, and tooltips. Layout lives in Edit Mode.
+## Version: 1.1.0
 ## Author: MIYANKO
 ## IconTexture: 133004
 ## SavedVariables: CleanClassicExperienceDB
 
 Modules/Styles.lua
-Modules/MicroMenu.lua
+Modules/EditMode.lua
 Modules/ActionBars.lua
 Modules/StatusBars.lua
 Modules/CastBar.lua
 Modules/TimerBars.lua
 Modules/Bags.lua
-Modules/ItemBorder.lua
-Modules/LFGButton.lua
 Modules/Minimap.lua
-Modules/Framerate.lua
-Modules/NamePlates.lua
+Modules/LFGButton.lua
 Modules/Auras.lua
 Modules/Chat.lua
 Modules/RaidFrames.lua
 Modules/RollFrames.lua
-Modules/AutoConfirm.lua
 Modules/FasterLoot.lua
 Modules/FastSellRepair.lua
 Modules/WorldMap.lua
-Modules/AddonSupport.lua
+Modules/TimeManager.lua
 Modules/Tooltips.lua
 Modules/UnitFrames.lua
