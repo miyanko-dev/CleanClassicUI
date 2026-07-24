@@ -113,12 +113,12 @@ end
 
 local function addRepTooltip(bar)
     addBarTooltip(bar, function()
-        local data = C_Reputation.GetWatchedFactionData()
-        if not data or data.factionID == 0 then return end
-        local current = data.currentStanding - data.currentReactionThreshold
-        local total = data.nextReactionThreshold - data.currentReactionThreshold
-        local standing = GetText("FACTION_STANDING_LABEL" .. data.reaction, UnitSex("player"))
-        GameTooltip:AddLine(format("%s (%s)", data.name, standing), 1, 1, 1)
+        local factionData = C_Reputation.GetWatchedFactionData()
+        if not factionData or factionData.factionID == 0 then return end
+        local current = factionData.currentStanding - factionData.currentReactionThreshold
+        local total = factionData.nextReactionThreshold - factionData.currentReactionThreshold
+        local standing = GetText("FACTION_STANDING_LABEL" .. factionData.reaction, UnitSex("player"))
+        GameTooltip:AddLine(format("%s (%s)", factionData.name, standing), 1, 1, 1)
         GameTooltip:AddLine(format("Reputation: %s", statLine(current, total)), 1, 1, 1)
         GameTooltip:AddLine(format("Missing: %s", shortStat(total - current, total)), 1, 0.82, 0)
     end)

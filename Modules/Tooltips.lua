@@ -1,5 +1,4 @@
 -- Era ships no HudTooltip system; an unregistered mover adopts EditModeSystemMixin for native placement chrome.
-
 -- Footprint and default spot mirror retail's GameTooltipDefaultContainer.
 local mover = CreateFrame("Frame", nil, UIParent)
 Mixin(mover, EditModeSystemMixin)

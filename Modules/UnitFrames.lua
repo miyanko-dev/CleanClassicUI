@@ -3,7 +3,6 @@ local FRAME_COLOR = CleanClassicExperience.COLOR.GREY
 local BAR_ATLAS = CleanClassicExperience.BAR_ATLAS
 
 -- SetStatusBarTexture accepts an atlas string, so the bars share the nameplate health bar's fill atlas.
-
 -- Desaturate before the grey vertex color or the gold art only darkens to brown.
 local function tint(texture)
     if not texture then return end

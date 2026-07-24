@@ -1,5 +1,4 @@
 -- Loot everything with the window hidden; it returns for manual loot, locked or roll-threshold items, or full bags.
-
 local LOOT_INTERVAL  = 0.033
 local NO_ROLL        = 10
 local KEYRING_FAMILY = 256

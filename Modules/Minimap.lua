@@ -1,5 +1,4 @@
 -- Edit Mode owns the cluster; hide chrome, restyle clock and zone text, unify every button, add wheel zoom and drag.
-
 local HIDDEN = {
     "MinimapBorder",
     "MinimapToggleButton",

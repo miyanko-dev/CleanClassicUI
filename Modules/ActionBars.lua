@@ -1,5 +1,4 @@
 -- Edit Mode owns all bar layout; only style the buttons and hide the styled border on empty action slots.
-
 -- Standard action bars, whose empty slots should show nothing.
 local ACTION_BAR_PREFIXES = {
     "ActionButton",

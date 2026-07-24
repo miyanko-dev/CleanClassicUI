@@ -1,5 +1,4 @@
 -- Edit Mode owns the bag-button row; style the buttons, stack the container windows, and open bank bags with the bank.
-
 local CONTAINER_GAP = CleanClassicExperience.SPACING.XS
 
 local BAG_BTNS = {

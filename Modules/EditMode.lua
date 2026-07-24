@@ -1,5 +1,4 @@
 -- On the Classic preset the styled bars hide inside the stock gryphon art; ask once to switch, never silently.
-
 local LAYOUT_NAME = "CleanClassicExperience"
 
 -- Edit Mode share-string export of the addon's reference layout; a failed parse falls back to the Modern preset.
@@ -10,10 +9,10 @@ local function onClassicPreset()
     if not (EditModeManagerFrame and EditModeManagerFrame:IsInitialized()) then
         return false
     end
-    local info = EditModeManagerFrame:GetActiveLayoutInfo()
-    return info
-        and info.layoutType == Enum.EditModeLayoutType.Preset
-        and info.layoutIndex == Enum.EditModePresetLayouts.Classic
+    local layoutInfo = EditModeManagerFrame:GetActiveLayoutInfo()
+    return layoutInfo
+        and layoutInfo.layoutType == Enum.EditModeLayoutType.Preset
+        and layoutInfo.layoutIndex == Enum.EditModePresetLayouts.Classic
 end
 
 -- Skip presets so a user layout named like ours is the only possible match.
@@ -34,13 +33,13 @@ local function applyAddonLayout()
         return
     end
 
-    local info = C_EditMode.ConvertStringToLayoutInfo(LAYOUT_STRING)
-    if info then
+    local layoutInfo = C_EditMode.ConvertStringToLayoutInfo(LAYOUT_STRING)
+    if layoutInfo then
         -- MakeNewLayout needs highestLayoutIndexByType, which Blizzard only builds once the Edit Mode dropdown updates.
         if not EditModeManagerFrame.highestLayoutIndexByType then
             EditModeManagerFrame:CreateLayoutTbls()
         end
-        EditModeManagerFrame:ImportLayout(info, Enum.EditModeLayoutType.Account, LAYOUT_NAME)
+        EditModeManagerFrame:ImportLayout(layoutInfo, Enum.EditModeLayoutType.Account, LAYOUT_NAME)
     else
         C_EditMode.SetActiveLayout(Enum.EditModePresetLayouts.Modern)
     end

@@ -1,5 +1,4 @@
 -- At a merchant: repair all gear when affordable, then sell every grey item in throttle-safe batches.
-
 -- The server silently drops sale requests past roughly one buyback page per burst, so sell 12 and rescan.
 local BATCH_SIZE     = 12
 local BATCH_INTERVAL = 0.3
@@ -21,8 +20,8 @@ local function junkSlots()
     local slots = {}
     for bag = BACKPACK_CONTAINER, NUM_BAG_SLOTS do
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
-            local item = C_Container.GetContainerItemInfo(bag, slot)
-            if item and item.quality == Enum.ItemQuality.Poor and not item.hasNoValue then
+            local slotItem = C_Container.GetContainerItemInfo(bag, slot)
+            if slotItem and slotItem.quality == Enum.ItemQuality.Poor and not slotItem.hasNoValue then
                 table.insert(slots, { bag = bag, slot = slot })
             end
         end
