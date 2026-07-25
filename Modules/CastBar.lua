@@ -21,7 +21,7 @@ local function centerText()
 end
 
 local function styleCastBar()
-    castBar:SetStatusBarTexture(CleanClassicExperience.BAR_TEXTURE)
+    castBar:SetStatusBarTexture(CleanClassicExperience.BAR_ATLAS)
 
     for _, key in ipairs(HIDDEN) do
         local region = castBar[key]
@@ -44,7 +44,7 @@ castBar.editModeSelectionTopOffset = 0
 -- classicStyleCastBar re-applies the stock fill on every cast state change; swap back, keep the color.
 hooksecurefunc(castBar, "UpdateBarFillTexture", function(self)
     local r, g, b, a = self:GetStatusBarColor()
-    self:SetStatusBarTexture(CleanClassicExperience.BAR_TEXTURE)
+    self:SetStatusBarTexture(CleanClassicExperience.BAR_ATLAS)
     self:SetStatusBarColor(r, g, b, a)
 end)
 
