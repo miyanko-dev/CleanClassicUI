@@ -1,7 +1,7 @@
 local BAR_HEIGHT = 20
 
 -- Border art extends 3px past each frame edge; pad the stack gap so it stays visible.
-local STACK_GAP = CleanClassicExperience.SPACING.SM + 2 * CleanClassicExperience.BORDER
+local STACK_GAP = CleanClassicExperience.SPACING[8] + 2 * CleanClassicExperience.BORDER
 
 local function styleTimer(index)
     local frame     = _G["MirrorTimer" .. index]

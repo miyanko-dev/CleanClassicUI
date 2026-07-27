@@ -74,6 +74,19 @@ if type(PlayerFrame_ToPlayerArt) == "function" then
     hooksecurefunc("PlayerFrame_ToPlayerArt", function() tint(PlayerFrameTexture) end)
 end
 
+-- PlayerFrame_UpdateStatus re-shows the rest/combat glow on every state change; keep it hidden.
+local function hideStatus(region)
+    if not region then return end
+    hooksecurefunc(region, "Show", region.Hide)
+    region:Hide()
+end
+
+hideStatus(PlayerStatusTexture)
+hideStatus(PlayerStatusGlow)
+
+-- The rest icon draws on OVERLAY, above the frame border; drop it below so the art crops it.
+if PlayerRestIcon then PlayerRestIcon:SetDrawLayer("BACKGROUND") end
+
 if type(UnitFrameManaBar_UpdateType) == "function" then
     hooksecurefunc("UnitFrameManaBar_UpdateType", function(manaBar)
         if manaBar == PlayerFrameManaBar or manaBar == TargetFrameManaBar

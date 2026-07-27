@@ -3,18 +3,15 @@ CleanClassicExperience = CleanClassicExperience or {}
 CleanClassicExperience.BAR_TEXTURE = "Interface/RaidFrame/Raid-Bar-Hp-Fill"
 CleanClassicExperience.BAR_ATLAS = "UI-HUD-CoolDownManager-Bar"
 CleanClassicExperience.EDGE_FILE = "Interface/Tooltips/UI-Tooltip-Border"
-CleanClassicExperience.BG_FILE = "Interface/Tooltips/UI-Tooltip-Background"
 
 CleanClassicExperience.BORDER = 3
-CleanClassicExperience.BTN_SIZE = 36
 
+-- Keyed by pixel value; use SPACING[8] over a bare 8 to mark an intentional layout gap.
 CleanClassicExperience.SPACING = {
-    XS  = 4,
-    SM  = 8,
-    MD  = 16,
-    LG  = 24,
-    XL  = 32,
-    XXL = 48,
+    [4]  = 4,
+    [8]  = 8,
+    [16] = 16,
+    [24] = 24,
 }
 
 -- RED through ORANGE mirror Blizzard's debuff-type border colors so aura borders match the game.
@@ -24,7 +21,6 @@ CleanClassicExperience.COLOR = {
     BLUE   = { 0.200, 0.600, 1.000 },
     VIOLET = { 0.600, 0.000, 1.000 },
     ORANGE = { 0.600, 0.400, 0.000 },
-    YELLOW = { 0.984, 0.820, 0.204 },
     GREY   = { 0.5, 0.5, 0.5 },
 }
 
@@ -38,10 +34,11 @@ local function extraScale(frame)
 end
 
 -- Safe to re-apply after scale changes; anchor optionally wraps an inner region instead of the frame.
-function CleanClassicExperience.ApplyBorder(frame, level, edgeSize, anchor)
+-- proportional keeps the raw edge so the border rides the host's Edit Mode scale instead of holding on-screen size.
+function CleanClassicExperience.ApplyBorder(frame, level, edgeSize, anchor, proportional)
     if not frame then return end
 
-    local scale = extraScale(frame)
+    local scale = proportional and 1 or extraScale(frame)
     local edge = (edgeSize or EDGE_SIZE) / scale
     local inset = CleanClassicExperience.BORDER / scale
 

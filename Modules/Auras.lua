@@ -59,7 +59,7 @@ local function styleButton(btn, color)
 end
 
 -- UpdateGridLayout re-anchors every Duration flush against the icon, so re-apply the margin afterwards.
-local DURATION_MARGIN = CleanClassicExperience.SPACING.XS
+local DURATION_MARGIN = CleanClassicExperience.SPACING[4]
 
 local function offsetDurations(container, auras)
     local point, relativePoint, x, y

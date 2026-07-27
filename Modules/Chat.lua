@@ -1,6 +1,7 @@
 -- Both 1.15.9 and 2.5.6 run the modern chat code; Edit Mode owns ChatFrame1's position and size.
 local SPACING = CleanClassicExperience.SPACING
-local BLOCK_GAP = SPACING.XS
+local BLOCK_GAP = SPACING[4]
+local SELECTION_PAD = SPACING[4]
 local TAB_FONT_SIZE = 14
 
 local TAB_TEXTURE_SUFFIXES = {
@@ -109,6 +110,44 @@ local function styleEditBox(chatFrame, editBox)
     editBox.cleanStyled = true
 end
 
+-- Native anchors pad for the hidden button frame and tab chrome; re-hug the visible tab, message frame, and edit box so drags and snapping stay precise.
+local function wrapEditModeSelection(chatFrame)
+    local selection = chatFrame.Selection
+    if not selection then return end
+
+    local name = chatFrame:GetName()
+    local tab = _G[name .. "Tab"]
+    local editBox = _G[name .. "EditBox"]
+
+    selection:ClearAllPoints()
+    selection:SetPoint("TOP", tab or chatFrame, "TOP", 0, SELECTION_PAD)
+    selection:SetPoint("LEFT", chatFrame, "LEFT", -SELECTION_PAD, 0)
+    selection:SetPoint("RIGHT", chatFrame, "RIGHT", SELECTION_PAD, 0)
+    selection:SetPoint("BOTTOM", editBox or chatFrame, "BOTTOM", 0, -SELECTION_PAD)
+
+    -- Base AnchorSelectionFrame computed clamps from the old rect; refresh against the new one.
+    chatFrame:UpdateClampOffsets()
+end
+
+local MIN_WIDTH = CHAT_FRAME_MIN_WIDTH or 40
+local MIN_HEIGHT = CHAT_FRAME_NORMAL_MIN_HEIGHT or 46
+
+-- StartSizing("BOTTOMRIGHT") pins the top-left, so screen-clamping the growing bottom shoves the top upward instead.
+-- Cap max height at the room below the pinned top (minus the edit box that trails the frame) so the bottom just stops.
+local function capResizeToScreen(chatFrame)
+    local editBox = _G[chatFrame:GetName() .. "EditBox"]
+    local reserved = SELECTION_PAD
+    if editBox then reserved = reserved + editBox:GetHeight() + BLOCK_GAP end
+
+    local maxHeight = math.max(MIN_HEIGHT, chatFrame:GetTop() - reserved)
+    chatFrame:SetResizeBounds(MIN_WIDTH, MIN_HEIGHT, GetScreenWidth(), maxHeight)
+end
+
+-- Drop the temporary height cap so the width and height settings can still size the frame freely.
+local function restoreResizeBounds(chatFrame)
+    chatFrame:SetResizeBounds(MIN_WIDTH, MIN_HEIGHT)
+end
+
 local function applyStyle()
     CleanClassicExperience.HideForever(ChatFrameMenuButton)
     CleanClassicExperience.HideForever(ChatFrameChannelButton)
@@ -158,3 +197,15 @@ end)
 
 -- FCF_StartAlertFlash pins an alerting tab's idle alpha to 1; replacing the global taints, so cancel via post-hook.
 hooksecurefunc("FCF_StartAlertFlash", FCF_StopAlertFlash)
+
+-- Only ChatFrame1 inherits EditModeChatFrameSystemTemplate; retighten its selection each time the game re-anchors it.
+if ChatFrame1 and ChatFrame1.AnchorSelectionFrame then
+    hooksecurefunc(ChatFrame1, "AnchorSelectionFrame", wrapEditModeSelection)
+end
+
+-- Cap the resize while the grabber drags, then release the cap so nothing else stays constrained.
+local resizeButton = ChatFrame1 and ChatFrame1.EditModeResizeButton
+if resizeButton then
+    resizeButton:HookScript("OnMouseDown", function() capResizeToScreen(ChatFrame1) end)
+    resizeButton:HookScript("OnMouseUp", function() restoreResizeBounds(ChatFrame1) end)
+end

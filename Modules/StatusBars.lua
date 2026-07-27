@@ -1,62 +1,44 @@
--- Edit Mode owns the tracking bars' placement; restyle them, halve their width, and add richer tooltips.
+-- Edit Mode owns the tracking bars' placement; restyle them, reproportion them, and add richer tooltips.
 local manager = StatusTrackingBarManager
 if not manager then return end
 
 local BG_TEXTURE = "Interface/Buttons/WHITE8x8"
-local BAR_EDGE = 8
-local WIDTH_FACTOR = 0.5
 
--- Divide the halved width by the container's Edit Mode scale so the on-screen width stays fixed at 50%.
+-- Match the cast bar's width at half its height; Edit Mode's Size slider scales this base like the cast bar's.
+local BAR_WIDTH, BAR_HEIGHT = 160, 10
+
+-- The container is the Edit Mode system, so the fixed base size stays put while Edit Mode only applies SetScale.
 local function resizeContainer(container)
-    container.cleanNativeWidth = container.cleanNativeWidth or container:GetWidth()
+    container:SetSize(BAR_WIDTH, BAR_HEIGHT)
 
-    local containerScale = container:GetEffectiveScale()
-    local uiScale = UIParent:GetEffectiveScale()
-    local scale = 1
-    if containerScale and uiScale and containerScale > 0 and uiScale > 0 then
-        scale = containerScale / uiScale
-    end
-
-    local width = container.cleanNativeWidth * WIDTH_FACTOR / scale
-    container:SetWidth(width)
+    -- Bars fill the container, but each StatusBar anchors only on the right, so size it explicitly.
     for _, bar in pairs(container.bars or {}) do
-        if bar.StatusBar then bar.StatusBar:SetWidth(width) end
+        if bar.StatusBar then bar.StatusBar:SetSize(BAR_WIDTH, BAR_HEIGHT) end
     end
 end
 
--- Layer the border above the fill and the backdrop below so the border line always draws over the fill edges.
-local function addChrome(bar)
+-- Dark backing so the unfilled portion still reads as a bar. Flush with the fill, since the border sits
+-- outside the bar and draws over its edges; any outward outset would bleed the fill past the border.
+local function addBackdrop(bar)
     if not bar or bar.cleanBg then return end
-    local edge = CleanClassicExperience.BORDER
-    local barLevel = bar:GetFrameLevel()
 
-    -- The dark fill tucks 1px under the border line.
-    local bgOutset = edge - 1
     local backdrop = CreateFrame("Frame", nil, bar)
-    backdrop:SetPoint("TOPLEFT", bar, "TOPLEFT", -bgOutset, bgOutset)
-    backdrop:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", bgOutset, -bgOutset)
-    backdrop:SetFrameLevel(math.max(0, barLevel - 1))
-    local backdropTexture = backdrop:CreateTexture(nil, "BACKGROUND")
-    backdropTexture:SetAllPoints()
-    backdropTexture:SetTexture(BG_TEXTURE)
-    backdropTexture:SetVertexColor(0, 0, 0, 0.4)
-
-    local border = CreateFrame("Frame", nil, bar, "BackdropTemplate")
-    border:SetPoint("TOPLEFT", bar, "TOPLEFT", -edge, edge)
-    border:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", edge, -edge)
-    border:SetFrameLevel(barLevel + 5)
-    border:SetBackdrop({ edgeFile = CleanClassicExperience.EDGE_FILE, edgeSize = BAR_EDGE })
-    border:SetBackdropBorderColor(unpack(CleanClassicExperience.COLOR.GREY))
+    backdrop:SetAllPoints(bar)
+    backdrop:SetFrameLevel(math.max(0, bar:GetFrameLevel() - 1))
+    local texture = backdrop:CreateTexture(nil, "BACKGROUND")
+    texture:SetAllPoints()
+    texture:SetTexture(BG_TEXTURE)
+    texture:SetVertexColor(0, 0, 0, 0.4)
 
     bar.cleanBg = backdrop
 end
 
--- Swap the fill texture without losing the state color Blizzard just applied.
+-- Swap in the nameplate fill atlas without losing the state color Blizzard just applied.
 local function restyleFill(bar)
     local statusBar = bar.StatusBar
     if not statusBar then return end
     local r, g, b, a = statusBar:GetStatusBarColor()
-    statusBar:SetStatusBarTexture(CleanClassicExperience.BAR_TEXTURE)
+    statusBar:SetStatusBarTexture(CleanClassicExperience.BAR_ATLAS)
     statusBar:SetStatusBarColor(r, g, b, a)
 end
 
@@ -128,7 +110,7 @@ local function styleBar(bar)
     if bar.cleanStyled then return end
     bar.cleanStyled = true
 
-    addChrome(bar.StatusBar)
+    addBackdrop(bar.StatusBar)
     stripTextures(bar)
 
     if bar.isExpBar then
@@ -166,13 +148,16 @@ local function applyStyle()
         -- bars is keyed by the manager's bar enum, not a dense array.
         for _, bar in pairs(container.bars or {}) do
             styleBar(bar)
+
+            -- 12/3 tooltip border that rides the Edit Mode scale, so it thins with the bar instead of dwarfing it.
+            CleanClassicExperience.ApplyBorder(bar.StatusBar, nil, nil, nil, true)
         end
     end
 end
 
 applyStyle()
 
--- The Size slider applies its SetScale per tick; recompute the compensated width after each applied setting.
+-- The Size slider applies its SetScale per tick; re-fit the resized bars and their border after each applied setting.
 hooksecurefunc(EditModeManagerFrame, "OnSystemSettingChange", applyStyle)
 
 CleanClassicExperience.OnEvent(function()
