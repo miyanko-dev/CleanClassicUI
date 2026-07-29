@@ -39,3 +39,11 @@ end
 for index = 1, MIRRORTIMER_NUMTIMERS do
     styleTimer(index)
 end
+
+-- Footprint and default spot mirror MirrorTimer1's stock XML anchor, so an unsaved layout changes nothing.
+local mover = CleanClassicExperience.CreateMover("Exhaustion", "exhaustionAnchor", 206, BAR_HEIGHT)
+mover:SetPoint("TOP", 0, -96)
+
+-- Timers 2 and 3 chain below timer 1, so re-homing the first bar carries the whole stack.
+MirrorTimer1:ClearAllPoints()
+MirrorTimer1:SetPoint("TOP", mover, "TOP")
