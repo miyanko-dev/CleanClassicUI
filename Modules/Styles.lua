@@ -72,9 +72,8 @@ end
 
 local ICON_CROP = 0.1
 
--- The glow art runs nearly to its texture edge while the flash carries more margin, so each needs its own overshoot.
-local GLOW_SCALE  = 1.05
-local FLASH_SCALE = 1.15
+-- The glow art runs nearly to its texture edge, so it needs a slight overshoot to cover the icon.
+local GLOW_SCALE = 1.05
 
 -- Shared restyle for action, bag, and aura buttons; borderAnchor wraps an inner region and the border is returned.
 function CleanClassicExperience.StyleButton(btn, borderAnchor)
@@ -103,24 +102,21 @@ function CleanClassicExperience.StyleButton(btn, borderAnchor)
 
     local width, height = btn:GetSize()
     if width and width > 0 then
-        local function fitGlow(glow, scale)
+        local function fitGlow(glow)
             if not glow then return end
-            scale = scale or GLOW_SCALE
             glow:ClearAllPoints()
             glow:SetPoint("CENTER", btn, "CENTER")
-            glow:SetSize(width * scale, height * scale)
+            glow:SetSize(width * GLOW_SCALE, height * GLOW_SCALE)
         end
         fitGlow(btn.GetCheckedTexture and btn:GetCheckedTexture())
         fitGlow(btn.GetHighlightTexture and btn:GetHighlightTexture())
         fitGlow(pushedTexture)
-
-        -- Restore the alpha earlier versions zeroed before fitting the auto-attack flash.
-        local flash = btn.Flash or (name and _G[name .. "Flash"])
-        if flash then
-            flash:SetAlpha(1)
-            fitGlow(flash, FLASH_SCALE)
-        end
     end
+
+    -- Auto attack raises both the red flash and the golden checked glow; keep only the glow.
+    -- Blizzard only ever Show/Hides the flash, so zeroing its alpha once is permanent and inert.
+    local flash = btn.Flash or (name and _G[name .. "Flash"])
+    if flash then flash:SetAlpha(0) end
 
     return CleanClassicExperience.ApplyBorder(btn, nil, nil, borderAnchor)
 end

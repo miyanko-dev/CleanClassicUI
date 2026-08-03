@@ -21,6 +21,16 @@ local function applyPowerBar(manaBar)
     if color then manaBar:SetStatusBarColor(color.r, color.g, color.b) end
 end
 
+-- Every power bar we own. UnitFrameManaBar_UpdateType resets each to the default texture on
+-- every UNIT_DISPLAYPOWER, so styleFrames and the hook below must cover the same set or a bar
+-- silently reverts; the ToT bar used to slip through the hook and kept falling back.
+local MANA_BARS = {
+    PlayerFrameManaBar,
+    TargetFrameManaBar,
+    PetFrameManaBar,
+    TargetFrameToTManaBar,
+}
+
 -- The dragon border art bakes into the same texture as the frame ring, so elite and rare targets stay native.
 local NATIVE_BORDER = {
     elite = true,
@@ -52,10 +62,7 @@ local function styleFrames()
     if TargetFrameHealthBar then TargetFrameHealthBar:SetStatusBarTexture(BAR_ATLAS) end
     if PetFrameHealthBar then PetFrameHealthBar:SetStatusBarTexture(BAR_ATLAS) end
     if TargetFrameToTHealthBar then TargetFrameToTHealthBar:SetStatusBarTexture(BAR_ATLAS) end
-    applyPowerBar(PlayerFrameManaBar)
-    applyPowerBar(TargetFrameManaBar)
-    applyPowerBar(PetFrameManaBar)
-    applyPowerBar(TargetFrameToTManaBar)
+    for _, bar in ipairs(MANA_BARS) do applyPowerBar(bar) end
 
     -- Native code recolors the name backing via SetVertexColor, so the atlas swap holds without touching the tint.
     if TargetFrameNameBackground then
@@ -85,11 +92,14 @@ end
 hideStatus(PlayerStatusTexture)
 hideStatus(PlayerStatusGlow)
 
+-- Re-apply after Blizzard resets the texture; this is the only runtime path that re-textures a power bar.
 if type(UnitFrameManaBar_UpdateType) == "function" then
     hooksecurefunc("UnitFrameManaBar_UpdateType", function(manaBar)
-        if manaBar == PlayerFrameManaBar or manaBar == TargetFrameManaBar
-            or manaBar == PetFrameManaBar then
-            applyPowerBar(manaBar)
+        for _, bar in ipairs(MANA_BARS) do
+            if manaBar == bar then
+                applyPowerBar(manaBar)
+                return
+            end
         end
     end)
 end
