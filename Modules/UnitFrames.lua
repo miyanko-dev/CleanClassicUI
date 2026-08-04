@@ -31,6 +31,26 @@ local MANA_BARS = {
     TargetFrameToTManaBar,
 }
 
+-- The 1.15.9/2.5.6 prediction segments ship with the legacy UI-StatusBar fill, which clashes with BAR_ATLAS.
+-- UnitFrame_Initialize stores them under these keys; each is a StatusBarOverlaySegment with a Fill texture.
+local SEGMENT_KEYS = {
+    "myHealPredictionBar",
+    "otherHealPredictionBar",
+    "healAbsorbBar",
+    "totalAbsorbBar",
+    "myManaCostPredictionBar",
+}
+
+-- SetAtlas keeps the segment's fillColor vertex tint, so only the texture needs replacing.
+local function applySegmentFills(frame)
+    for _, key in ipairs(SEGMENT_KEYS) do
+        local segment = frame and frame[key]
+        if segment and segment.Fill then
+            segment.Fill:SetAtlas(BAR_ATLAS, TextureKitConstants.IgnoreAtlasSize)
+        end
+    end
+end
+
 -- The dragon border art bakes into the same texture as the frame ring, so elite and rare targets stay native.
 local NATIVE_BORDER = {
     elite = true,
@@ -63,6 +83,11 @@ local function styleFrames()
     if PetFrameHealthBar then PetFrameHealthBar:SetStatusBarTexture(BAR_ATLAS) end
     if TargetFrameToTHealthBar then TargetFrameToTHealthBar:SetStatusBarTexture(BAR_ATLAS) end
     for _, bar in ipairs(MANA_BARS) do applyPowerBar(bar) end
+
+    -- ToT carries no prediction segments, so only these three frames need the fill swap.
+    applySegmentFills(PlayerFrame)
+    applySegmentFills(TargetFrame)
+    applySegmentFills(PetFrame)
 
     -- Native code recolors the name backing via SetVertexColor, so the atlas swap holds without touching the tint.
     if TargetFrameNameBackground then
