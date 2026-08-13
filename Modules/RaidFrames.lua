@@ -4,7 +4,7 @@ local function skinBars(frame)
     -- Share the nameplate health bar fill atlas used across the unit frames
     if frame.healthBar then frame.healthBar:SetStatusBarTexture(CleanClassicExperience.BAR_ATLAS) end
 
-    if frame.powerBar then frame.powerBar:SetStatusBarTexture(CleanClassicExperience.BAR_TEXTURE) end
+    if frame.powerBar then frame.powerBar:SetStatusBarTexture(CleanClassicExperience.BAR_ATLAS) end
 end
 
 hooksecurefunc("DefaultCompactUnitFrameSetup", skinBars)
