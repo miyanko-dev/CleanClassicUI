@@ -11,6 +11,7 @@ Blizzard's Edit Mode.
 - Minimal cast bar with no border art, spark, or icon
 - Restyled breath and fatigue timers
 - Bordered bag buttons, stacked bag windows, and bank bags that open with the bank
+- Quality-colored item borders in bags, bank, character panel, and inspect panel, with quest items in gold
 - Item level shown in item tooltips
 - Tooltip anchor placeable through Edit Mode
 - Clean minimap with uniform grey-ringed buttons, scroll-to-zoom, and draggable buttons
@@ -21,8 +22,6 @@ Blizzard's Edit Mode.
 - Shift-click a chat tab to jump to the newest message
 - Restyled raid frames
 - Free-draggable loot roll frames that remember their position
-- Instant looting, with the loot window hidden unless something can't be looted
-- Auto repair and grey-item selling at vendors
 - Smaller, centered world map with scroll-to-zoom
 - Draggable clock and alarm panel that remembers where you put it
 

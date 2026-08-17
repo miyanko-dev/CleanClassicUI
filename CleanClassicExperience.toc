@@ -13,14 +13,13 @@ Modules/StatusBars.lua
 Modules/CastBar.lua
 Modules/TimerBars.lua
 Modules/Bags.lua
+Modules/ColoredItemBorders.lua
 Modules/Minimap.lua
 Modules/LFGButton.lua
 Modules/Auras.lua
 Modules/Chat.lua
 Modules/RaidFrames.lua
 Modules/RollFrames.lua
-Modules/FasterLoot.lua
-Modules/FastSellRepair.lua
 Modules/WorldMap.lua
 Modules/TimeManager.lua
 Modules/Tooltips.lua

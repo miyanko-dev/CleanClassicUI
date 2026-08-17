@@ -2,11 +2,15 @@
 local HIDDEN = {
     "MinimapBorder",
     "MinimapToggleButton",
-    "MinimapNorthTag",
-    "MinimapCompassTexture",
     "MinimapZoomIn",
     "MinimapZoomOut",
     "GameTimeFrame",
+}
+
+-- OnUpdateRotationSetting re-shows one of these on every rotateMinimap flip, but never touches their alpha.
+local ROTATION_ART = {
+    "MinimapNorthTag",
+    "MinimapCompassTexture",
 }
 
 local BUTTON_SIZE = 33
@@ -14,6 +18,8 @@ local BUTTON_SIZE = 33
 -- The zone text acts as the map's header: constant-size, gap below to the map.
 local ZONE_TEXT_HEIGHT = 18
 local ZONE_TEXT_GAP    = 2
+
+local CLOCK_GAP = 12
 
 -- Desaturate before the grey vertex color or the gold ring art only darkens.
 local RING_COLOR = CleanClassicExperience.COLOR.GREY
@@ -23,6 +29,9 @@ local ICON_SIZE = 17
 local BG_SIZE   = 20
 local RING_SIZE = 53
 local ICON_CROP = 0.05
+
+-- LibDBIcon's stock rim gap; native buttons reuse it so every button sits on one circle.
+local EDGE_GAP = 5
 
 -- The ring art's opening sits (-11, 12) from its center at RING_SIZE, so anchor at the inverse offset.
 local RING_TO_ICON_X, RING_TO_ICON_Y = 11, -12
@@ -34,21 +43,47 @@ local EDGE_BUTTONS = {
     { frame = "MiniMapBattlefieldFrame", icon = "MiniMapBattlefieldIcon", rings = { "MiniMapBattlefieldBorder" } },
 }
 
+CleanClassicExperienceDB = CleanClassicExperienceDB or {}
+CleanClassicExperienceDB.iconAngles = CleanClassicExperienceDB.iconAngles or {}
+
+-- Cancel the Edit Mode container scale once so nothing parented to this ring grows with the map.
+local edgeFrame = CreateFrame("Frame", "CleanClassicExperienceMinimapEdge", Minimap)
+edgeFrame:SetPoint("CENTER", Minimap, "CENTER")
+
+-- Extra scale Edit Mode puts on the map, measured against the unscaled cluster around it.
+local function mapScale()
+    local cluster, map = MinimapCluster:GetEffectiveScale(), Minimap:GetEffectiveScale()
+    if cluster <= 0 or map <= 0 then return 1 end
+    return map / cluster
+end
+
+-- Match the map's on-screen circle so children need no scale math of their own.
+local function resizeEdge()
+    local scale    = mapScale()
+    local diameter = Minimap:GetWidth() * scale
+    edgeFrame:SetScale(1 / scale)
+    edgeFrame:SetSize(diameter, diameter)
+end
+
+-- Offsets are read in the moved frame's own units, so only edgeFrame children may be placed here.
+local function placeOnEdge(frame, angle)
+    local rad    = math.rad(angle)
+    local radius = edgeFrame:GetWidth() / 2 + EDGE_GAP
+    frame:ClearAllPoints()
+    frame:SetPoint("CENTER", edgeFrame, "CENTER", math.cos(rad) * radius, math.sin(rad) * radius)
+end
+
 local function recolorRing(ring)
     if not ring then return end
     ring:SetDesaturated(true)
     ring:SetVertexColor(unpack(RING_COLOR))
 end
 
-local function placeButtonIcon(icon, frame)
+-- Crop baked icon edges like LibDBIcon so square art stays inside the ring.
+local function styleButtonIcon(icon, frame)
     icon:SetSize(ICON_SIZE, ICON_SIZE)
     icon:ClearAllPoints()
     icon:SetPoint("CENTER", frame, "CENTER")
-end
-
--- Crop baked icon edges like LibDBIcon so square art stays inside the ring.
-local function styleButtonIcon(icon, frame)
-    placeButtonIcon(icon, frame)
     icon:SetTexCoord(ICON_CROP, 1 - ICON_CROP, ICON_CROP, 1 - ICON_CROP)
 end
 
@@ -60,31 +95,15 @@ local function styleRing(ring, icon)
     recolorRing(ring)
 end
 
-local function styleBackdrop(backdrop, icon)
-    backdrop:SetSize(BG_SIZE, BG_SIZE)
-    backdrop:ClearAllPoints()
-    backdrop:SetPoint("CENTER", icon, "CENTER")
-end
-
 -- Native buttons lack LibDBIcon's backdrop disc; add one so tints match.
 local function ensureBackground(frame, icon)
     if not frame.cceBackground then
         frame.cceBackground = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
         frame.cceBackground:SetTexture("Interface\\Minimap\\UI-Minimap-Background")
     end
-    styleBackdrop(frame.cceBackground, icon)
-end
-
--- A frame inside the Edit Mode-scaled container set to this scale keeps a constant on-screen size.
-local function counterScale()
-    return MinimapCluster:GetEffectiveScale() / Minimap:GetEffectiveScale()
-end
-
--- Pinning the clock's effective scale to the cluster's also keeps its 12px gap constant.
-local function pinClock()
-    if TimeManagerClockButton then
-        TimeManagerClockButton:SetScale(counterScale())
-    end
+    frame.cceBackground:SetSize(BG_SIZE, BG_SIZE)
+    frame.cceBackground:ClearAllPoints()
+    frame.cceBackground:SetPoint("CENTER", icon, "CENTER")
 end
 
 -- Re-anchor the scaled container to the cluster's top so the Edit Mode selection overlay hugs the content.
@@ -99,33 +118,18 @@ local function anchorMinimapContainer()
     end
 end
 
--- Counter-scale addon buttons and widen the lib's ring radius so they stay BUTTON_SIZE on the map edge.
+-- Addon buttons keep LibDBIcon's own sizing; the ring parent and color are all this addon sets.
 local function refreshAddonIcons()
-    if not LibStub then return end
-    local lib = LibStub("LibDBIcon-1.0", true)
-    if not (lib and lib.objects and lib.Refresh) then return end
+    local lib = LibStub and LibStub("LibDBIcon-1.0", true)
+    if not (lib and lib.objects and lib.SetButtonRadius) then return end
 
-    local counter = counterScale()
-    if lib.SetButtonRadius then
-        lib:SetButtonRadius((Minimap:GetWidth() / 2) * (1 / counter - 1))
+    for _, button in pairs(lib.objects) do
+        button:SetParent(edgeFrame)
+        recolorRing(button.border)
     end
-    for name, btn in pairs(lib.objects) do
-        btn:SetScale(counter)
-        btn:SetSize(BUTTON_SIZE, BUTTON_SIZE)
 
-        -- The lib owns icon texcoords (crop and pressed state); geometry only.
-        if btn.icon then
-            placeButtonIcon(btn.icon, btn)
-
-            if btn.background then
-                styleBackdrop(btn.background, btn.icon)
-            end
-
-            styleRing(btn.border, btn.icon)
-        end
-
-        lib:Refresh(name)
-    end
+    -- The lib anchors to Minimap in unscaled units, so grow its radius by what the map's scale adds.
+    lib:SetButtonRadius((Minimap:GetWidth() / 2) * (mapScale() - 1) + EDGE_GAP)
 end
 
 -- Buttons that addons register after login must pick up the styling too.
@@ -139,39 +143,36 @@ local function hookIconCreation()
     iconCreationHooked = true
 end
 
-local function placeOnEdge(icon, angle)
-    local rad = math.rad(angle)
-
-    -- Divide the rim radius by the button's counter-scale so local offsets land on the map edge.
-    local radius = (Minimap:GetWidth() / 2) / icon:GetScale()
-    icon:ClearAllPoints()
-    icon:SetPoint("CENTER", Minimap, "CENTER", math.cos(rad) * radius, math.sin(rad) * radius)
-end
-
-local function dragUpdate(icon, key)
-    local cx, cy = Minimap:GetCenter()
+local function dragUpdate(frame, key)
+    local cx, cy = edgeFrame:GetCenter()
     if not cx then return end
     local mx, my = GetCursorPosition()
-    local scale  = Minimap:GetEffectiveScale()
+    local scale  = edgeFrame:GetEffectiveScale()
     local angle  = math.deg(math.atan2(my / scale - cy, mx / scale - cx))
     CleanClassicExperienceDB.iconAngles[key] = angle
-    placeOnEdge(icon, angle)
+    placeOnEdge(frame, angle)
 end
 
 -- dragHandle receives the mouse when it differs from the moved frame (TBC's dropdown child covers its parent).
-local function setupEdgeIcon(icon, key, defaultAngle, dragHandle)
-    if not icon then return end
-    local handle = dragHandle or icon
-    icon:SetMovable(true)
+local function enableEdgeDrag(frame, key, dragHandle)
+    if frame.cceDraggable then return end
+    frame.cceDraggable = true
+
+    local handle = dragHandle or frame
+    frame:SetMovable(true)
     handle:RegisterForDrag("LeftButton")
     handle:SetScript("OnDragStart", function(self)
-        self:SetScript("OnUpdate", function() dragUpdate(icon, key) end)
+        self:SetScript("OnUpdate", function() dragUpdate(frame, key) end)
     end)
     handle:SetScript("OnDragStop", function(self)
         self:SetScript("OnUpdate", nil)
     end)
-    local angle = CleanClassicExperienceDB.iconAngles[key] or defaultAngle
-    placeOnEdge(icon, angle)
+end
+
+local function setupEdgeIcon(frame, key, defaultAngle, dragHandle)
+    if not frame then return end
+    enableEdgeDrag(frame, key, dragHandle)
+    placeOnEdge(frame, CleanClassicExperienceDB.iconAngles[key] or defaultAngle)
 end
 
 local function adjustEdgeIcons()
@@ -184,13 +185,9 @@ local function styleEdgeButton(entry)
     local frame, icon = _G[entry.frame], _G[entry.icon]
     if not (frame and icon) then return end
 
-    -- Era ships tracking parented outside the map; make every edge button a Minimap child so rim math treats them alike.
-    if frame:GetParent() ~= Minimap then
-        frame:SetParent(Minimap)
-    end
-
+    -- Parenting onto the ring is what keeps the map's Edit Mode scale off the button.
+    frame:SetParent(edgeFrame)
     frame:SetSize(BUTTON_SIZE, BUTTON_SIZE)
-    frame:SetScale(counterScale())
     styleButtonIcon(icon, frame)
     ensureBackground(frame, icon)
 
@@ -225,6 +222,22 @@ local function styleEdgeButtons()
     end
 end
 
+-- Park the clock under the map's visible bottom edge at a constant gap.
+local function placeClock()
+    if not TimeManagerClockButton then return end
+    TimeManagerClockButton:SetParent(edgeFrame)
+    TimeManagerClockButton:ClearAllPoints()
+    TimeManagerClockButton:SetPoint("TOP", edgeFrame, "BOTTOM", 0, -CLOCK_GAP)
+end
+
+-- Re-fit the ring first, then re-place everything that reads its radius.
+local function refreshEdge()
+    resizeEdge()
+    adjustEdgeIcons()
+    refreshAddonIcons()
+    placeClock()
+end
+
 Minimap:EnableMouseWheel(true)
 Minimap:SetScript("OnMouseWheel", function(_, delta)
     if delta > 0 then Minimap_ZoomIn() else Minimap_ZoomOut() end
@@ -236,17 +249,24 @@ local function applyMinimap()
         if region then region:Hide() end
     end
 
+    for _, name in ipairs(ROTATION_ART) do
+        local texture = _G[name]
+        if texture then texture:SetAlpha(0) end
+    end
+
     -- The top banner is a parentKey texture, not a named global.
     if MinimapCluster and MinimapCluster.BorderTop then
         MinimapCluster.BorderTop:Hide()
     end
 
-    -- The stock hit insets padded the removed border art and now miss the visible content.
     if MinimapCluster then
+        -- The stock hit insets padded the removed border art and now miss the visible content.
         MinimapCluster:SetHitRectInsets(0, 0, 0, 0)
+
+        -- Clearing this stops SetEditModeScale resizing the header, so it stays a constant white strip.
+        MinimapCluster.scaleMinimapHeader = false
     end
 
-    -- Blizzard scales the header with the map (scaleMinimapHeader); pin it back to a constant white header.
     if MinimapZoneTextButton and MinimapZoneText
         and MinimapCluster and MinimapCluster.MinimapContainer then
         MinimapZoneTextButton:Show()
@@ -264,10 +284,7 @@ local function applyMinimap()
 
     if TimeManagerClockButton then
         TimeManagerClockButton:Show()
-        TimeManagerClockButton:SetScale(counterScale())
         TimeManagerClockButton:SetSize(60, 20)
-        TimeManagerClockButton:ClearAllPoints()
-        TimeManagerClockButton:SetPoint("TOP", Minimap, "BOTTOM", 0, -12)
         TimeManagerClockButton:SetHitRectInsets(0, 0, 0, 0)
 
         for _, region in pairs({ TimeManagerClockButton:GetRegions() }) do
@@ -281,27 +298,17 @@ local function applyMinimap()
         TimeManagerClockTicker:SetPoint("CENTER", TimeManagerClockButton, "CENTER", 0, 0)
     end
 
-    CleanClassicExperienceDB = CleanClassicExperienceDB or {}
-    CleanClassicExperienceDB.iconAngles = CleanClassicExperienceDB.iconAngles or {}
     styleEdgeButtons()
-    adjustEdgeIcons()
-    refreshAddonIcons()
+    refreshEdge()
     hookIconCreation()
     anchorMinimapContainer()
 end
 
 applyMinimap()
 
--- The size slider routes through SetEditModeScale, including live drags that fire no event; re-pin everything.
-if MinimapCluster and MinimapCluster.SetEditModeScale then
-    hooksecurefunc(MinimapCluster, "SetEditModeScale", function()
-        pinClock()
-        refreshAddonIcons()
-        styleEdgeButtons()
-        adjustEdgeIcons()
-        if MinimapZoneTextButton then MinimapZoneTextButton:SetScale(1) end
-        anchorMinimapContainer()
-    end)
+-- Every size change routes through the container's scale, including live slider drags that fire no event.
+if MinimapCluster and MinimapCluster.MinimapContainer then
+    hooksecurefunc(MinimapCluster.MinimapContainer, "SetScale", refreshEdge)
 end
 
 -- Each scale change ends in SetHeaderUnderneath, which resets the container to its stock anchor; re-fix after.
