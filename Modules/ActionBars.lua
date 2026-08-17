@@ -33,6 +33,36 @@ hooksecurefunc(EditModeManagerFrame, "OnSystemSettingChange", styleAllButtons)
 CleanClassicExperience.OnEvent(styleAllButtons,
     "PLAYER_ENTERING_WORLD", "EDIT_MODE_LAYOUTS_UPDATED")
 
+-- Only these bars carry stock art; the multi bars ship none.
+local ART_BARS = { MainActionBar, StanceBar, PetActionBar, PossessActionBar }
+
+local ART_KEYS = {
+    "EndCaps",             -- MainActionBar's compact gryphon caps
+    "BorderArt",
+    "BackgroundArtLeft",   -- StanceBar's three-piece plate
+    "BackgroundArtMiddle",
+    "BackgroundArtRight",
+}
+
+-- Match Edit Mode's Hide Bar Art without writing to the layout; it only flips SetShown, so zero alpha outlasts it.
+local function hideBarArt()
+    -- The wide dwarf plate and its gryphon caps sit on the stock main menu bar, not on any action bar.
+    MainMenuBarArtFrame:SetAlpha(0)
+
+    for _, bar in ipairs(ART_BARS) do
+        for _, key in ipairs(ART_KEYS) do
+            if bar[key] then bar[key]:SetAlpha(0) end
+        end
+
+        -- Pet and possess bars keep their plate pieces in an array instead.
+        for _, texture in ipairs(bar.BackgroundArtTextures or {}) do
+            texture:SetAlpha(0)
+        end
+    end
+end
+
+hideBarArt()
+
 -- Blizzard's Update hides the icon while its data is uncached and nothing redraws it once the data arrives, until hovering forces UpdateAction.
 local function repairIcons()
     for _, prefix in ipairs(BAR_PREFIXES) do

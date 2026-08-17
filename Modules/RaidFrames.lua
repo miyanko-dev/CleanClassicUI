@@ -9,3 +9,6 @@ end
 
 hooksecurefunc("DefaultCompactUnitFrameSetup", skinBars)
 hooksecurefunc("DefaultCompactMiniFrameSetup", skinBars)
+
+-- Catch pet and target minis, whose setup func the raid container captured before this addon loaded
+hooksecurefunc("CompactUnitFrame_SetUpFrame", skinBars)
