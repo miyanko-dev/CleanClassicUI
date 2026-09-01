@@ -1,4 +1,4 @@
--- Both 1.15.9 and 2.5.6 run the modern chat code; Edit Mode owns ChatFrame1's position and size.
+-- 1.15.9 runs the modern chat code. Edit Mode owns ChatFrame1 position and size.
 local SPACING = CleanClassicUI.SPACING
 local BLOCK_GAP = SPACING[4]
 local SELECTION_PAD = SPACING[4]

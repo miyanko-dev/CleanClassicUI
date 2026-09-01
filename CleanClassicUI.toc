@@ -1,4 +1,4 @@
-## Interface: 11509, 20506
+## Interface: 11509
 ## Title: CleanClassicUI
 ## Notes: Minimalist styling for action bars, bags, status bars, minimap, auras, chat, and tooltips. Layout lives in Edit Mode.
 ## Version: 1.1.0

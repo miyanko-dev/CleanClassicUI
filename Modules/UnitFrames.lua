@@ -31,7 +31,7 @@ local MANA_BARS = {
     TargetFrameToTManaBar,
 }
 
--- The 1.15.9/2.5.6 prediction segments ship with the legacy UI-StatusBar fill, which clashes with BAR_ATLAS.
+-- The 1.15.9 prediction segments ship with the legacy UI-StatusBar fill, which clashes with BAR_ATLAS.
 -- UnitFrame_Initialize stores them under these keys; each is a StatusBarOverlaySegment with a Fill texture.
 local SEGMENT_KEYS = {
     "myHealPredictionBar",

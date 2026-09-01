@@ -36,11 +36,10 @@ local EDGE_GAP = 5
 -- The ring art's opening sits (-11, 12) from its center at RING_SIZE, so anchor at the inverse offset.
 local RING_TO_ICON_X, RING_TO_ICON_Y = 11, -12
 
--- rings lists per-flavor texture names (era/tbc); whichever exists is used.
 local EDGE_BUTTONS = {
-    { frame = "MiniMapTracking",         icon = "MiniMapTrackingIcon",    rings = { "MiniMapTrackingBorder", "MiniMapTrackingButtonBorder" } },
-    { frame = "MiniMapMailFrame",        icon = "MiniMapMailIcon",        rings = { "MiniMapMailBorder" } },
-    { frame = "MiniMapBattlefieldFrame", icon = "MiniMapBattlefieldIcon", rings = { "MiniMapBattlefieldBorder" } },
+    { frame = "MiniMapTracking",         icon = "MiniMapTrackingIcon",    ring = "MiniMapTrackingBorder" },
+    { frame = "MiniMapMailFrame",        icon = "MiniMapMailIcon",        ring = "MiniMapMailBorder" },
+    { frame = "MiniMapBattlefieldFrame", icon = "MiniMapBattlefieldIcon", ring = "MiniMapBattlefieldBorder" },
 }
 
 CleanClassicUIDB = CleanClassicUIDB or {}
@@ -153,30 +152,28 @@ local function dragUpdate(frame, key)
     placeOnEdge(frame, angle)
 end
 
--- dragHandle receives the mouse when it differs from the moved frame (TBC's dropdown child covers its parent).
-local function enableEdgeDrag(frame, key, dragHandle)
+local function enableEdgeDrag(frame, key)
     if frame.ccuiDraggable then return end
     frame.ccuiDraggable = true
 
-    local handle = dragHandle or frame
     frame:SetMovable(true)
-    handle:RegisterForDrag("LeftButton")
-    handle:SetScript("OnDragStart", function(self)
+    frame:RegisterForDrag("LeftButton")
+    frame:SetScript("OnDragStart", function(self)
         self:SetScript("OnUpdate", function() dragUpdate(frame, key) end)
     end)
-    handle:SetScript("OnDragStop", function(self)
+    frame:SetScript("OnDragStop", function(self)
         self:SetScript("OnUpdate", nil)
     end)
 end
 
-local function setupEdgeIcon(frame, key, defaultAngle, dragHandle)
+local function setupEdgeIcon(frame, key, defaultAngle)
     if not frame then return end
-    enableEdgeDrag(frame, key, dragHandle)
+    enableEdgeDrag(frame, key)
     placeOnEdge(frame, CleanClassicUIDB.iconAngles[key] or defaultAngle)
 end
 
 local function adjustEdgeIcons()
-    setupEdgeIcon(MiniMapTracking,         "tracking",    135, MiniMapTrackingButton)
+    setupEdgeIcon(MiniMapTracking,         "tracking",    135)
     setupEdgeIcon(MiniMapMailFrame,        "mail",         45)
     setupEdgeIcon(MiniMapBattlefieldFrame, "battlefield", 225)
 end
@@ -191,9 +188,7 @@ local function styleEdgeButton(entry)
     styleButtonIcon(icon, frame)
     ensureBackground(frame, icon)
 
-    for _, name in ipairs(entry.rings) do
-        styleRing(_G[name], icon)
-    end
+    styleRing(_G[entry.ring], icon)
 end
 
 -- Blizzard rewrites the battlefield icon on every queue update; restore the shared geometry after it.
@@ -203,22 +198,12 @@ local function restyleBattlefieldIcon()
     end
 end
 
-if type(BattlefieldFrame_UpdateStatus) == "function" then
-    hooksecurefunc("BattlefieldFrame_UpdateStatus", restyleBattlefieldIcon)
-end
-if type(MiniMapBattlefieldFrame_UpdateArena) == "function" then
-    hooksecurefunc("MiniMapBattlefieldFrame_UpdateArena", restyleBattlefieldIcon)
-end
+hooksecurefunc("BattlefieldFrame_UpdateStatus", restyleBattlefieldIcon)
+hooksecurefunc("MiniMapBattlefieldFrame_UpdateArena", restyleBattlefieldIcon)
 
 local function styleEdgeButtons()
     for _, entry in ipairs(EDGE_BUTTONS) do
         styleEdgeButton(entry)
-    end
-
-    -- Keep TBC's child dropdown click target matched to the resized frame.
-    if MiniMapTrackingButton then
-        MiniMapTrackingButton:ClearAllPoints()
-        MiniMapTrackingButton:SetAllPoints(MiniMapTracking)
     end
 end
 
@@ -311,17 +296,13 @@ if MinimapCluster and MinimapCluster.MinimapContainer then
     hooksecurefunc(MinimapCluster.MinimapContainer, "SetScale", refreshEdge)
 end
 
--- Each scale change ends in SetHeaderUnderneath, which resets the container to its stock anchor; re-fix after.
-if MinimapCluster and MinimapCluster.SetHeaderUnderneath then
-    hooksecurefunc(MinimapCluster, "SetHeaderUnderneath", anchorMinimapContainer)
-end
+-- Each scale change ends in SetHeaderUnderneath, which resets the container to its stock anchor, so re-fix after.
+hooksecurefunc(MinimapCluster, "SetHeaderUnderneath", anchorMinimapContainer)
 
--- Blizzard recolors the zone text by PvP zone type on every zone change; keep it white.
-if type(Minimap_Update) == "function" then
-    hooksecurefunc("Minimap_Update", function()
-        if MinimapZoneText then MinimapZoneText:SetTextColor(1, 1, 1) end
-    end)
-end
+-- Blizzard recolors the zone text by PvP zone type on every zone change, so keep it white.
+hooksecurefunc("Minimap_Update", function()
+    if MinimapZoneText then MinimapZoneText:SetTextColor(1, 1, 1) end
+end)
 
 CleanClassicUI.OnEvent(function()
     C_Timer.After(0, applyMinimap)
