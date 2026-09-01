@@ -20,7 +20,7 @@ local MAX_BUTTONS = 12
 local function styleAllButtons()
     for _, prefix in ipairs(BAR_PREFIXES) do
         for i = 1, MAX_BUTTONS do
-            CleanClassicExperience.StyleButton(_G[prefix .. i])
+            CleanClassicUI.StyleButton(_G[prefix .. i])
         end
     end
 end
@@ -30,7 +30,7 @@ styleAllButtons()
 -- Icon-size changes apply live in Edit Mode before layouts save, so restyle on every applied setting too.
 hooksecurefunc(EditModeManagerFrame, "OnSystemSettingChange", styleAllButtons)
 
-CleanClassicExperience.OnEvent(styleAllButtons,
+CleanClassicUI.OnEvent(styleAllButtons,
     "PLAYER_ENTERING_WORLD", "EDIT_MODE_LAYOUTS_UPDATED")
 
 -- Only these bars carry stock art; the multi bars ship none.
@@ -94,5 +94,5 @@ local function queueRepair()
     end)
 end
 
-CleanClassicExperience.OnEvent(queueRepair,
+CleanClassicUI.OnEvent(queueRepair,
     "SPELLS_CHANGED", "UPDATE_MACROS", "GET_ITEM_INFO_RECEIVED")

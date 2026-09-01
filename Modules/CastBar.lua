@@ -21,7 +21,7 @@ local function centerText()
 end
 
 local function styleCastBar()
-    castBar:SetStatusBarTexture(CleanClassicExperience.BAR_ATLAS)
+    castBar:SetStatusBarTexture(CleanClassicUI.BAR_ATLAS)
 
     for _, key in ipairs(HIDDEN) do
         local region = castBar[key]
@@ -32,7 +32,7 @@ local function styleCastBar()
     end
 
     centerText()
-    CleanClassicExperience.ApplyBorder(castBar)
+    CleanClassicUI.ApplyBorder(castBar)
 end
 
 styleCastBar()
@@ -44,7 +44,7 @@ castBar.editModeSelectionTopOffset = 0
 -- classicStyleCastBar re-applies the stock fill on every cast state change; swap back, keep the color.
 hooksecurefunc(castBar, "UpdateBarFillTexture", function(self)
     local r, g, b, a = self:GetStatusBarColor()
-    self:SetStatusBarTexture(CleanClassicExperience.BAR_ATLAS)
+    self:SetStatusBarTexture(CleanClassicUI.BAR_ATLAS)
     self:SetStatusBarColor(r, g, b, a)
 end)
 
@@ -57,5 +57,5 @@ end)
 -- BarSize lands as a SetScale that changes the border's coordinate space; re-apply on every applied setting.
 hooksecurefunc(EditModeManagerFrame, "OnSystemSettingChange", styleCastBar)
 
-CleanClassicExperience.OnEvent(styleCastBar,
+CleanClassicUI.OnEvent(styleCastBar,
     "PLAYER_ENTERING_WORLD", "EDIT_MODE_LAYOUTS_UPDATED")

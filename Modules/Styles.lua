@@ -1,13 +1,13 @@
-CleanClassicExperience = CleanClassicExperience or {}
+CleanClassicUI = CleanClassicUI or {}
 
-CleanClassicExperience.BAR_TEXTURE = "Interface/RaidFrame/Raid-Bar-Hp-Fill"
-CleanClassicExperience.BAR_ATLAS = "UI-HUD-CoolDownManager-Bar"
-CleanClassicExperience.EDGE_FILE = "Interface/Tooltips/UI-Tooltip-Border"
+CleanClassicUI.BAR_TEXTURE = "Interface/RaidFrame/Raid-Bar-Hp-Fill"
+CleanClassicUI.BAR_ATLAS = "UI-HUD-CoolDownManager-Bar"
+CleanClassicUI.EDGE_FILE = "Interface/Tooltips/UI-Tooltip-Border"
 
-CleanClassicExperience.BORDER = 3
+CleanClassicUI.BORDER = 3
 
 -- Keyed by pixel value; use SPACING[8] over a bare 8 to mark an intentional layout gap.
-CleanClassicExperience.SPACING = {
+CleanClassicUI.SPACING = {
     [4]  = 4,
     [8]  = 8,
     [16] = 16,
@@ -15,7 +15,7 @@ CleanClassicExperience.SPACING = {
 }
 
 -- RED through ORANGE mirror Blizzard's debuff-type border colors so aura borders match the game.
-CleanClassicExperience.COLOR = {
+CleanClassicUI.COLOR = {
     RED    = { 0.800, 0.000, 0.000 },
     GREEN  = { 0.000, 0.600, 0.000 },
     BLUE   = { 0.200, 0.600, 1.000 },
@@ -35,12 +35,12 @@ end
 
 -- Safe to re-apply after scale changes; anchor optionally wraps an inner region instead of the frame.
 -- proportional keeps the raw edge so the border rides the host's Edit Mode scale instead of holding on-screen size.
-function CleanClassicExperience.ApplyBorder(frame, level, edgeSize, anchor, proportional)
+function CleanClassicUI.ApplyBorder(frame, level, edgeSize, anchor, proportional)
     if not frame then return end
 
     local scale = proportional and 1 or extraScale(frame)
     local edge = (edgeSize or EDGE_SIZE) / scale
-    local inset = CleanClassicExperience.BORDER / scale
+    local inset = CleanClassicUI.BORDER / scale
 
     local border = frame.cleanBorder
     if border and border.cleanEdge == edge then return border end
@@ -57,14 +57,14 @@ function CleanClassicExperience.ApplyBorder(frame, level, edgeSize, anchor, prop
     if border.cleanEdge then
         r, g, b, a = border:GetBackdropBorderColor()
     else
-        r, g, b = unpack(CleanClassicExperience.COLOR.GREY)
+        r, g, b = unpack(CleanClassicUI.COLOR.GREY)
     end
 
     local target = anchor or frame
     border:ClearAllPoints()
     border:SetPoint("TOPLEFT", target, "TOPLEFT", -inset, inset)
     border:SetPoint("BOTTOMRIGHT", target, "BOTTOMRIGHT", inset, -inset)
-    border:SetBackdrop({ edgeFile = CleanClassicExperience.EDGE_FILE, edgeSize = edge })
+    border:SetBackdrop({ edgeFile = CleanClassicUI.EDGE_FILE, edgeSize = edge })
     border:SetBackdropBorderColor(r, g, b, a)
     border.cleanEdge = edge
     return border
@@ -76,7 +76,7 @@ local ICON_CROP = 0.1
 local GLOW_SCALE = 1.05
 
 -- Shared restyle for action, bag, and aura buttons; borderAnchor wraps an inner region and the border is returned.
-function CleanClassicExperience.StyleButton(btn, borderAnchor)
+function CleanClassicUI.StyleButton(btn, borderAnchor)
     if not btn then return end
 
     -- Clear the file and zero the alpha so oversized stock ring art stays gone even if Blizzard re-sets it.
@@ -118,16 +118,16 @@ function CleanClassicExperience.StyleButton(btn, borderAnchor)
     local flash = btn.Flash or (name and _G[name .. "Flash"])
     if flash then flash:SetAlpha(0) end
 
-    return CleanClassicExperience.ApplyBorder(btn, nil, nil, borderAnchor)
+    return CleanClassicUI.ApplyBorder(btn, nil, nil, borderAnchor)
 end
 
-function CleanClassicExperience.HideForever(frame)
+function CleanClassicUI.HideForever(frame)
     if not frame then return end
     frame:Hide()
     frame:SetScript("OnShow", frame.Hide)
 end
 
-function CleanClassicExperience.OnEvent(callback, ...)
+function CleanClassicUI.OnEvent(callback, ...)
     local frame = CreateFrame("Frame")
     for i = 1, select("#", ...) do
         frame:RegisterEvent((select(i, ...)))

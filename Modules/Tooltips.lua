@@ -1,5 +1,5 @@
 -- Footprint and default spot mirror retail's GameTooltipDefaultContainer.
-local mover = CleanClassicExperience.CreateMover("Tooltip", "tooltipAnchor", 250, 150)
+local mover = CleanClassicUI.CreateMover("Tooltip", "tooltipAnchor", 250, 150)
 mover:SetPoint("BOTTOMRIGHT", -9, 85)
 
 -- Blizzard forces ANCHOR_NONE before this hook runs, so anchoring to the hidden mover is safe.
@@ -9,7 +9,7 @@ hooksecurefunc("GameTooltip_SetDefaultAnchor", function(tooltip)
     tooltip:SetPoint("BOTTOMRIGHT", mover, "BOTTOMRIGHT")
 end)
 
-CleanClassicExperience.HideForever(GameTooltipStatusBar)
+CleanClassicUI.HideForever(GameTooltipStatusBar)
 
 -- Nothing native caps tooltip width, so wrap the long lines instead of letting the frame grow sideways.
 local MAX_WIDTH = 240

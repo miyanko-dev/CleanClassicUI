@@ -3,7 +3,7 @@ local movers = {}
 local MOVEMENT_KEYS = { UP = true, DOWN = true, LEFT = true, RIGHT = true }
 
 -- Era lacks these HUD systems natively; an unregistered mover adopts EditModeSystemMixin for native placement chrome.
-function CleanClassicExperience.CreateMover(systemName, dbKey, width, height)
+function CleanClassicUI.CreateMover(systemName, dbKey, width, height)
     local mover = CreateFrame("Frame", nil, UIParent)
     Mixin(mover, EditModeSystemMixin)
     mover:SetSize(width, height)
@@ -16,7 +16,7 @@ function CleanClassicExperience.CreateMover(systemName, dbKey, width, height)
     mover.systemNameString = systemName
 
     function mover:SavedPosition()
-        return CleanClassicExperienceDB and CleanClassicExperienceDB[dbKey]
+        return CleanClassicUIDB and CleanClassicUIDB[dbKey]
     end
 
     -- Store bottom-right in UIParent space so the anchor survives reloads and pooled snap targets.
@@ -29,8 +29,8 @@ function CleanClassicExperience.CreateMover(systemName, dbKey, width, height)
 
     -- Every native reposition path funnels through here; save to the addon's variables instead of the manager.
     function mover:OnSystemPositionChange()
-        CleanClassicExperienceDB = CleanClassicExperienceDB or {}
-        CleanClassicExperienceDB[dbKey] = { right = self:GetRight(), bottom = self:GetBottom() }
+        CleanClassicUIDB = CleanClassicUIDB or {}
+        CleanClassicUIDB[dbKey] = { right = self:GetRight(), bottom = self:GetBottom() }
         self:RestorePosition()
     end
 
@@ -108,7 +108,7 @@ hooksecurefunc(EditModeManagerFrame, "SelectSystem", dropSelection)
 hooksecurefunc(EditModeManagerFrame, "ClearSelectedSystem", dropSelection)
 
 -- SavedVariables land after the module files run; place each mover once they exist.
-CleanClassicExperience.OnEvent(function()
+CleanClassicUI.OnEvent(function()
     for _, mover in ipairs(movers) do
         mover:RestorePosition()
     end

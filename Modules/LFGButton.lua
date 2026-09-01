@@ -17,7 +17,7 @@ end
 
 placeLFGButton()
 
-CleanClassicExperience.OnEvent(function()
+CleanClassicUI.OnEvent(function()
     C_Timer.After(0, placeLFGButton)
 end, "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED",
 "EDIT_MODE_LAYOUTS_UPDATED")

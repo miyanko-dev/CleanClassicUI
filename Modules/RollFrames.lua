@@ -1,18 +1,18 @@
 -- Stack the loot roll frames on a movable handle. Untouched, they sit at Blizzard's native spot;
 -- drag any frame to move the whole stack, and it returns there every time the frames reappear.
-local SPACING = CleanClassicExperience.SPACING
+local SPACING = CleanClassicUI.SPACING
 
 local FRAME_GAP   = SPACING[4]
 local ANCHOR_SIZE = 24
 local DB_KEY      = "rollFramesAnchor"
 
 local function getDB()
-    CleanClassicExperienceDB = CleanClassicExperienceDB or {}
-    CleanClassicExperienceDB[DB_KEY] = CleanClassicExperienceDB[DB_KEY] or {}
-    return CleanClassicExperienceDB[DB_KEY]
+    CleanClassicUIDB = CleanClassicUIDB or {}
+    CleanClassicUIDB[DB_KEY] = CleanClassicUIDB[DB_KEY] or {}
+    return CleanClassicUIDB[DB_KEY]
 end
 
-local anchor = CreateFrame("Frame", "CleanClassicExperienceRollAnchor", UIParent)
+local anchor = CreateFrame("Frame", "CleanClassicUIRollAnchor", UIParent)
 anchor:SetSize(ANCHOR_SIZE, ANCHOR_SIZE)
 anchor:SetFrameStrata("MEDIUM")
 anchor:SetMovable(true)
@@ -97,7 +97,7 @@ if type(GroupLootContainer_Update) == "function" then
     hooksecurefunc("GroupLootContainer_Update", arrangeRollFrames)
 end
 
-CleanClassicExperience.OnEvent(function()
+CleanClassicUI.OnEvent(function()
     loadPosition()
     arrangeRollFrames()
 end, "PLAYER_LOGIN")

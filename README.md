@@ -1,4 +1,4 @@
-# CleanClassicExperience
+# CleanClassicUI
 
 A minimalist UI addon for World of Warcraft Classic Era. It restyles the
 default interface and adds a handful of quality-of-life tweaks. Frame layout

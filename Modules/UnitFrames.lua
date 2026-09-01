@@ -1,6 +1,6 @@
 -- Edit Mode owns unit frame positions; recolor the frame art grey and swap the bar fills.
-local FRAME_COLOR = CleanClassicExperience.COLOR.GREY
-local BAR_ATLAS = CleanClassicExperience.BAR_ATLAS
+local FRAME_COLOR = CleanClassicUI.COLOR.GREY
+local BAR_ATLAS = CleanClassicUI.BAR_ATLAS
 
 -- SetStatusBarTexture accepts an atlas string, so the bars share the nameplate health bar's fill atlas.
 -- Desaturate before the grey vertex color or the gold art only darkens to brown.
@@ -129,5 +129,5 @@ if type(UnitFrameManaBar_UpdateType) == "function" then
     end)
 end
 
-CleanClassicExperience.OnEvent(styleFrames,
+CleanClassicUI.OnEvent(styleFrames,
     "PLAYER_ENTERING_WORLD", "PLAYER_TARGET_CHANGED", "UNIT_CLASSIFICATION_CHANGED")

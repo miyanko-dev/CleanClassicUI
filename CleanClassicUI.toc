@@ -1,10 +1,10 @@
 ## Interface: 11509, 20506
-## Title: CleanClassicExperience
+## Title: CleanClassicUI
 ## Notes: Minimalist styling for action bars, bags, status bars, minimap, auras, chat, and tooltips. Layout lives in Edit Mode.
 ## Version: 1.1.0
 ## Author: MIYANKO
 ## IconTexture: 133004
-## SavedVariables: CleanClassicExperienceDB
+## SavedVariables: CleanClassicUIDB
 
 Modules/Styles.lua
 Modules/EditMode.lua

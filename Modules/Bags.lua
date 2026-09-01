@@ -1,5 +1,5 @@
 -- Edit Mode owns the bag-button row; style the buttons, stack the container windows, and open bank bags with the bank.
-local CONTAINER_GAP = CleanClassicExperience.SPACING[4]
+local CONTAINER_GAP = CleanClassicUI.SPACING[4]
 
 local BAG_BTNS = {
     "MainMenuBarBackpackButton",
@@ -27,11 +27,11 @@ local function styleKeyring()
         tex:SetTexCoord(KEYRING_LEFT + dx, KEYRING_RIGHT - dx, KEYRING_TOP + dy, KEYRING_BOTTOM - dy)
     end
 
-    CleanClassicExperience.ApplyBorder(btn)
+    CleanClassicUI.ApplyBorder(btn)
 end
 
 local function styleButtons()
-    for _, name in ipairs(BAG_BTNS) do CleanClassicExperience.StyleButton(_G[name]) end
+    for _, name in ipairs(BAG_BTNS) do CleanClassicUI.StyleButton(_G[name]) end
     styleKeyring()
 end
 
@@ -56,7 +56,7 @@ end
 
 hooksecurefunc("UpdateContainerFrameAnchors", arrangeContainers)
 
-CleanClassicExperience.OnEvent(function(_, event)
+CleanClassicUI.OnEvent(function(_, event)
     if event == "BANKFRAME_OPENED" then
         for id = NUM_BAG_SLOTS + 1, NUM_BAG_SLOTS + NUM_BANKBAGSLOTS do OpenBag(id) end
     else
@@ -69,5 +69,5 @@ styleButtons()
 -- The bag bar's Size setting applies live in Edit Mode before layouts save, so restyle on every applied setting too.
 hooksecurefunc(EditModeManagerFrame, "OnSystemSettingChange", styleButtons)
 
-CleanClassicExperience.OnEvent(styleButtons,
+CleanClassicUI.OnEvent(styleButtons,
     "PLAYER_ENTERING_WORLD", "EDIT_MODE_LAYOUTS_UPDATED")

@@ -1,7 +1,7 @@
 local BAR_HEIGHT = 20
 
 -- Border art extends 3px past each frame edge; pad the stack gap so it stays visible.
-local STACK_GAP = CleanClassicExperience.SPACING[8] + 2 * CleanClassicExperience.BORDER
+local STACK_GAP = CleanClassicUI.SPACING[8] + 2 * CleanClassicUI.BORDER
 
 local function styleTimer(index)
     local frame     = _G["MirrorTimer" .. index]
@@ -15,7 +15,7 @@ local function styleTimer(index)
 
     statusbar:ClearAllPoints()
     statusbar:SetAllPoints(frame)
-    statusbar:SetStatusBarTexture(CleanClassicExperience.BAR_TEXTURE)
+    statusbar:SetStatusBarTexture(CleanClassicUI.BAR_TEXTURE)
 
     -- Stretch the template's anonymous black backdrop behind the full bar.
     for _, region in ipairs({ frame:GetRegions() }) do
@@ -28,7 +28,7 @@ local function styleTimer(index)
     text:ClearAllPoints()
     text:SetPoint("CENTER", frame, "CENTER", 0, 0)
 
-    CleanClassicExperience.ApplyBorder(frame)
+    CleanClassicUI.ApplyBorder(frame)
 
     if index > 1 then
         frame:ClearAllPoints()
@@ -41,7 +41,7 @@ for index = 1, MIRRORTIMER_NUMTIMERS do
 end
 
 -- Footprint and default spot mirror MirrorTimer1's stock XML anchor, so an unsaved layout changes nothing.
-local mover = CleanClassicExperience.CreateMover("Exhaustion", "exhaustionAnchor", 206, BAR_HEIGHT)
+local mover = CleanClassicUI.CreateMover("Exhaustion", "exhaustionAnchor", 206, BAR_HEIGHT)
 mover:SetPoint("TOP", 0, -96)
 
 -- Timers 2 and 3 chain below timer 1, so re-homing the first bar carries the whole stack.

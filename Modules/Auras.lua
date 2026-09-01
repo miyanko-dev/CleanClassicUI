@@ -1,7 +1,7 @@
 -- Edit Mode owns the aura layout; restyle the buttons with dispel-colored borders, exact minutes, and a timer margin.
 if not (BuffFrame and BuffFrame.auraFrames and DebuffFrame) then return end
 
-local COLOR = CleanClassicExperience.COLOR
+local COLOR = CleanClassicUI.COLOR
 
 local DEBUFF_COLORS = {
     Poison  = COLOR.GREEN,
@@ -47,7 +47,7 @@ end
 
 local function styleButton(btn, color)
     -- Wrap only the 30x30 Icon so the timer in the button's bottom strip sits outside the border.
-    local border = CleanClassicExperience.StyleButton(btn, btn.Icon)
+    local border = CleanClassicUI.StyleButton(btn, btn.Icon)
     if border then border:SetBackdropBorderColor(unpack(color)) end
 
     -- Edit Mode examples never run the UpdateDuration hook, so whiten here as well.
@@ -59,7 +59,7 @@ local function styleButton(btn, color)
 end
 
 -- UpdateGridLayout re-anchors every Duration flush against the icon, so re-apply the margin afterwards.
-local DURATION_MARGIN = CleanClassicExperience.SPACING[4]
+local DURATION_MARGIN = CleanClassicUI.SPACING[4]
 
 local function offsetDurations(container, auras)
     local point, relativePoint, x, y
@@ -108,7 +108,7 @@ hooksecurefunc(DebuffFrame, "UpdateGridLayout", styleAuraFrame)
 hooksecurefunc(BuffFrame.AuraContainer, "UpdateGridLayout", offsetDurations)
 hooksecurefunc(DebuffFrame.AuraContainer, "UpdateGridLayout", offsetDurations)
 
-CleanClassicExperience.OnEvent(function()
+CleanClassicUI.OnEvent(function()
     styleAuraFrame(BuffFrame)
     styleAuraFrame(DebuffFrame)
     offsetDurations(BuffFrame.AuraContainer, BuffFrame.auraFrames)

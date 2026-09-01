@@ -1,5 +1,5 @@
 -- Both 1.15.9 and 2.5.6 run the modern chat code; Edit Mode owns ChatFrame1's position and size.
-local SPACING = CleanClassicExperience.SPACING
+local SPACING = CleanClassicUI.SPACING
 local BLOCK_GAP = SPACING[4]
 local SELECTION_PAD = SPACING[4]
 local TAB_FONT_SIZE = 14
@@ -149,8 +149,8 @@ local function restoreResizeBounds(chatFrame)
 end
 
 local function applyStyle()
-    CleanClassicExperience.HideForever(ChatFrameMenuButton)
-    CleanClassicExperience.HideForever(ChatFrameChannelButton)
+    CleanClassicUI.HideForever(ChatFrameMenuButton)
+    CleanClassicUI.HideForever(ChatFrameChannelButton)
 
     local maxWindows = NUM_CHAT_WINDOWS or Constants.ChatFrameConstants.MaxChatWindows
     for i = 1, maxWindows do
@@ -158,7 +158,7 @@ local function applyStyle()
         if chatFrame then
             local editBox = _G[chatFrame:GetName() .. "EditBox"]
             local tab = _G[chatFrame:GetName() .. "Tab"]
-            CleanClassicExperience.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
+            CleanClassicUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
             stripChatFrameTextures(chatFrame)
             styleTab(tab)
             styleEditBox(chatFrame, editBox)
@@ -181,7 +181,7 @@ local function enableClassColors()
     end
 end
 
-CleanClassicExperience.OnEvent(function()
+CleanClassicUI.OnEvent(function()
     applyStyle()
     enableClassColors()
 end, "PLAYER_ENTERING_WORLD", "UPDATE_FLOATING_CHAT_WINDOWS")
@@ -189,7 +189,7 @@ end, "PLAYER_ENTERING_WORLD", "UPDATE_FLOATING_CHAT_WINDOWS")
 -- Style brand-new temporary tabs directly from the frame the hook receives.
 hooksecurefunc("FCF_SetTemporaryWindowType", function(chatFrame)
     if not chatFrame then return end
-    CleanClassicExperience.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
+    CleanClassicUI.HideForever(_G[chatFrame:GetName() .. "ButtonFrame"])
     stripChatFrameTextures(chatFrame)
     styleTab(_G[chatFrame:GetName() .. "Tab"])
     styleEditBox(chatFrame, _G[chatFrame:GetName() .. "EditBox"])

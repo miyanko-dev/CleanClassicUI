@@ -2,9 +2,9 @@
 local DB_KEY = "timeManagerFrame"
 
 local function getDB()
-    CleanClassicExperienceDB = CleanClassicExperienceDB or {}
-    CleanClassicExperienceDB[DB_KEY] = CleanClassicExperienceDB[DB_KEY] or {}
-    return CleanClassicExperienceDB[DB_KEY]
+    CleanClassicUIDB = CleanClassicUIDB or {}
+    CleanClassicUIDB[DB_KEY] = CleanClassicUIDB[DB_KEY] or {}
+    return CleanClassicUIDB[DB_KEY]
 end
 
 local function savePosition(frame)
@@ -45,7 +45,7 @@ end
 if C_AddOns.IsAddOnLoaded("Blizzard_TimeManager") then
     makeMovable()
 else
-    CleanClassicExperience.OnEvent(function(self, _, name)
+    CleanClassicUI.OnEvent(function(self, _, name)
         if name == "Blizzard_TimeManager" then
             self:UnregisterEvent("ADDON_LOADED")
             makeMovable()

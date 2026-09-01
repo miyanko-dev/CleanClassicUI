@@ -50,7 +50,7 @@ hooksecurefunc("PaperDollItemSlotButton_Update", function(button)
 end)
 
 -- The inspect panel loads on demand, so its slot updater only exists to hook once that addon arrives.
-CleanClassicExperience.OnEvent(function(self, _, addon)
+CleanClassicUI.OnEvent(function(self, _, addon)
     if addon ~= "Blizzard_InspectUI" then return end
 
     hooksecurefunc("InspectPaperDollItemSlotButton_Update", function(button)

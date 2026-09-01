@@ -38,7 +38,7 @@ local function restyleFill(bar)
     local statusBar = bar.StatusBar
     if not statusBar then return end
     local r, g, b, a = statusBar:GetStatusBarColor()
-    statusBar:SetStatusBarTexture(CleanClassicExperience.BAR_ATLAS)
+    statusBar:SetStatusBarTexture(CleanClassicUI.BAR_ATLAS)
     statusBar:SetStatusBarColor(r, g, b, a)
 end
 
@@ -117,7 +117,7 @@ local function styleBar(bar)
         addXPTooltip(bar)
 
         -- The rested tooltip moved into the bar tooltip above.
-        CleanClassicExperience.HideForever(bar.ExhaustionTick)
+        CleanClassicUI.HideForever(bar.ExhaustionTick)
         if bar.ExhaustionLevelFillBar then bar.ExhaustionLevelFillBar:Hide() end
 
         -- Re-applies the rested/normal color on UPDATE_EXHAUSTION.
@@ -150,7 +150,7 @@ local function applyStyle()
             styleBar(bar)
 
             -- 12/3 tooltip border that rides the Edit Mode scale, so it thins with the bar instead of dwarfing it.
-            CleanClassicExperience.ApplyBorder(bar.StatusBar, nil, nil, nil, true)
+            CleanClassicUI.ApplyBorder(bar.StatusBar, nil, nil, nil, true)
         end
     end
 end
@@ -160,6 +160,6 @@ applyStyle()
 -- The Size slider applies its SetScale per tick; re-fit the resized bars and their border after each applied setting.
 hooksecurefunc(EditModeManagerFrame, "OnSystemSettingChange", applyStyle)
 
-CleanClassicExperience.OnEvent(function()
+CleanClassicUI.OnEvent(function()
     C_Timer.After(0, applyStyle)
 end, "PLAYER_ENTERING_WORLD", "EDIT_MODE_LAYOUTS_UPDATED")

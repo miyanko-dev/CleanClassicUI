@@ -22,7 +22,7 @@ local ZONE_TEXT_GAP    = 2
 local CLOCK_GAP = 12
 
 -- Desaturate before the grey vertex color or the gold ring art only darkens.
-local RING_COLOR = CleanClassicExperience.COLOR.GREY
+local RING_COLOR = CleanClassicUI.COLOR.GREY
 
 -- Copy LibDBIcon's classic recipe so native and addon buttons share one look.
 local ICON_SIZE = 17
@@ -43,11 +43,11 @@ local EDGE_BUTTONS = {
     { frame = "MiniMapBattlefieldFrame", icon = "MiniMapBattlefieldIcon", rings = { "MiniMapBattlefieldBorder" } },
 }
 
-CleanClassicExperienceDB = CleanClassicExperienceDB or {}
-CleanClassicExperienceDB.iconAngles = CleanClassicExperienceDB.iconAngles or {}
+CleanClassicUIDB = CleanClassicUIDB or {}
+CleanClassicUIDB.iconAngles = CleanClassicUIDB.iconAngles or {}
 
 -- Cancel the Edit Mode container scale once so nothing parented to this ring grows with the map.
-local edgeFrame = CreateFrame("Frame", "CleanClassicExperienceMinimapEdge", Minimap)
+local edgeFrame = CreateFrame("Frame", "CleanClassicUIMinimapEdge", Minimap)
 edgeFrame:SetPoint("CENTER", Minimap, "CENTER")
 
 -- Extra scale Edit Mode puts on the map, measured against the unscaled cluster around it.
@@ -97,13 +97,13 @@ end
 
 -- Native buttons lack LibDBIcon's backdrop disc; add one so tints match.
 local function ensureBackground(frame, icon)
-    if not frame.cceBackground then
-        frame.cceBackground = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
-        frame.cceBackground:SetTexture("Interface\\Minimap\\UI-Minimap-Background")
+    if not frame.ccuiBackground then
+        frame.ccuiBackground = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
+        frame.ccuiBackground:SetTexture("Interface\\Minimap\\UI-Minimap-Background")
     end
-    frame.cceBackground:SetSize(BG_SIZE, BG_SIZE)
-    frame.cceBackground:ClearAllPoints()
-    frame.cceBackground:SetPoint("CENTER", icon, "CENTER")
+    frame.ccuiBackground:SetSize(BG_SIZE, BG_SIZE)
+    frame.ccuiBackground:ClearAllPoints()
+    frame.ccuiBackground:SetPoint("CENTER", icon, "CENTER")
 end
 
 -- Re-anchor the scaled container to the cluster's top so the Edit Mode selection overlay hugs the content.
@@ -139,7 +139,7 @@ local function hookIconCreation()
     local lib = LibStub("LibDBIcon-1.0", true)
     if not (lib and lib.RegisterCallback) then return end
 
-    lib.RegisterCallback(CleanClassicExperience, "LibDBIcon_IconCreated", refreshAddonIcons)
+    lib.RegisterCallback(CleanClassicUI, "LibDBIcon_IconCreated", refreshAddonIcons)
     iconCreationHooked = true
 end
 
@@ -149,14 +149,14 @@ local function dragUpdate(frame, key)
     local mx, my = GetCursorPosition()
     local scale  = edgeFrame:GetEffectiveScale()
     local angle  = math.deg(math.atan2(my / scale - cy, mx / scale - cx))
-    CleanClassicExperienceDB.iconAngles[key] = angle
+    CleanClassicUIDB.iconAngles[key] = angle
     placeOnEdge(frame, angle)
 end
 
 -- dragHandle receives the mouse when it differs from the moved frame (TBC's dropdown child covers its parent).
 local function enableEdgeDrag(frame, key, dragHandle)
-    if frame.cceDraggable then return end
-    frame.cceDraggable = true
+    if frame.ccuiDraggable then return end
+    frame.ccuiDraggable = true
 
     local handle = dragHandle or frame
     frame:SetMovable(true)
@@ -172,7 +172,7 @@ end
 local function setupEdgeIcon(frame, key, defaultAngle, dragHandle)
     if not frame then return end
     enableEdgeDrag(frame, key, dragHandle)
-    placeOnEdge(frame, CleanClassicExperienceDB.iconAngles[key] or defaultAngle)
+    placeOnEdge(frame, CleanClassicUIDB.iconAngles[key] or defaultAngle)
 end
 
 local function adjustEdgeIcons()
@@ -323,7 +323,7 @@ if type(Minimap_Update) == "function" then
     end)
 end
 
-CleanClassicExperience.OnEvent(function()
+CleanClassicUI.OnEvent(function()
     C_Timer.After(0, applyMinimap)
 end, "PLAYER_ENTERING_WORLD", "UI_SCALE_CHANGED", "DISPLAY_SIZE_CHANGED",
 "EDIT_MODE_LAYOUTS_UPDATED")
